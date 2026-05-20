@@ -268,7 +268,7 @@ const totalDeposits=state.players.reduce((s,p)=>s+(p.payment_history||[]).reduce
 return{registered,lessonMembers,totalLessons,totalDeposits};
 }
 function getMonthStats(){const deposits=state.players.reduce((s,p)=>s+(p.payment_history||[]).filter(h=>isThisMonth(h.date)).reduce((a,h)=>a+h.amount,0),0);const deductions=state.schedules.filter(s=>s.status==='completed'&&isThisMonth(s.date)).length;return{deposits,deductions};}
-function onDate(iso){return state.schedules.filter(s=>s.date===iso).sort((a,b)=>a.time.localeCompare(b.time));}
+function onDate(iso){return state.schedules.filter(s=>s.date===iso&&s.status!=='canceled').sort((a,b)=>a.time.localeCompare(b.time));}
 function badge(p){return isLow(p)?'<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-[#FFF0E0] text-[#E65100]">재결제 필요</span>':'';}
 function profileBadge(p){const g=p.gender==='여성'?'여':'남';const age=getAge(p);return`<span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-toss-bg text-toss-sub shrink-0">${age!=null?age+'세':'?'} · ${g}</span>`;}
 
@@ -533,13 +533,16 @@ return`<div class="toss-card p-5 mb-3"><div class="flex justify-between items-st
 <span class="inline-flex items-center justify-center shrink-0 h-7 px-3 text-xs font-semibold leading-none rounded-full ${done?'bg-toss-bg text-toss-muted':'bg-[#E8F3FF] text-toss-blue'}">${done?'차감 완료':'예정'}</span></div>
 ${!done&&!no?`<button type="button" onclick="completeLesson('${s.id}')" class="btn-toss">레슨 완료 (1회 차감)</button>`:''}
 ${no?`<button type="button" onclick="openSheet('payment','${p.id}')" class="w-full py-3 rounded-2xl bg-[#FFF0E0] text-[#E65100] font-semibold mt-2">회차 충전이 필요해요</button>`:''}
-${!done?`<button type="button" onclick="cancelSchedule('${s.id}')" class="w-full mt-2 py-2 text-sm text-toss-muted">일정 취소</button>`:''}</div>`;
+${!done?`<div class="flex gap-2 mt-3">
+<button type="button" onclick="openSheet('schedule',{id:'${s.id}'})" class="flex-1 py-2.5 rounded-xl bg-toss-bg text-sm font-semibold text-toss-blue">일정 수정</button>
+<button type="button" onclick="cancelSchedule('${s.id}')" class="flex-1 py-2.5 rounded-xl bg-toss-bg text-sm text-toss-muted">일정 취소</button>
+</div>`:''}</div>`;
 }
 
 function openSheet(type,arg){
 if(type==='player')renderPlayerForm(arg);
 else if(type==='payment')renderPaymentForm(arg);
-else if(type==='schedule')renderScheduleForm(typeof arg==='string'?arg:arg?.date);
+else if(type==='schedule')renderScheduleForm(arg);
 else if(type==='detail'){detailTab='payment';renderDetail(arg);}
 const sheet=document.getElementById('sheet'),bd=document.getElementById('sheetBackdrop');
 bd.classList.remove('hidden');sheet.classList.remove('hidden');
@@ -597,15 +600,21 @@ document.getElementById('sheet').innerHTML=`<div class="w-10 h-1 bg-gray-200 rou
 <button type="submit" class="btn-toss">충전 완료</button></form>`;
 }
 
-function renderScheduleForm(date){
-const opts=state.players.map(p=>`<option value="${p.id}">${esc(p.name)} (${getAge(p)??'?'}세 · 잔여 ${p.remaining_sessions}회)</option>`).join('');
+function renderScheduleForm(arg){
+const s=(arg&&typeof arg==='object'&&arg.id)?state.schedules.find(x=>x.id===arg.id):null;
+const date=s?.date||(typeof arg==='string'?arg:arg?.date)||todayISO();
+const opts=state.players.map(p=>{
+const sel=s&&p.id===s.player_id?' selected':'';
+return`<option value="${p.id}"${sel}>${esc(p.name)} (${getAge(p)??'?'}세 · 잔여 ${p.remaining_sessions}회)</option>`;
+}).join('');
 document.getElementById('sheet').innerHTML=`<div class="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-5"></div>
-<h2 class="text-xl font-bold mb-5">레슨 예약</h2>
-<form onsubmit="submitSchedule(event)" class="space-y-4">
-<label class="block"><span class="text-sm text-toss-sub mb-2 block">날짜</span><input name="date" type="date" required class="toss-input" value="${date||todayISO()}"/></label>
-<label class="block"><span class="text-sm text-toss-sub mb-2 block">시간</span><input name="time" type="time" required class="toss-input" value="15:00"/></label>
+<h2 class="text-xl font-bold mb-5">${s?'일정 수정':'레슨 예약'}</h2>
+<form onsubmit="submitSchedule(event,'${s?.id||''}')" class="space-y-4">
+<label class="block"><span class="text-sm text-toss-sub mb-2 block">날짜</span><input name="date" type="date" required class="toss-input" value="${date}"/></label>
+<label class="block"><span class="text-sm text-toss-sub mb-2 block">시간</span><input name="time" type="time" required class="toss-input" value="${s?.time||'15:00'}"/></label>
 <label class="block"><span class="text-sm text-toss-sub mb-2 block">선수</span><select name="player_id" required class="toss-input"><option value="">선택</option>${opts}</select></label>
-<button type="submit" class="btn-toss">등록</button></form>`;
+<div class="flex gap-2"><button type="submit" class="btn-toss flex-1">${s?'저장':'등록'}</button><button type="button" onclick="closeSheet()" class="btn-toss-ghost flex-1">닫기</button></div>
+</form>`;
 }
 
 function getUsageHistory(pid){
@@ -656,7 +665,14 @@ if(p.remaining_sessions<=0){alert('잔여 회차가 없습니다.');openSheet('p
 if(!confirm(p.name+'님 레슨을 완료하고 1회 차감할까요?'))return;
 p.used_sessions+=1;s.status='completed';saveState();render();
 }
-function cancelSchedule(id){const s=state.schedules.find(x=>x.id===id);if(s){s.status='canceled';saveState();render();}}
+function cancelSchedule(id){
+const s=state.schedules.find(x=>x.id===id);
+if(!s||s.status!=='scheduled')return;
+if(!confirm('이 일정을 취소할까요?'))return;
+s.status='canceled';
+saveState();
+render();
+}
 function deletePlayer(id){if(!confirm('회원과 관련 일정이 삭제됩니다. 계속할까요?'))return;state.players=state.players.filter(p=>p.id!==id);state.schedules=state.schedules.filter(s=>s.player_id!==id);saveState();closeSheet();render();}
 function submitPlayer(e,id){
 e.preventDefault();
@@ -682,8 +698,20 @@ render();
 detailTab='payment';
 renderDetail(pid);
 }
-function submitSchedule(e){e.preventDefault();const fd=new FormData(e.target);state.schedules.push({id:uid('s'),date:fd.get('date'),time:String(fd.get('time')).slice(0,5),player_id:fd.get('player_id'),status:'scheduled'});
-selectedDate=fd.get('date');saveState();closeSheet();setView('calendar');}
+function submitSchedule(e,id){
+e.preventDefault();
+const fd=new FormData(e.target);
+const data={date:fd.get('date'),time:String(fd.get('time')).slice(0,5),player_id:fd.get('player_id')};
+if(id){
+const s=state.schedules.find(x=>x.id===id);
+if(!s||s.status!=='scheduled')return;
+Object.assign(s,data);
+}else{
+state.schedules.push({id:uid('s'),...data,status:'scheduled'});
+}
+selectedDate=data.date;
+saveState();closeSheet();setView('calendar');
+}
 
 window.setView=setView;window.openSheet=openSheet;window.closeSheet=closeSheet;
 window.completeLesson=completeLesson;window.cancelSchedule=cancelSchedule;window.deletePlayer=deletePlayer;
