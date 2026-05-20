@@ -242,7 +242,7 @@ if(!state.schedules.some(x=>x.id===s.id))state.schedules.push({...s});
 
 function upgradeState(raw){
 const demo=defaultData();
-if(!raw||!raw.players||!raw.players.length)return{...demo};
+if(!raw||!Array.isArray(raw.players))return{...demo};
 const players=raw.players.map(p=>({
 ...p,
 gender:p.gender||'남성',
@@ -261,35 +261,55 @@ return{_version:DATA_VERSION,players,schedules};
 }
 
 function loadState(){
+let shouldSave=false;
 try{
 let raw=localStorage.getItem(STORAGE_KEY);
 if(!raw)raw=localStorage.getItem('soccer-lesson-app-v3')||localStorage.getItem('soccer-lesson-app-v2');
 if(raw){
 const parsed=JSON.parse(raw);
-if(parsed._version===DATA_VERSION&&parsed.players&&parsed.players.length){
-state=parsed;
+if(parsed._version===DATA_VERSION&&Array.isArray(parsed.players)){
+state={_version:DATA_VERSION,players:parsed.players,schedules:Array.isArray(parsed.schedules)?parsed.schedules:[]};
 migrateState();
 ensureChartSampleData();
 }else{
 state=upgradeState(parsed);
+shouldSave=true;
 }
 }else{
 state=defaultData();
+shouldSave=true;
 }
 }catch{
 state=defaultData();
+shouldSave=true;
 }
 syncAll();
-saveState();
+if(purgeOrphanSchedules())shouldSave=true;
+if(shouldSave)saveState();
 }
 function saveState(){
-state._version=DATA_VERSION;
 syncAll();
-localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
+purgeOrphanSchedules();
+const payload={_version:DATA_VERSION,players:state.players,schedules:state.schedules};
+try{
+localStorage.setItem(STORAGE_KEY,JSON.stringify(payload));
+state.players=payload.players;
+state.schedules=payload.schedules;
+state._version=DATA_VERSION;
+}catch(e){
+console.error(e);
+alert('저장에 실패했습니다. 브라우저 저장 공간을 확인해 주세요.');
+}
 }
 function syncAll(){state.players.forEach(syncPlayer);}
 function syncPlayer(p){const h=p.payment_history||[];p.total_paid=h.reduce((s,x)=>s+(x.amount||0),0);p.total_sessions=h.reduce((s,x)=>s+(x.sessions||0),0);p.used_sessions=Math.min(p.used_sessions||0,p.total_sessions);p.remaining_sessions=Math.max(0,p.total_sessions-p.used_sessions);}
-function getPlayer(id){return state.players.find(p=>p.id===id);}
+function getPlayer(id){if(id==null||id==='')return null;return state.players.find(p=>String(p.id)===String(id));}
+function purgeOrphanSchedules(){
+const ids=new Set(state.players.map(p=>String(p.id)));
+const before=state.schedules.length;
+state.schedules=state.schedules.filter(s=>s.player_id!=null&&s.player_id!==''&&ids.has(String(s.player_id)));
+return before!==state.schedules.length;
+}
 function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function money(n){return new Intl.NumberFormat('ko-KR').format(n)+'원';}
 function shortMoney(n){if(n>=10000)return Math.round(n/10000)+'만';if(n>=1000)return Math.round(n/1000)+'천';return String(n);}
@@ -475,7 +495,17 @@ fab.onclick=()=>{if(v==='players')openSheet('player');else openSheet('schedule',
 render();
 }
 
-function render(){renderStats();renderAlerts();renderHome();renderPlayers();renderCalendar();if(currentView==='home')scheduleDashboardAnimations();}
+function safeRender(fn){
+try{fn();}catch(e){console.error(e);}
+}
+function render(){
+safeRender(renderStats);
+safeRender(renderAlerts);
+safeRender(renderHome);
+safeRender(renderPlayers);
+safeRender(renderCalendar);
+if(currentView==='home')scheduleDashboardAnimations();
+}
 
 let dashAnimToken=0;
 const prefersReducedMotion=()=>window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -866,7 +896,19 @@ s.status='canceled';
 saveState();
 render();
 }
-async function deletePlayer(id){if(!await showConfirm('회원과 관련 일정이 삭제됩니다. 계속할까요?'))return;state.players=state.players.filter(p=>p.id!==id);state.schedules=state.schedules.filter(s=>s.player_id!==id);saveState();closeSheet();render();}
+async function deletePlayer(id){
+if(!id||!await showConfirm('회원과 관련 일정이 삭제됩니다. 계속할까요?'))return;
+const pid=String(id);
+const playersBefore=state.players.length;
+const schedulesBefore=state.schedules.length;
+state.players=state.players.filter(p=>String(p.id)!==pid);
+state.schedules=state.schedules.filter(s=>String(s.player_id)!==pid);
+purgeOrphanSchedules();
+if(state.players.length===playersBefore&&state.schedules.length===schedulesBefore)return;
+saveState();
+closeSheet();
+render();
+}
 function submitPlayer(e,id){
 e.preventDefault();
 const fd=new FormData(e.target);
@@ -914,6 +956,7 @@ window.setCalMode=setCalMode;window.calNav=calNav;window.selectCalDay=selectCalD
 document.getElementById('confirmCancel').onclick=()=>closeConfirm(false);
 document.getElementById('confirmOk').onclick=()=>closeConfirm(true);
 document.getElementById('confirmBackdrop').onclick=e=>{if(e.target.id==='confirmBackdrop')closeConfirm(false);};
+document.getElementById('confirmDialog').onclick=e=>e.stopPropagation();
 
 loadState();selectedDate=todayISO();setView('home');
 </script>
