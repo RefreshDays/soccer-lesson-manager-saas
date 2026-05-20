@@ -32,13 +32,29 @@ body{background:#F2F4F6;color:#191F28;-webkit-tap-highlight-color:transparent}
 .segment-btn{flex:1;padding:12px 8px;border-radius:11px;font-size:15px;font-weight:600;color:#4E5968;background:transparent;border:none;cursor:pointer;font-family:inherit;transition:all .2s}
 .segment-btn.active{background:#fff;color:#3182F6;box-shadow:0 1px 4px rgba(0,0,0,.08)}
 .chart-bar,.chart-col{transition:width .65s cubic-bezier(.32,.72,0,1),height .65s cubic-bezier(.32,.72,0,1)}
-.bottom-nav{padding-bottom:env(safe-area-inset-bottom,0)}
-.bottom-nav-inner{display:flex;align-items:stretch;min-height:60px}
-.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:10px 4px 8px;color:#8B95A1;background:transparent;border:0;cursor:pointer;font-family:inherit}
-.nav-btn .nav-icon-wrap{width:28px;height:28px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.nav-btn .nav-icon{width:24px;height:24px;display:block}
-.nav-btn .nav-label{font-size:11px;line-height:1;font-weight:500;letter-spacing:-.02em}
+.bottom-nav{
+position:fixed;bottom:0;left:0;right:0;z:40;
+padding:0 16px calc(env(safe-area-inset-bottom,0) + 10px);
+background:linear-gradient(to top,rgba(242,244,246,.98) 0%,rgba(242,244,246,0) 100%);
+pointer-events:none;
+}
+.bottom-nav-inner{
+display:flex;align-items:stretch;min-height:58px;
+max-width:32rem;margin:0 auto;
+background:rgba(255,255,255,.94);
+-webkit-backdrop-filter:saturate(180%) blur(16px);
+backdrop-filter:saturate(180%) blur(16px);
+border-radius:18px;
+border:1px solid rgba(0,0,0,.06);
+box-shadow:0 4px 24px rgba(0,0,0,.08),0 1px 3px rgba(0,0,0,.04);
+pointer-events:auto;
+}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:8px 4px 6px;color:#8B95A1;background:transparent;border:0;cursor:pointer;font-family:inherit;transition:color .2s}
+.nav-btn .nav-icon-wrap{width:40px;height:28px;display:flex;align-items:center;justify-content:center;flex-shrink:0;border-radius:14px;transition:background .2s}
+.nav-btn .nav-icon{width:22px;height:22px;display:block}
+.nav-btn .nav-label{font-size:10px;line-height:1;font-weight:600;letter-spacing:-.02em}
 .nav-btn.nav-active{color:#3182F6}
+.nav-btn.nav-active .nav-icon-wrap{background:#E8F3FF}
 .nav-btn.nav-active .nav-label{font-weight:700}
 .cal-day{min-height:92px;min-width:0;border-radius:12px;display:flex;flex-direction:column;align-items:stretch;padding:6px 2px 4px!important}
 .cal-day.selected{background:#E8F3FF}
@@ -95,8 +111,8 @@ body.sheet-open{overflow:hidden}
 <div id="view-calendar" class="view-panel hidden space-y-4"></div>
 </main>
 </div>
-<nav class="bottom-nav fixed bottom-0 inset-x-0 z-40 bg-white border-t border-gray-100">
-<div class="bottom-nav-inner max-w-lg mx-auto md:max-w-2xl lg:max-w-4xl">
+<nav class="bottom-nav">
+<div class="bottom-nav-inner">
 <button type="button" data-view="home" class="nav-btn nav-active" aria-current="page">
 <span class="nav-icon-wrap"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1v-9.5z"/></svg></span>
 <span class="nav-label">홈</span>
@@ -663,6 +679,7 @@ ${p.memo?`<div class="toss-card bg-toss-bg shadow-none p-4 mb-5"><p class="text-
 <div class="relative timeline-line pl-6 mb-6">${timeline}</div>
 <button type="button" onclick="openSheet('payment','${p.id}')" class="btn-toss mb-2">선불 충전</button>
 <button type="button" onclick="openSheet('player','${p.id}')" class="btn-toss-secondary mb-2">정보 수정</button>
+<button type="button" onclick="deletePlayer('${p.id}')" class="w-full mb-2 py-3 rounded-2xl bg-[#FFF0F0] text-red-500 text-sm font-semibold">회원 삭제</button>
 <button type="button" onclick="closeSheet()" class="py-3 text-toss-muted text-sm w-full">닫기</button>`;
 }
 
