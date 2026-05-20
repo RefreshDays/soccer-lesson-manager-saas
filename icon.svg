@@ -1,5 +1,7 @@
 ﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-<rect width="512" height="512" rx="112" fill="#3182F6"/>
-<circle cx="256" cy="256" r="96" fill="none" stroke="#ffffff" stroke-width="10"/>
-<path fill="#ffffff" d="M256 178l22 38h44l-36 26 14 42-44-30-44 30 14-42-36-26h44z"/>
+<rect width="512" height="512" rx="112" fill="#F2F4F6"/>
+<text x="256" y="228" text-anchor="middle" font-family="system-ui,sans-serif" font-size="44" font-weight="800" fill="#3182F6" letter-spacing="-1">LESSON</text>
+<text x="256" y="272" text-anchor="middle" font-family="system-ui,sans-serif" font-size="44" font-weight="800" fill="#3182F6" letter-spacing="-1">MANAGER</text>
+<text x="256" y="318" text-anchor="middle" font-family="system-ui,sans-serif" font-size="20" font-weight="500" fill="#191F28">원유현 감독 전용</text>
+<text x="256" y="346" text-anchor="middle" font-family="system-ui,sans-serif" font-size="20" font-weight="500" fill="#191F28">레슨 매니저</text>
 </svg>

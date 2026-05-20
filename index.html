@@ -121,9 +121,19 @@ body.sheet-open,body.confirm-open{overflow:hidden}
 .dash-stat-label{font-size:11px;font-weight:500;color:#8B95A1;line-height:1.3}
 .dash-stat-value{font-size:1.35rem;font-weight:700;color:#191F28;line-height:1.2;letter-spacing:-.03em}
 .dash-stat-unit{font-size:12px;font-weight:600;color:#8B95A1;margin-left:2px}
+.app-splash{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#F2F4F6;padding:max(24px,env(safe-area-inset-top)) 28px 24px;text-align:center;transition:opacity .4s ease,visibility .4s}
+.app-splash.is-hidden{opacity:0;visibility:hidden;pointer-events:none}
+.app-splash-brand{margin:0;font-size:1.625rem;font-weight:800;color:#3182F6;letter-spacing:-.03em;line-height:1.2}
+.app-splash-title{margin:12px 0 0;font-size:1.0625rem;font-weight:400;color:#191F28;line-height:1.45;letter-spacing:-.02em}
+body.app-boot #app{opacity:0}
+body.app-boot .bottom-nav,body.app-boot #fab{opacity:0}
 </style>
 </head>
-<body class="min-h-screen font-sans antialiased pb-24">
+<body class="min-h-screen font-sans antialiased pb-24 app-boot">
+<div id="appSplash" class="app-splash" aria-hidden="false">
+<p class="app-splash-brand">LESSON MANAGER</p>
+<p class="app-splash-title">원유현 감독 전용 레슨 매니저</p>
+</div>
 <div id="app" class="max-w-lg mx-auto md:max-w-2xl lg:max-w-4xl">
 <header id="appHeader" class="sticky top-0 z-30 bg-[#F2F4F6]/95 backdrop-blur-sm px-5 pt-5 pb-3 hidden">
 <h1 class="text-[17px] font-bold leading-snug tracking-tight">원유현 감독 전용 레슨 매니저</h1>
@@ -958,7 +968,17 @@ document.getElementById('confirmOk').onclick=()=>closeConfirm(true);
 document.getElementById('confirmBackdrop').onclick=e=>{if(e.target.id==='confirmBackdrop')closeConfirm(false);};
 document.getElementById('confirmDialog').onclick=e=>e.stopPropagation();
 
+function hideAppSplash(){
+const el=document.getElementById('appSplash');
+if(!el)return;
+el.classList.add('is-hidden');
+el.setAttribute('aria-hidden','true');
+document.body.classList.remove('app-boot');
+setTimeout(()=>el.remove(),450);
+}
+const splashStarted=performance.now();
 loadState();selectedDate=todayISO();setView('home');
+setTimeout(hideAppSplash,Math.max(0,650-(performance.now()-splashStarted)));
 </script>
 </body>
 </html>
