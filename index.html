@@ -263,27 +263,18 @@ const uid=p=>p+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 const WEEKDAYS=['일','월','화','수','목','금','토'];
 let state={players:[],schedules:[]};
 let currentView='home',calendarMode='month',calendarDate=new Date(),selectedDate=null,detailTab='payment',historyViewMonth=null;
-let cloudSaveTimer=null,cloudUnsub=null,lastCloudPush=0,applyingRemote=false,firebaseReady=false,bootFinished=false,currentAuthUid=null;
+let cloudSaveTimer=null,cloudUnsub=null,lastCloudPush=0,applyingRemote=false,firebaseReady=false,bootFinished=false,currentAuthUid=null,currentSyncSession=0;
+const APP_BUILD='20260521-accounts';
 
 function getStorageKey(authUid){return authUid?STORAGE_KEY_BASE+'-'+authUid:STORAGE_KEY_BASE;}
 function readLocalCache(authUid){
 if(!authUid)return null;
 try{
 const raw=localStorage.getItem(getStorageKey(authUid));
-if(raw){
+if(!raw)return null;
 const parsed=JSON.parse(raw);
 if(parsed.ownerUid&&parsed.ownerUid!==authUid)return null;
 return parsed;
-}
-const legacy=localStorage.getItem(STORAGE_KEY_BASE);
-if(legacy){
-const parsed=JSON.parse(legacy);
-if(parsed.ownerUid&&parsed.ownerUid!==authUid)return null;
-parsed.ownerUid=authUid;
-localStorage.setItem(getStorageKey(authUid),JSON.stringify(parsed));
-localStorage.removeItem(STORAGE_KEY_BASE);
-return parsed;
-}
 }catch(e){console.error(e);}
 return null;
 }
@@ -456,7 +447,7 @@ if(!bar||!dot||!text)return;
 if(!isFirebaseEnabled()){bar.classList.add('hidden');return;}
 bar.classList.remove('hidden');
 dot.className='sync-dot';
-if(mode==='synced'){dot.classList.add('is-synced');text.innerHTML='<strong>클라우드 저장됨</strong>'+(detail?' · '+esc(detail):'');}
+if(mode==='synced'){dot.classList.add('is-synced');text.innerHTML='<strong>클라우드 저장됨</strong>'+(detail?' · '+esc(detail):'')+' <span class="text-toss-muted">('+APP_BUILD+')</span>';}
 else if(mode==='pending'){dot.classList.add('is-pending');text.innerHTML='<strong>저장 중…</strong>';}
 else if(mode==='error'){dot.classList.add('is-error');text.innerHTML='<strong>동기화 실패</strong>'+(detail?' · '+esc(detail):'');}
 else if(mode==='local'){bar.classList.add('hidden');return;}
@@ -517,29 +508,26 @@ updateSyncStatus('error','잠시 후 다시 시도해 주세요');
 }
 },600);
 }
-async function syncFromCloud(uid){
+async function syncFromCloud(uid,sessionId){
 const ref=cloudDocRef(uid);
 const snap=await ref.get();
-const localParsed=readLocalCache(uid);
+if(sessionId!==currentSyncSession||currentAuthUid!==uid)return;
 if(snap.exists){
-const cloud=snap.data();
-const cloudTime=cloud.updatedAt||0;
-const localTime=localParsed?.updatedAt||0;
-if(localTime>cloudTime&&localParsed)applyPayload(localParsed);
-else applyPayload(cloud);
-}else if(localParsed&&Array.isArray(localParsed.players)){
-applyPayload(localParsed);
+applyPayload(snap.data());
 }else{
-resetAppState();
-syncAll();
+const localParsed=readLocalCache(uid);
+if(localParsed&&Array.isArray(localParsed.players))applyPayload(localParsed);
+else resetAppState();
 }
 syncAll();
 if(purgeOrphanSchedules())saveStateLocal(undefined,uid);
+if(sessionId!==currentSyncSession||currentAuthUid!==uid)return;
 await saveStateToCloud(uid);
 }
-function startCloudListener(uid){
+function startCloudListener(uid,sessionId){
 if(cloudUnsub)cloudUnsub();
 cloudUnsub=cloudDocRef(uid).onSnapshot(snap=>{
+if(sessionId!==currentSyncSession||currentAuthUid!==uid)return;
 if(!snap.exists||applyingRemote)return;
 const data=snap.data();
 if(!data||!Array.isArray(data.players))return;
@@ -555,6 +543,8 @@ updateSyncStatus('synced',firebase.auth().currentUser?.email||'');
 async function handleAuthUser(user){
 if(cloudUnsub){cloudUnsub();cloudUnsub=null;}
 lastCloudPush=0;
+currentSyncSession++;
+const sessionId=currentSyncSession;
 if(!user){
 currentAuthUid=null;
 resetAppState();
@@ -568,13 +558,14 @@ resetAppState();
 hideAuthGate();
 updateSyncStatus('pending');
 try{
-await syncFromCloud(user.uid);
-startCloudListener(user.uid);
+await syncFromCloud(user.uid,sessionId);
+if(sessionId!==currentSyncSession)return;
+startCloudListener(user.uid,sessionId);
 updateSyncStatus('synced',user.email||'');
 if(bootFinished)render();
 }catch(e){
 console.error(e);
-updateSyncStatus('error','데이터 불러오기 실패');
+if(sessionId===currentSyncSession)updateSyncStatus('error','데이터 불러오기 실패');
 }
 }
 function setAuthBusy(busy){
@@ -616,9 +607,10 @@ showAuthError(e.code==='auth/email-already-in-use'?'이미 가입된 이메일�
 }
 async function firebaseLogout(){
 if(!firebaseReady)return;
-const ok=await showConfirm('로그아웃할까요?\n다른 계정으로 로그인하면 해당 계정 데이터를 불러옵니다.');
+const ok=await showConfirm('로그아웃할까요?\n다른 계정으로 로그인하면 해당 계정 데이터만 불러옵니다.');
 if(!ok)return;
 if(cloudUnsub){cloudUnsub();cloudUnsub=null;}
+currentSyncSession++;
 currentAuthUid=null;
 resetAppState();
 await firebase.auth().signOut();
