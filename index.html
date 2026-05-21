@@ -1028,16 +1028,16 @@ const iconCls=type==='registered'?'dash-stat-icon':`dash-stat-icon dash-stat-ico
 const fmt=type==='deposit'?'deposit':'plain';
 return`<div class="dash-stat"><span class="${iconCls}">${DASH_SVG[icons[type]]}</span><div class="min-w-0 flex-1"><p class="dash-stat-label">${label}</p><p class="dash-stat-value" data-count="${value}" data-fmt="${fmt}"><span class="dash-stat-num">0</span><span class="dash-stat-unit">${unit}</span></p></div></div>`;
 }
-function getPastMonthsWithActivity(){
+function getPastMonthsForHistory(){
 const cur=monthYM(new Date());
-return getLastMonths(12).filter(m=>m.ym!==cur).reverse().filter(m=>monthHasActivity(getStatsForMonth(m.ym)));
+return getLastMonths(12).filter(m=>m.ym!==cur).reverse();
 }
 function monthMiniStat(label,value,unit,isDeposit){
 const v=isDeposit?formatDeposit(value):value;
 return`<div class="month-mini-stat"><p class="month-mini-stat-label">${label}</p><p class="month-mini-stat-value">${v}<span class="month-mini-stat-unit">${unit}</span></p></div>`;
 }
 function renderMonthlyHistoryHTML(){
-const months=getPastMonthsWithActivity();
+const months=getPastMonthsForHistory();
 if(!months.length)return'';
 if(!historyViewMonth||!months.some(m=>m.ym===historyViewMonth))historyViewMonth=months[0].ym;
 const stats=getStatsForMonth(historyViewMonth);
