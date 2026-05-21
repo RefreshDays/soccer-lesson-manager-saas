@@ -246,7 +246,7 @@ body.auth-lock #app,body.auth-lock .bottom-nav,body.auth-lock #fab{visibility:hi
 <h2>클라우드 로그인</h2>
 <p>회원·스케줄·결제 데이터를 Firebase에 저장합니다. 기기를 바꿔도 같은 계정으로 불러올 수 있어요.</p>
 <label class="block mb-2"><span class="sr-only">이메일</span><input type="email" id="authEmail" class="toss-input" placeholder="이메일" autocomplete="username"/></label>
-<label class="block mb-4"><span class="sr-only">비밀번호</span><input type="password" id="authPassword" class="toss-input" placeholder="비밀번호 (6자 이상)" autocomplete="current-password"/></label>
+<label class="block mb-4"><span class="sr-only">비밀번호</span><input type="password" id="authPassword" class="toss-input" placeholder="비밀번호 (6자 이상)" autocomplete="new-password"/></label>
 <button type="button" id="authLogin" class="btn-toss mb-2">로그인</button>
 <button type="button" id="authRegister" class="btn-toss-secondary">처음 사용 (가입)</button>
 <p id="authError" class="auth-error hidden" role="alert"></p>
@@ -454,10 +454,19 @@ else if(mode==='local'){bar.classList.add('hidden');return;}
 else{text.textContent=detail||'동기화 준비 중';}
 if(logout)logout.classList.toggle('hidden',mode!=='synced'&&mode!=='pending'&&mode!=='error');
 }
+function resetAuthForm(){
+const pw=document.getElementById('authPassword');
+if(!pw)return;
+pw.value='';
+const clearPw=()=>{pw.value='';};
+requestAnimationFrame(clearPw);
+setTimeout(clearPw,50);
+}
 function showAuthGate(msg){
 const gate=document.getElementById('authGate');
 const err=document.getElementById('authError');
 document.body.classList.add('auth-lock');
+resetAuthForm();
 if(gate){gate.classList.remove('hidden');gate.setAttribute('aria-hidden','false');}
 if(err){err.classList.toggle('hidden',!msg);if(msg)err.textContent=msg;}
 }
