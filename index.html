@@ -24,6 +24,25 @@ body{background:#F2F4F6;color:#191F28;-webkit-tap-highlight-color:transparent}
 .toss-card{background:#fff;border-radius:20px;box-shadow:0 2px 16px rgba(0,0,0,.06)}
 .toss-input{background:#F2F4F6;border:none;border-radius:14px;min-height:52px;font-size:16px;width:100%;padding:0 16px}
 .toss-input:focus{outline:2px solid #3182F6;background:#fff}
+.toss-select{
+-webkit-appearance:none;
+appearance:none;
+background-color:#fff;
+border:1px solid #E5E8EB;
+border-radius:14px;
+min-height:52px;
+width:100%;
+padding:0 44px 0 16px;
+font-size:16px;
+font-family:inherit;
+color:#191F28;
+cursor:pointer;
+background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%238B95A1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+background-repeat:no-repeat;
+background-position:right 14px center;
+background-size:20px;
+}
+.toss-select:focus{outline:none;border-color:#3182F6;box-shadow:0 0 0 2px rgba(49,130,246,.12)}
 .toss-textarea{min-height:120px;padding:14px 16px;resize:vertical}
 .btn-toss{background:#3182F6;color:#fff;border-radius:16px;min-height:52px;font-weight:600;font-size:16px;width:100%}
 .btn-toss-secondary{background:#E8F3FF;color:#3182F6;border-radius:16px;min-height:52px;font-weight:600;width:100%}
@@ -120,7 +139,27 @@ body.sheet-open,body.confirm-open{overflow:hidden}
 .dash-stat-icon--deposit{background:#FFF4E6;color:#E65100}
 .dash-stat-label{font-size:11px;font-weight:500;color:#8B95A1;line-height:1.3}
 .dash-stat-value{font-size:1.35rem;font-weight:700;color:#191F28;line-height:1.2;letter-spacing:-.03em}
-.dash-stat-unit{font-size:12px;font-weight:600;color:#8B95A1;margin-left:2px}
+.dash-hero-month{padding:0 16px 4px;text-align:center}
+.dash-hero-month span{display:inline-flex;align-items:center;font-size:11px;font-weight:600;color:#3182F6;background:#E8F3FF;padding:6px 12px;border-radius:9999px;letter-spacing:-.02em}
+.month-history-body{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.month-mini-stat{background:#F2F4F6;border-radius:14px;padding:12px 10px}
+.month-mini-stat-label{font-size:10px;color:#8B95A1;margin-bottom:4px;line-height:1.3}
+.month-mini-stat-value{font-size:15px;font-weight:700;color:#191F28;letter-spacing:-.02em}
+.month-mini-stat-unit{font-size:11px;font-weight:600;color:#8B95A1;margin-left:1px}
+.member-head{margin-bottom:12px}
+.member-head--compact{margin-bottom:10px}
+.member-head-row{display:flex;align-items:flex-start;justify-content:space-between;gap:10px 14px}
+.member-head-main{flex:1;min-width:0}
+.member-head-reg{flex-shrink:0;font-size:11px;color:#8B95A1;line-height:1.35;text-align:right;white-space:nowrap;padding-top:3px}
+.member-head-affiliation{margin-top:5px;font-size:13px;font-weight:500;color:#4E5968;line-height:1.35;word-break:keep-all}
+.member-head-phones{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:8px}
+.member-head-phone{font-size:13px;font-weight:500;color:#3182F6;text-decoration:none;white-space:nowrap}
+.member-summary-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.member-summary-name{display:flex;flex-wrap:wrap;align-items:center;gap:8px;min-width:0;flex:1}
+.member-detail-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.member-detail-top{display:flex;flex-wrap:wrap;align-items:center;gap:8px;min-width:0;flex:1}
+.member-detail-aff{font-size:14px;font-weight:500;color:#4E5968;line-height:1.35}
+.member-detail-contact{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:10px;font-size:14px;line-height:1.4}
 .app-splash{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#F2F4F6;padding:max(24px,env(safe-area-inset-top)) 28px 24px;text-align:center;transition:opacity .4s ease,visibility .4s}
 .app-splash.is-hidden{opacity:0;visibility:hidden;pointer-events:none}
 .app-splash-brand{margin:0;font-size:1.625rem;font-weight:800;color:#3182F6;letter-spacing:-.03em;line-height:1.2}
@@ -180,7 +219,7 @@ const DATA_VERSION=4;
 const uid=p=>p+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 const WEEKDAYS=['일','월','화','수','목','금','토'];
 let state={players:[],schedules:[]};
-let currentView='home',calendarMode='month',calendarDate=new Date(),selectedDate=null,detailTab='payment';
+let currentView='home',calendarMode='month',calendarDate=new Date(),selectedDate=null,detailTab='payment',historyViewMonth=null;
 
 function fmtISO(d){const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return`${y}-${m}-${day}`;}
 function todayISO(){return fmtISO(new Date());}
@@ -210,10 +249,10 @@ return[...done,
 const defaultData=()=>({
 _version:DATA_VERSION,
 players:[
-{id:'p1',name:'홍길동',birth_year:2012,gender:'남성',phone:'010-1234-5678',parent_phone:'',affiliation:'○○중 FC',memo:'골키퍼 집중.\n발 구석 잡기 연습 중. 무릎 주의.',payment_history:[{date:'2026-03-01',amount:500000,sessions:10},{date:'2026-05-01',amount:250000,sessions:5}],used_sessions:8},
-{id:'p2',name:'김철수',birth_year:2009,gender:'남성',phone:'010-9876-5432',parent_phone:'',affiliation:'△△고등학교',memo:'필드 플레이어. 스피드·패스 위주.',payment_history:[{date:'2026-04-10',amount:600000,sessions:12}],used_sessions:11},
-{id:'p3',name:'이영희',birth_year:2014,gender:'여성',phone:'010-5555-1234',parent_phone:'',affiliation:'□□초등부',memo:'주 1회 그룹 레슨 참여.',payment_history:[{date:'2026-05-10',amount:400000,sessions:8}],used_sessions:2},
-{id:'p4',name:'박민수',birth_year:2002,gender:'남성',phone:'010-2222-8888',parent_phone:'',affiliation:'개인 레슨',memo:'성인 취미반. 체력·기술 병행.',payment_history:[{date:'2026-02-15',amount:450000,sessions:10}],used_sessions:4}
+{id:'p1',name:'홍길동',birth_year:2012,gender:'남성',phone:'010-1234-5678',parent_phone:'',registered_at:'2026-03-01',affiliation:'○○중 FC',memo:'골키퍼 집중.\n발 구석 잡기 연습 중. 무릎 주의.',payment_history:[{date:'2026-03-01',amount:500000,sessions:10},{date:'2026-05-01',amount:250000,sessions:5}],used_sessions:8},
+{id:'p2',name:'김철수',birth_year:2009,gender:'남성',phone:'010-9876-5432',parent_phone:'',registered_at:'2026-04-10',affiliation:'△△고등학교',memo:'필드 플레이어. 스피드·패스 위주.',payment_history:[{date:'2026-04-10',amount:600000,sessions:12}],used_sessions:11},
+{id:'p3',name:'이영희',birth_year:2014,gender:'여성',phone:'010-5555-1234',parent_phone:'',registered_at:'2026-05-10',affiliation:'□□초등부',memo:'주 1회 그룹 레슨 참여.',payment_history:[{date:'2026-05-10',amount:400000,sessions:8}],used_sessions:2},
+{id:'p4',name:'박민수',birth_year:2002,gender:'남성',phone:'010-2222-8888',parent_phone:'',registered_at:'2026-02-15',affiliation:'개인 레슨',memo:'성인 취미반. 체력·기술 병행.',payment_history:[{date:'2026-02-15',amount:450000,sessions:10}],used_sessions:4}
 ],
 schedules:buildDemoSchedules()
 });
@@ -250,6 +289,7 @@ if(!p.birth_year&&p.birth_date)p.birth_year=parseISO(p.birth_date).getFullYear()
 if(!p.birth_year&&(p.age!=null&&p.age!==''))p.birth_year=new Date().getFullYear()-Number(p.age);
 if(!p.birth_year)p.birth_year=new Date().getFullYear()-14;
 if(p.parent_phone==null)p.parent_phone='';
+if(!p.registered_at)p.registered_at=firstPaymentDate(p)||todayISO();
 delete p.birth_date;
 delete p.age;
 });
@@ -271,6 +311,7 @@ const players=raw.players.map(p=>({
 gender:p.gender||'남성',
 birth_year:p.birth_year||(p.birth_date?parseISO(p.birth_date).getFullYear():(p.age!=null?new Date().getFullYear()-Number(p.age):new Date().getFullYear()-14)),
 parent_phone:p.parent_phone||'',
+registered_at:p.registered_at||firstPaymentDate(p)||todayISO(),
 payment_history:p.payment_history||[],
 }));
 let schedules=Array.isArray(raw.schedules)?[...raw.schedules]:[];
@@ -340,7 +381,6 @@ function shortMoney(n){if(n>=10000)return Math.round(n/10000)+'만';if(n>=1000)r
 function phone(v){const d=String(v).replace(/\D/g,'');if(d.length<=3)return d;if(d.length<=7)return d.slice(0,3)+'-'+d.slice(3);return d.slice(0,3)+'-'+d.slice(3,7)+'-'+d.slice(7,11);}
 function fmtShort(iso){const[,m,d]=iso.split('-');return Number(m)+'월 '+Number(d)+'일';}
 function fmtFull(iso){const[y,m,d]=iso.split('-');return y+'.'+m+'.'+d;}
-function isThisMonth(iso){const d=parseISO(iso),n=new Date();return d.getMonth()===n.getMonth()&&d.getFullYear()===n.getFullYear();}
 function isLow(p){return p.total_sessions>0&&p.remaining_sessions<=2;}
 function formatDisplayDate(d=new Date()){return`${d.getFullYear()}.${d.getMonth()+1}.${d.getDate()}`;}
 function formatClockTime(d=new Date()){
@@ -362,14 +402,22 @@ if(dashClockTimer)clearInterval(dashClockTimer);
 updateDashClock();
 dashClockTimer=setInterval(updateDashClock,1000);
 }
-function getDashboardStats(){
-const registered=state.players.length;
-const lessonMembers=state.players.filter(p=>p.remaining_sessions>0).length;
-const totalLessons=state.schedules.filter(s=>s.status==='completed').length;
-const totalDeposits=state.players.reduce((s,p)=>s+(p.payment_history||[]).reduce((a,h)=>a+(h.amount||0),0),0);
-return{registered,lessonMembers,totalLessons,totalDeposits};
+function getStatsForMonth(ym){
+return{
+registered:state.players.filter(p=>isNewRegistrationInMonth(p,ym)).length,
+lessonMembers:state.players.filter(p=>isMaintainedInMonth(p,ym)).length,
+totalLessons:state.schedules.filter(s=>s.status==='completed'&&s.date.slice(0,7)===ym).length,
+totalDeposits:state.players.reduce((s,p)=>s+(p.payment_history||[]).filter(h=>h.date.slice(0,7)===ym).reduce((a,h)=>a+(h.amount||0),0),0)
+};
 }
-function getMonthStats(){const deposits=state.players.reduce((s,p)=>s+(p.payment_history||[]).filter(h=>isThisMonth(h.date)).reduce((a,h)=>a+h.amount,0),0);const deductions=state.schedules.filter(s=>s.status==='completed'&&isThisMonth(s.date)).length;return{deposits,deductions};}
+function getDashboardStats(){return getStatsForMonth(monthYM(new Date()));}
+function formatMonthTitle(ym){
+const[y,m]=ym.split('-').map(Number);
+return y+'년 '+m+'월';
+}
+function monthHasActivity(stats){
+return stats.registered||stats.lessonMembers||stats.totalLessons||stats.totalDeposits;
+}
 function onDate(iso){return state.schedules.filter(s=>s.date===iso&&s.status!=='canceled').sort((a,b)=>a.time.localeCompare(b.time));}
 function badge(p){return isLow(p)?'<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-[#FFF0E0] text-[#E65100]">재결제 필요</span>':'';}
 function profileBadge(p){const g=p.gender==='여성'?'여':'남';const age=getAge(p);return`<span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-toss-bg text-toss-sub shrink-0">${age!=null?age+'세':'?'} · ${g}</span>`;}
@@ -399,6 +447,47 @@ return getLastMonths(6).map(m=>({...m,count:state.players.filter(p=>isMaintained
 function firstPaymentDate(p){
 const d=(p.payment_history||[]).map(h=>h.date).filter(Boolean).sort();
 return d[0]||null;
+}
+function getRegisteredAt(p){return p.registered_at||firstPaymentDate(p)||'';}
+function fmtRegisteredLabel(p){
+const iso=getRegisteredAt(p);
+if(!iso)return'';
+const[y,m,d]=iso.split('-');
+return y+'.'+Number(m)+'.'+Number(d)+' 등록';
+}
+function memberCardHead(p,opts={}){
+const reg=fmtRegisteredLabel(p);
+const aff=p.affiliation?esc(p.affiliation):'';
+const nameCls=opts.large?'text-xl font-bold':'font-bold text-[17px]';
+const nameTag=opts.large?'h2':'h3';
+return`<div class="member-head${opts.compact?' member-head--compact':''}">
+<div class="member-head-row">
+<div class="member-head-main min-w-0">
+<div class="flex flex-wrap items-center gap-2"><${nameTag} class="${nameCls} truncate">${esc(p.name)}</${nameTag}>${profileBadge(p)}${badge(p)}</div>
+${aff?`<p class="member-head-affiliation">${aff}</p>`:''}
+</div>
+${reg?`<p class="member-head-reg">${reg}</p>`:''}
+</div>
+</div>`;
+}
+function memberSummaryRow(p){
+return`<div class="member-summary-row">
+<div class="member-summary-name"><span class="font-bold text-lg truncate">${esc(p.name)}</span>${profileBadge(p)}${badge(p)}</div>
+<span class="text-toss-blue text-sm font-semibold shrink-0">상세 →</span>
+</div>`;
+}
+function memberDetailHead(p){
+const reg=fmtRegisteredLabel(p);
+const aff=p.affiliation?`<span class="member-detail-aff">${esc(p.affiliation)}</span>`:'';
+const phones=[`<a href="tel:${p.phone}" class="member-head-phone">${esc(p.phone)}</a>`];
+if(p.parent_phone)phones.push(`<a href="tel:${p.parent_phone}" class="member-head-phone">학부모 ${esc(p.parent_phone)}</a>`);
+return`<div class="member-head mb-4">
+<div class="member-detail-row">
+<div class="member-detail-top"><h2 class="text-xl font-bold truncate">${esc(p.name)}</h2>${profileBadge(p)}${badge(p)}${aff}</div>
+${reg?`<p class="member-head-reg">${reg}</p>`:''}
+</div>
+<div class="member-detail-contact">${phones.join('')}</div>
+</div>`;
 }
 function isNewRegistrationInMonth(p,ym){
 const first=firstPaymentDate(p);
@@ -629,8 +718,42 @@ const iconCls=type==='registered'?'dash-stat-icon':`dash-stat-icon dash-stat-ico
 const fmt=type==='deposit'?'deposit':'plain';
 return`<div class="dash-stat"><span class="${iconCls}">${DASH_SVG[icons[type]]}</span><div class="min-w-0 flex-1"><p class="dash-stat-label">${label}</p><p class="dash-stat-value" data-count="${value}" data-fmt="${fmt}"><span class="dash-stat-num">0</span><span class="dash-stat-unit">${unit}</span></p></div></div>`;
 }
+function getPastMonthsWithActivity(){
+const cur=monthYM(new Date());
+return getLastMonths(12).filter(m=>m.ym!==cur).reverse().filter(m=>monthHasActivity(getStatsForMonth(m.ym)));
+}
+function monthMiniStat(label,value,unit,isDeposit){
+const v=isDeposit?formatDeposit(value):value;
+return`<div class="month-mini-stat"><p class="month-mini-stat-label">${label}</p><p class="month-mini-stat-value">${v}<span class="month-mini-stat-unit">${unit}</span></p></div>`;
+}
+function renderMonthlyHistoryHTML(){
+const months=getPastMonthsWithActivity();
+if(!months.length)return'';
+if(!historyViewMonth||!months.some(m=>m.ym===historyViewMonth))historyViewMonth=months[0].ym;
+const stats=getStatsForMonth(historyViewMonth);
+return`<section class="mt-6">
+<h2 class="text-lg font-bold mb-1">월별 현황</h2>
+<p class="text-sm text-toss-sub mb-3">월을 선택해 지난 실적을 확인하세요</p>
+<label class="block mb-3"><span class="sr-only">월 선택</span><select class="toss-select" onchange="setHistoryMonth(this.value)">${months.map(m=>`<option value="${m.ym}"${m.ym===historyViewMonth?' selected':''}>${formatMonthTitle(m.ym)}</option>`).join('')}</select></label>
+<div class="toss-card p-4">
+<p class="text-xs text-toss-muted mb-3">입금 ${formatDeposit(stats.totalDeposits)} · 레슨 ${stats.totalLessons}회</p>
+<div class="month-history-body">
+${monthMiniStat('신규 등록',stats.registered,'명',false)}
+${monthMiniStat('레슨 회원',stats.lessonMembers,'명',false)}
+${monthMiniStat('레슨 완료',stats.totalLessons,'회',false)}
+${monthMiniStat('입금액',stats.totalDeposits,'원',true)}
+</div>
+</div>
+</section>`;
+}
+function renderMonthlyHistory(){
+const el=document.getElementById('monthHistorySection');
+if(el)el.innerHTML=renderMonthlyHistoryHTML();
+}
+function setHistoryMonth(ym){historyViewMonth=ym;renderMonthlyHistory();}
 function renderStats(){
 const now=new Date();
+const curYm=monthYM(now);
 const{registered,lessonMembers,totalLessons,totalDeposits}=getDashboardStats();
 document.getElementById('statsSection').innerHTML=`
 <div class="mb-4">
@@ -645,11 +768,12 @@ document.getElementById('statsSection').innerHTML=`
 <span class="dash-clock-date">${formatDisplayDate(now)}</span>
 <span class="dash-clock-time">${formatClockTime(now)}</span>
 </div>
+<div class="dash-hero-month"><span>${formatMonthTitle(curYm)} 누계</span></div>
 <div class="dash-hero-body">
-${dashStat('registered','등록 회원',registered,'명')}
+${dashStat('registered','신규 등록',registered,'명')}
 ${dashStat('lesson','레슨 회원',lessonMembers,'명')}
-${dashStat('lessons','총 레슨',totalLessons,'회')}
-${dashStat('deposit','총 입금액',totalDeposits,'원')}
+${dashStat('lessons','레슨 완료',totalLessons,'회')}
+${dashStat('deposit','입금액',totalDeposits,'원')}
 </div>
 </article>`;
 if(currentView==='home')startDashClock();
@@ -663,18 +787,25 @@ el.classList.remove('hidden');
 el.innerHTML=`<div class="toss-card p-4 flex gap-3 bg-[#FFF8EB]"><span class="text-xl">⚠️</span><div><p class="font-semibold text-[#E65100] text-sm">재결제가 필요한 회원 ${low.length}명</p><p class="text-xs text-toss-sub mt-1">${low.map(p=>esc(p.name)).join(', ')}</p></div></div>`;
 }
 
+function getRecentPlayers(limit=3){
+return[...state.players].sort((a,b)=>(getRegisteredAt(b)||'').localeCompare(getRegisteredAt(a)||'')).slice(0,limit);
+}
 function renderHome(){
 const upcoming=[...state.schedules].filter(s=>s.status==='scheduled'&&s.date>=todayISO()).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time)).slice(0,5);
+const total=state.players.length;
+const recent=getRecentPlayers(3);
 document.getElementById('view-home').innerHTML=`
 ${renderCharts()}
-<section class="mt-2"><div class="flex justify-between items-center mb-3"><h2 class="text-lg font-bold">회원 현황</h2><button type="button" onclick="setView('players')" class="text-sm text-toss-blue font-semibold">전체 보기</button></div>
-<div class="space-y-3">${state.players.length?state.players.map(summaryCard).join(''):'<div class="toss-card p-10 text-center text-toss-sub">등록된 회원이 없어요</div>'}</div></section>
+<div id="monthHistorySection"></div>
+<section class="mt-2"><div class="flex justify-between items-center mb-3"><h2 class="text-lg font-bold">회원 현황</h2><button type="button" onclick="setView('players')" class="text-sm text-toss-blue font-semibold">전체 보기${total?` (${total}명)`:''}</button></div>
+<div class="space-y-3">${recent.length?recent.map(summaryCard).join(''):'<div class="toss-card p-10 text-center text-toss-sub">등록된 회원이 없어요</div>'}</div></section>
 <section class="mt-6"><h2 class="text-lg font-bold mb-3">다가오는 레슨</h2>
 <div class="space-y-2">${upcoming.length?upcoming.map(schedRow).join(''):'<p class="text-center py-8 text-toss-muted text-sm">예정된 레슨이 없습니다</p>'}</div></section>`;
+renderMonthlyHistory();
 }
 
 function summaryCard(p){return`<button type="button" onclick="openSheet('detail','${p.id}')" class="toss-card w-full p-5 text-left">
-<div class="flex justify-between mb-2"><div class="flex flex-wrap gap-2 items-center min-w-0"><span class="font-bold text-lg truncate">${esc(p.name)}</span>${profileBadge(p)}${badge(p)}</div><span class="text-toss-blue text-sm font-semibold shrink-0">상세 →</span></div>
+${memberSummaryRow(p)}
 <div class="grid grid-cols-2 gap-2"><div class="bg-toss-bg rounded-xl p-3"><p class="text-xs text-toss-muted mb-0.5">누적 결제</p><p class="font-bold">${money(p.total_paid||0)}</p></div>
 <div class="bg-toss-bg rounded-xl p-3"><p class="text-xs text-toss-muted mb-0.5">충전 / 사용 / 잔여</p>
 <p class="font-bold"><span class="text-toss-sub">${p.total_sessions}</span> / <span class="text-toss-sub">${p.used_sessions}</span> / <span class="text-toss-blue text-lg">${p.remaining_sessions}</span><span class="text-xs text-toss-muted">회</span></p></div></div></button>`;}
@@ -685,8 +816,7 @@ document.getElementById('view-players').innerHTML=`<div class="flex justify-betw
 <div class="space-y-3">${state.players.map(listCard).join('')}</div>`;
 }
 function listCard(p){return`<button type="button" onclick="openSheet('detail','${p.id}')" class="toss-card w-full p-5 text-left">
-<div class="flex flex-wrap items-center gap-2 mb-1"><h3 class="font-bold text-[17px]">${esc(p.name)}</h3>${profileBadge(p)}${badge(p)}</div>
-${p.affiliation?`<p class="text-sm text-toss-sub mb-3">${esc(p.affiliation)}</p>`:'<div class="mb-2"></div>'}
+${memberCardHead(p,{compact:true})}
 <div class="grid grid-cols-4 gap-1 text-center">
 <div><p class="text-[10px] text-toss-muted mb-1">누적 결제</p><p class="text-sm font-bold">${shortMoney(p.total_paid)}</p></div>
 <div><p class="text-[10px] text-toss-muted mb-1">충전</p><p class="text-sm font-bold">${p.total_sessions}회</p></div>
@@ -872,10 +1002,7 @@ const p=getPlayer(id);if(!p)return closeSheet();
 const isUsage=detailTab==='usage';
 const timeline=isUsage?renderUsageTimeline(p.id):renderPaymentTimeline(p);
 document.getElementById('sheet').innerHTML=`<div class="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-5"></div>
-<div class="mb-4"><div class="flex flex-wrap items-center gap-2"><h2 class="text-xl font-bold">${esc(p.name)}</h2>${profileBadge(p)}${badge(p)}</div>
-${p.affiliation?`<p class="text-sm text-toss-sub mt-1">${esc(p.affiliation)}</p>`:''}
-<a href="tel:${p.phone}" class="text-toss-blue font-medium text-sm mt-1 inline-block">${esc(p.phone)}</a>
-${p.parent_phone?`<a href="tel:${p.parent_phone}" class="text-toss-blue font-medium text-sm mt-1 block">학부모 ${esc(p.parent_phone)}</a>`:''}</div>
+${memberDetailHead(p)}
 <div class="grid grid-cols-4 gap-2 mb-5">
 ${detailStatCard(!isUsage,`setDetailTab('${p.id}','payment')`,'누적 결제',shortMoney(p.total_paid))}
 ${detailStatCard(!isUsage,`setDetailTab('${p.id}','payment')`,'충전',p.total_sessions+'회')}
@@ -950,7 +1077,7 @@ affiliation:(fd.get('affiliation')||'').trim(),
 memo:(fd.get('memo')||'').trim()
 };
 if(id){const p=getPlayer(id);Object.assign(p,data);delete p.birth_date;}
-else state.players.push({id:uid('p'),...data,payment_history:[],used_sessions:0});
+else state.players.push({id:uid('p'),...data,registered_at:todayISO(),payment_history:[],used_sessions:0});
 saveState();closeSheet();render();
 }
 function submitPayment(e,pid){e.preventDefault();const p=getPlayer(pid);if(!p)return;const fd=new FormData(e.target);
@@ -979,7 +1106,7 @@ saveState();closeSheet();setView('calendar');
 window.setView=setView;window.openSheet=openSheet;window.closeSheet=closeSheet;
 window.completeLesson=completeLesson;window.cancelSchedule=cancelSchedule;window.deletePlayer=deletePlayer;
 window.submitPlayer=submitPlayer;window.submitPayment=submitPayment;window.submitSchedule=submitSchedule;
-window.setCalMode=setCalMode;window.calNav=calNav;window.selectCalDay=selectCalDay;window.setDetailTab=setDetailTab;
+window.setCalMode=setCalMode;window.calNav=calNav;window.selectCalDay=selectCalDay;window.setDetailTab=setDetailTab;window.setHistoryMonth=setHistoryMonth;
 
 document.getElementById('confirmCancel').onclick=()=>closeConfirm(false);
 document.getElementById('confirmOk').onclick=()=>closeConfirm(true);
