@@ -58,6 +58,13 @@ background-size:20px;
 .chart-dot.is-in{opacity:1;transform:scale(1)}
 .chart-bar-label{opacity:0;transform:translateY(6px);transition:opacity .4s ease,transform .4s ease}
 .chart-bar-label.is-in{opacity:1;transform:translateY(0)}
+.chart-card-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;min-height:20px;padding-right:var(--chart-side-inset,0)}
+.chart-card-subhead{padding-right:var(--chart-side-inset,0)}
+.chart-card-title{font-size:14px;font-weight:600;color:#191F28;line-height:1.35;flex-shrink:0;margin:0}
+.chart-card-desc{font-size:10px;color:#8B95A1;line-height:1.35;text-align:right;flex:1;min-width:0;word-break:keep-all;margin:0}
+.chart-card-plot{margin-top:8px}
+.chart-bar-chart{margin-top:10px}
+.chart-bar-track{width:100%;display:flex;align-items:flex-end;justify-content:center;height:5rem}
 @keyframes dashFadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
 .dash-anim{opacity:0}
 .dash-anim.is-in{animation:dashFadeUp .55s cubic-bezier(.32,.72,0,1) forwards}
@@ -156,8 +163,10 @@ body.sheet-open,body.confirm-open{overflow:hidden}
 .member-head-phone{font-size:13px;font-weight:500;color:#3182F6;text-decoration:none;white-space:nowrap}
 .member-summary-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
 .member-summary-name{display:flex;flex-wrap:wrap;align-items:center;gap:8px;min-width:0;flex:1}
-.member-detail-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.member-detail-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .member-detail-top{display:flex;flex-wrap:wrap;align-items:center;gap:8px;min-width:0;flex:1}
+.member-detail-top h2{margin:0;line-height:1.35}
+.member-detail-row .member-head-reg{padding-top:0;font-size:12px;line-height:1.35}
 .member-detail-aff{font-size:14px;font-weight:500;color:#4E5968;line-height:1.35}
 .member-detail-contact{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:10px;font-size:14px;line-height:1.4}
 .app-splash{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#F2F4F6;padding:max(24px,env(safe-area-inset-top)) 28px 24px;text-align:center;transition:opacity .4s ease,visibility .4s}
@@ -525,25 +534,43 @@ return{x,y,count:m.count};
 function memberChartArea(pts,base){
 return pts.length?`M ${pts[0].x} ${pts[0].y} ${pts.slice(1).map(p=>`L ${p.x} ${p.y}`).join(' ')} L ${pts[pts.length-1].x} ${base} L ${pts[0].x} ${base} Z`:'';
 }
+function memberChartLabelDy(mPt,nPt,plotBottom,padT){
+const samePoint=Math.abs(mPt.y-nPt.y)<1.5&&mPt.count===nPt.count;
+const nearBottom=mPt.y>plotBottom-10;
+const nearTop=mPt.y<padT+16;
+let mDy=-12,nDy=16;
+if(samePoint){
+if(nearBottom){mDy=-28;nDy=-13;}
+else if(nearTop){mDy=-14;nDy=18;}
+else{mDy=-20;nDy=20;}
+}else{
+if(nearBottom)nDy=-13;
+if(nearTop)mDy=-14;
+const gap=(nPt.y+nDy)-(mPt.y+mDy);
+if(gap<13){mDy-=5;nDy+=5;}
+}
+return{m:mDy,n:nDy};
+}
 function renderMemberTrendChart(active,newly){
-const W=300,H=148,padL=16,padR=16,padT=22,padB=14;
+const W=300,H=124,padL=12,padR=12,padT=18,padB=10;
 const plotH=H-padT-padB;
+const plotBottom=padT+plotH;
 const max=Math.max(...active.map(m=>m.count),...newly.map(m=>m.count),1);
 const mPts=memberChartPts(active,max,W,padL,padR,padT,plotH);
 const nPts=memberChartPts(newly,max,W,padL,padR,padT,plotH);
 const base=padT+plotH;
 const mLine=mPts.map(p=>`${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
 const nLine=nPts.map(p=>`${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
-const dot=(p,i,color,delayBase,labelY,labelFill)=>`<circle class="chart-dot" style="transition-delay:${delayBase+i*.07}s" cx="${p.x}" cy="${p.y}" r="4" fill="#fff" stroke="${color}" stroke-width="2.5"/><text class="chart-dot" style="transition-delay:${delayBase+.05+i*.07}s" x="${p.x}" y="${labelY}" text-anchor="middle" fill="${labelFill}" font-size="10" font-weight="700">${p.count}</text>`;
+const dot=(p,i,color,delayBase,dy,labelFill)=>`<circle class="chart-dot" style="transition-delay:${delayBase+i*.07}s" cx="${p.x}" cy="${p.y}" r="4" fill="#fff" stroke="${color}" stroke-width="2.5"/>${p.count?`<text class="chart-dot" style="transition-delay:${delayBase+.05+i*.07}s" x="${p.x}" y="${p.y}" dy="${dy}" text-anchor="middle" dominant-baseline="central" fill="${labelFill}" font-size="10" font-weight="700">${p.count}</text>`:''}`;
 return`<svg viewBox="0 0 ${W} ${H}" class="w-full chart-line" aria-hidden="true">
 <path class="chart-line-area" d="${memberChartArea(mPts,base)}" fill="${CHART_MAINTAIN}" fill-opacity="0.1"/>
 <path class="chart-line-area chart-line-area--new" d="${memberChartArea(nPts,base)}" fill="${CHART_NEW}" fill-opacity="0.12"/>
 <polyline class="chart-line-stroke" points="${mLine}" fill="none" stroke="${CHART_MAINTAIN}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
 <polyline class="chart-line-stroke chart-line-stroke--new" points="${nLine}" fill="none" stroke="${CHART_NEW}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-${mPts.map((p,i)=>dot(p,i,CHART_MAINTAIN,.45,Math.max(p.y-9,11),CHART_MAINTAIN)).join('')}
-${nPts.map((p,i)=>dot(p,i,CHART_NEW,.58,Math.min(p.y+16,H-4),CHART_NEW)).join('')}
+${mPts.map((p,i)=>{const d=memberChartLabelDy(p,nPts[i],plotBottom,padT);return dot(p,i,CHART_MAINTAIN,.45,d.m,CHART_MAINTAIN);}).join('')}
+${nPts.map((p,i)=>{const d=memberChartLabelDy(mPts[i],p,plotBottom,padT);return dot(p,i,CHART_NEW,.58,d.n,CHART_NEW);}).join('')}
 </svg>
-<div class="flex justify-between mt-2 px-1">${active.map(m=>`<span class="text-[11px] text-toss-muted flex-1 text-center">${m.label}</span>`).join('')}</div>`;
+<div class="flex justify-between mt-1">${active.map(m=>`<span class="text-[11px] text-toss-muted flex-1 text-center">${m.label}</span>`).join('')}</div>`;
 }
 
 function renderCharts(){
@@ -560,33 +587,41 @@ return`
 <section class="space-y-4 dash-charts">
 <h2 class="text-lg font-bold dash-anim">통계 분석</h2>
 
-<div class="toss-card p-5 dash-anim">
-<p class="text-sm font-semibold text-toss-text mb-1">월별 회원 추이</p>
-<p class="text-xs text-toss-muted mb-2">유지: 잔여 1회 이상 · 신규: 첫 결제 월 · 최근 6개월</p>
-<div class="flex flex-wrap items-baseline gap-x-4 gap-y-1 mb-2">
-<p class="text-xl font-bold"><span class="text-toss-blue">유지</span> <span class="text-toss-text dash-count" data-count="${currentActive}">0</span><span class="text-sm font-medium text-toss-muted ml-0.5">명</span></p>
-<p class="text-xl font-bold"><span style="color:${CHART_NEW}">신규</span> <span class="text-toss-text dash-count-new" data-count="${currentNew}">0</span><span class="text-sm font-medium text-toss-muted ml-0.5">명</span></p>
+<div class="toss-card p-4 dash-anim chart-card" style="--chart-side-inset:4%">
+<div class="chart-card-head">
+<p class="chart-card-title">월별 회원 추이</p>
+<p class="chart-card-desc">유지: 잔여 1회 이상 · 신규: 첫 결제 월 · 최근 6개월</p>
 </div>
-<div class="flex gap-4 mb-3 text-[11px] text-toss-sub font-medium">
-<span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full shrink-0" style="background:${CHART_MAINTAIN}"></span>유지 회원</span>
-<span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full shrink-0" style="background:${CHART_NEW}"></span>신규 등록</span>
+<div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 mb-1 chart-card-subhead">
+<div class="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
+<p class="text-lg font-bold leading-tight"><span class="text-toss-blue">유지</span> <span class="text-toss-text dash-count" data-count="${currentActive}">0</span><span class="text-sm font-medium text-toss-muted ml-0.5">명</span></p>
+<p class="text-lg font-bold leading-tight"><span style="color:${CHART_NEW}">신규</span> <span class="text-toss-text dash-count-new" data-count="${currentNew}">0</span><span class="text-sm font-medium text-toss-muted ml-0.5">명</span></p>
 </div>
-${renderMemberTrendChart(active,newly)}
+<div class="flex gap-3 text-[11px] text-toss-sub font-medium shrink-0">
+<span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full shrink-0" style="background:${CHART_MAINTAIN}"></span>유지 회원</span>
+<span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full shrink-0" style="background:${CHART_NEW}"></span>신규 등록</span>
+</div>
+</div>
+<div class="chart-card-plot">${renderMemberTrendChart(active,newly)}</div>
 </div>
 
-<div class="toss-card p-5 dash-anim">
-<p class="text-sm font-semibold text-toss-text mb-1">월별 레슨 현황</p>
-<p class="text-xs text-toss-muted mb-5">최근 4개월 완료 레슨</p>
-<div class="flex items-end justify-between gap-2 h-36 px-1">
+<div class="toss-card p-4 dash-anim chart-card" style="--chart-side-inset:4%">
+<div class="chart-card-head">
+<p class="chart-card-title">월별 레슨 현황</p>
+<p class="chart-card-desc">최근 4개월 완료 레슨</p>
+</div>
+<div class="chart-card-plot chart-bar-chart">
+<div class="flex items-end justify-between gap-2">
 ${monthly.map((m,i)=>{
 const h=maxMonth?Math.round(m.count/maxMonth*100):0;
 const pct=Math.max(h,4);
-return`<div class="flex-1 flex flex-col items-center gap-2 min-w-0">
-<div class="w-full flex items-end justify-center h-28"><div class="chart-col w-[70%] max-w-[40px] rounded-t-xl bg-[#3182F6]" data-h="${pct}" data-i="${i}"></div></div>
+return`<div class="flex-1 flex flex-col items-center gap-1 min-w-0">
+<div class="chart-bar-track"><div class="chart-col w-[70%] max-w-[40px] rounded-t-xl bg-[#3182F6]" data-h="${pct}" data-i="${i}"></div></div>
 <p class="text-xs font-bold text-toss-text chart-bar-label" data-i="${i}">${m.count}</p>
 <p class="text-[11px] text-toss-muted chart-bar-label" data-i="${i}l">${m.label}</p>
 </div>`;
 }).join('')}
+</div>
 </div>
 </div>
 </section>`;
