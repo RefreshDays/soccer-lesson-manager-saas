@@ -173,6 +173,23 @@ body.sheet-open,body.confirm-open{overflow:hidden}
 .app-splash-title{margin:12px 0 0;font-size:1.0625rem;font-weight:400;color:#191F28;line-height:1.45;letter-spacing:-.02em}
 body.app-boot #app{opacity:0}
 body.app-boot .bottom-nav,body.app-boot #fab{opacity:0}
+body.auth-lock #app,body.auth-lock .bottom-nav,body.auth-lock #fab{visibility:hidden;pointer-events:none}
+.auth-gate{position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;padding:24px;background:#F2F4F6}
+.auth-gate.hidden{display:none!important}
+.auth-card{width:100%;max-width:22rem}
+.auth-card h2{font-size:1.125rem;font-weight:700;margin:0 0 6px}
+.auth-card p{font-size:13px;color:#4E5968;line-height:1.45;margin:0 0 16px}
+.auth-error{margin-top:10px;font-size:13px;color:#F04452;line-height:1.4}
+.sync-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;background:#fff;border-radius:14px;box-shadow:0 2px 12px rgba(0,0,0,.05);margin-bottom:12px}
+.sync-bar.hidden{display:none!important}
+.sync-bar-text{font-size:12px;color:#4E5968;line-height:1.35;min-width:0}
+.sync-bar-text strong{color:#191F28;font-weight:600}
+.sync-bar-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.sync-dot{width:8px;height:8px;border-radius:9999px;background:#8B95A1}
+.sync-dot.is-synced{background:#00D084}
+.sync-dot.is-pending{background:#E65100}
+.sync-dot.is-error{background:#F04452}
+.sync-logout{font-size:12px;font-weight:600;color:#8B95A1;background:transparent;border:0;padding:0;cursor:pointer;font-family:inherit}
 </style>
 </head>
 <body class="min-h-screen font-sans antialiased pb-24 app-boot">
@@ -184,8 +201,12 @@ body.app-boot .bottom-nav,body.app-boot #fab{opacity:0}
 <header id="appHeader" class="sticky top-0 z-30 bg-[#F2F4F6]/95 backdrop-blur-sm px-5 pt-5 pb-3 hidden">
 <h1 class="text-[17px] font-bold leading-snug tracking-tight">원유현 감독 전용 레슨 매니저</h1>
 </header>
-<main class="px-5 pb-4">
-<section id="statsSection" class="mb-5 pt-5"></section>
+<main class="px-5 pb-4 pt-5">
+<section id="syncStatusBar" class="sync-bar hidden mb-3" aria-live="polite">
+<div class="sync-bar-text"><span class="sync-dot" id="syncDot"></span> <span id="syncText">동기화 준비 중</span></div>
+<button type="button" id="syncLogout" class="sync-logout hidden">로그아웃</button>
+</section>
+<section id="statsSection" class="mb-5"></section>
 <section id="alertSection" class="hidden mb-5"></section>
 <div id="view-home" class="view-panel space-y-5"></div>
 <div id="view-players" class="view-panel hidden space-y-4"></div>
@@ -220,6 +241,21 @@ body.app-boot .bottom-nav,body.app-boot #fab{opacity:0}
 </div>
 </div>
 </div>
+<div id="authGate" class="auth-gate hidden" aria-hidden="true">
+<div class="auth-card toss-card p-6">
+<h2>클라우드 로그인</h2>
+<p>회원·스케줄·결제 데이터를 Firebase에 저장합니다. 기기를 바꿔도 같은 계정으로 불러올 수 있어요.</p>
+<label class="block mb-2"><span class="sr-only">이메일</span><input type="email" id="authEmail" class="toss-input" placeholder="이메일" autocomplete="username"/></label>
+<label class="block mb-4"><span class="sr-only">비밀번호</span><input type="password" id="authPassword" class="toss-input" placeholder="비밀번호 (6자 이상)" autocomplete="current-password"/></label>
+<button type="button" id="authLogin" class="btn-toss mb-2">로그인</button>
+<button type="button" id="authRegister" class="btn-toss-secondary">처음 사용 (가입)</button>
+<p id="authError" class="auth-error hidden" role="alert"></p>
+</div>
+</div>
+<script src="/firebase-config.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore-compat.js"></script>
 <script>
 const STORAGE_KEY='soccer-lesson-app-v4';
 const DATA_VERSION=4;
@@ -227,6 +263,7 @@ const uid=p=>p+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 const WEEKDAYS=['일','월','화','수','목','금','토'];
 let state={players:[],schedules:[]};
 let currentView='home',calendarMode='month',calendarDate=new Date(),selectedDate=null,detailTab='payment',historyViewMonth=null;
+let cloudSaveTimer=null,cloudUnsub=null,lastCloudPush=0,applyingRemote=false,firebaseReady=false,bootFinished=false;
 
 function fmtISO(d){const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return`${y}-${m}-${day}`;}
 function todayISO(){return fmtISO(new Date());}
@@ -332,6 +369,196 @@ if(!schedules.length)schedules=demo.schedules;
 return{_version:DATA_VERSION,players,schedules};
 }
 
+function isFirebaseEnabled(){
+const c=window.FIREBASE_CONFIG;
+return !!(c&&c.projectId&&c.apiKey);
+}
+function initFirebase(){
+if(!isFirebaseEnabled()||typeof firebase==='undefined')return false;
+if(!firebase.apps.length)firebase.initializeApp(window.FIREBASE_CONFIG);
+firebaseReady=true;
+return true;
+}
+function cloudDocRef(uid){return firebase.firestore().doc('users/'+uid+'/app/state');}
+function buildPayload(){
+return{_version:DATA_VERSION,players:state.players,schedules:state.schedules,updatedAt:Date.now()};
+}
+function applyPayload(parsed){
+if(!parsed||!Array.isArray(parsed.players))return false;
+state={_version:DATA_VERSION,players:parsed.players,schedules:Array.isArray(parsed.schedules)?parsed.schedules:[]};
+migrateState();
+ensureChartSampleData();
+syncAll();
+purgeOrphanSchedules();
+return true;
+}
+function saveStateLocal(payload){
+const data=payload||buildPayload();
+try{
+localStorage.setItem(STORAGE_KEY,JSON.stringify(data));
+state.players=data.players;
+state.schedules=data.schedules;
+state._version=DATA_VERSION;
+return true;
+}catch(e){
+console.error(e);
+alert('저장에 실패했습니다. 브라우저 저장 공간을 확인해 주세요.');
+return false;
+}
+}
+function updateSyncStatus(mode,detail){
+const bar=document.getElementById('syncStatusBar');
+const dot=document.getElementById('syncDot');
+const text=document.getElementById('syncText');
+const logout=document.getElementById('syncLogout');
+if(!bar||!dot||!text)return;
+if(!isFirebaseEnabled()){bar.classList.add('hidden');return;}
+bar.classList.remove('hidden');
+dot.className='sync-dot';
+if(mode==='synced'){dot.classList.add('is-synced');text.innerHTML='<strong>클라우드 저장됨</strong>'+(detail?' · '+esc(detail):'');}
+else if(mode==='pending'){dot.classList.add('is-pending');text.innerHTML='<strong>저장 중…</strong>';}
+else if(mode==='error'){dot.classList.add('is-error');text.innerHTML='<strong>동기화 실패</strong>'+(detail?' · '+esc(detail):'');}
+else if(mode==='local'){bar.classList.add('hidden');return;}
+else{text.textContent=detail||'동기화 준비 중';}
+if(logout)logout.classList.toggle('hidden',mode!=='synced'&&mode!=='pending'&&mode!=='error');
+}
+function showAuthGate(msg){
+const gate=document.getElementById('authGate');
+const err=document.getElementById('authError');
+document.body.classList.add('auth-lock');
+if(gate){gate.classList.remove('hidden');gate.setAttribute('aria-hidden','false');}
+if(err){err.classList.toggle('hidden',!msg);if(msg)err.textContent=msg;}
+}
+function hideAuthGate(){
+const gate=document.getElementById('authGate');
+const err=document.getElementById('authError');
+document.body.classList.remove('auth-lock');
+if(gate){gate.classList.add('hidden');gate.setAttribute('aria-hidden','true');}
+if(err)err.classList.add('hidden');
+}
+async function saveStateToCloud(uid){
+if(!firebaseReady||!uid)return;
+const payload=buildPayload();
+lastCloudPush=payload.updatedAt;
+await cloudDocRef(uid).set(payload);
+saveStateLocal(payload);
+}
+function scheduleCloudSave(){
+if(!firebaseReady)return;
+const user=firebase.auth().currentUser;
+if(!user)return;
+updateSyncStatus('pending');
+clearTimeout(cloudSaveTimer);
+cloudSaveTimer=setTimeout(async()=>{
+try{
+await saveStateToCloud(user.uid);
+updateSyncStatus('synced',user.email||'');
+}catch(e){
+console.error(e);
+updateSyncStatus('error','잠시 후 다시 시도해 주세요');
+}
+},600);
+}
+async function syncFromCloud(uid){
+const ref=cloudDocRef(uid);
+const snap=await ref.get();
+let localParsed=null;
+try{
+const raw=localStorage.getItem(STORAGE_KEY);
+if(raw)localParsed=JSON.parse(raw);
+}catch(e){console.error(e);}
+if(snap.exists){
+const cloud=snap.data();
+const cloudTime=cloud.updatedAt||0;
+const localTime=localParsed?.updatedAt||0;
+if(cloudTime>=localTime)applyPayload(cloud);
+else if(localParsed)applyPayload(localParsed);
+}else if(localParsed&&Array.isArray(localParsed.players)){
+applyPayload(localParsed);
+}
+syncAll();
+if(purgeOrphanSchedules())saveStateLocal();
+await saveStateToCloud(uid);
+}
+function startCloudListener(uid){
+if(cloudUnsub)cloudUnsub();
+cloudUnsub=cloudDocRef(uid).onSnapshot(snap=>{
+if(!snap.exists||applyingRemote)return;
+const data=snap.data();
+if(!data||!Array.isArray(data.players))return;
+if((data.updatedAt||0)<=lastCloudPush)return;
+applyingRemote=true;
+applyPayload(data);
+saveStateLocal(data);
+applyingRemote=false;
+if(bootFinished)render();
+updateSyncStatus('synced',firebase.auth().currentUser?.email||'');
+},e=>console.error(e));
+}
+async function handleAuthUser(user){
+if(!user){
+showAuthGate();
+updateSyncStatus('offline','로그인이 필요합니다');
+if(bootFinished)render();
+return;
+}
+hideAuthGate();
+updateSyncStatus('pending');
+try{
+await syncFromCloud(user.uid);
+startCloudListener(user.uid);
+updateSyncStatus('synced',user.email||'');
+if(bootFinished)render();
+}catch(e){
+console.error(e);
+updateSyncStatus('error','데이터 불러오기 실패');
+}
+}
+function setAuthBusy(busy){
+['authLogin','authRegister','authEmail','authPassword'].forEach(id=>{
+const el=document.getElementById(id);
+if(el)el.disabled=busy;
+});
+}
+function showAuthError(msg){
+const err=document.getElementById('authError');
+if(!err)return;
+err.textContent=msg;
+err.classList.remove('hidden');
+}
+async function firebaseLogin(){
+if(!firebaseReady)return;
+const email=(document.getElementById('authEmail')?.value||'').trim();
+const pw=document.getElementById('authPassword')?.value||'';
+if(!email||!pw){showAuthError('이메일과 비밀번호를 입력해 주세요.');return;}
+setAuthBusy(true);
+try{
+await firebase.auth().signInWithEmailAndPassword(email,pw);
+}catch(e){
+showAuthError(e.code==='auth/invalid-credential'||e.code==='auth/wrong-password'?'이메일 또는 비밀번호가 올바르지 않습니다.':(e.message||'로그인에 실패했습니다.'));
+}finally{setAuthBusy(false);}
+}
+async function firebaseRegister(){
+if(!firebaseReady)return;
+const email=(document.getElementById('authEmail')?.value||'').trim();
+const pw=document.getElementById('authPassword')?.value||'';
+if(!email||!pw){showAuthError('이메일과 비밀번호를 입력해 주세요.');return;}
+if(pw.length<6){showAuthError('비밀번호는 6자 이상이어야 합니다.');return;}
+setAuthBusy(true);
+try{
+await firebase.auth().createUserWithEmailAndPassword(email,pw);
+}catch(e){
+showAuthError(e.code==='auth/email-already-in-use'?'이미 가입된 이메일입니다. 로그인해 주세요.':(e.message||'가입에 실패했습니다.'));
+}finally{setAuthBusy(false);}
+}
+async function firebaseLogout(){
+if(!firebaseReady)return;
+const ok=await showConfirm('로그아웃할까요?\n로컬 캐시는 남지만 클라우드 동기화는 중지됩니다.');
+if(!ok)return;
+if(cloudUnsub){cloudUnsub();cloudUnsub=null;}
+await firebase.auth().signOut();
+}
+
 function loadState(){
 let shouldSave=false;
 try{
@@ -340,9 +567,7 @@ if(!raw)raw=localStorage.getItem('soccer-lesson-app-v3')||localStorage.getItem('
 if(raw){
 const parsed=JSON.parse(raw);
 if(parsed._version===DATA_VERSION&&Array.isArray(parsed.players)){
-state={_version:DATA_VERSION,players:parsed.players,schedules:Array.isArray(parsed.schedules)?parsed.schedules:[]};
-migrateState();
-ensureChartSampleData();
+applyPayload(parsed);
 }else{
 state=upgradeState(parsed);
 shouldSave=true;
@@ -357,21 +582,13 @@ shouldSave=true;
 }
 syncAll();
 if(purgeOrphanSchedules())shouldSave=true;
-if(shouldSave)saveState();
+if(shouldSave)saveStateLocal();
 }
 function saveState(){
 syncAll();
 purgeOrphanSchedules();
-const payload={_version:DATA_VERSION,players:state.players,schedules:state.schedules};
-try{
-localStorage.setItem(STORAGE_KEY,JSON.stringify(payload));
-state.players=payload.players;
-state.schedules=payload.schedules;
-state._version=DATA_VERSION;
-}catch(e){
-console.error(e);
-alert('저장에 실패했습니다. 브라우저 저장 공간을 확인해 주세요.');
-}
+saveStateLocal();
+scheduleCloudSave();
 }
 function syncAll(){state.players.forEach(syncPlayer);}
 function syncPlayer(p){const h=p.payment_history||[];p.total_paid=h.reduce((s,x)=>s+(x.amount||0),0);p.total_sessions=h.reduce((s,x)=>s+(x.sessions||0),0);p.used_sessions=Math.min(p.used_sessions||0,p.total_sessions);p.remaining_sessions=Math.max(0,p.total_sessions-p.used_sessions);}
@@ -1134,6 +1351,12 @@ window.setView=setView;window.openSheet=openSheet;window.closeSheet=closeSheet;
 window.completeLesson=completeLesson;window.cancelSchedule=cancelSchedule;window.deletePlayer=deletePlayer;
 window.submitPlayer=submitPlayer;window.submitPayment=submitPayment;window.submitSchedule=submitSchedule;
 window.setCalMode=setCalMode;window.calNav=calNav;window.selectCalDay=selectCalDay;window.setDetailTab=setDetailTab;window.setHistoryMonth=setHistoryMonth;
+window.firebaseLogout=firebaseLogout;
+
+document.getElementById('authLogin')?.addEventListener('click',firebaseLogin);
+document.getElementById('authRegister')?.addEventListener('click',firebaseRegister);
+document.getElementById('syncLogout')?.addEventListener('click',firebaseLogout);
+document.getElementById('authPassword')?.addEventListener('keydown',e=>{if(e.key==='Enter')firebaseLogin();});
 
 document.getElementById('confirmCancel').onclick=()=>closeConfirm(false);
 document.getElementById('confirmOk').onclick=()=>closeConfirm(true);
@@ -1148,9 +1371,26 @@ el.setAttribute('aria-hidden','true');
 document.body.classList.remove('app-boot');
 setTimeout(()=>el.remove(),450);
 }
+function finishBootUI(){
+selectedDate=selectedDate||todayISO();
+setView('home');
+bootFinished=true;
+}
+
+function bootApp(){
+loadState();
+if(initFirebase()){
+showAuthGate();
+firebase.auth().onAuthStateChanged(handleAuthUser);
+}else{
+updateSyncStatus('local');
+}
+finishBootUI();
 const splashStarted=performance.now();
-loadState();selectedDate=todayISO();setView('home');
 setTimeout(hideAppSplash,Math.max(0,650-(performance.now()-splashStarted)));
+}
+
+bootApp();
 </script>
 </body>
 </html>
