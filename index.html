@@ -210,10 +210,10 @@ return[...done,
 const defaultData=()=>({
 _version:DATA_VERSION,
 players:[
-{id:'p1',name:'홍길동',birth_date:'2012-03-01',gender:'남성',phone:'010-1234-5678',affiliation:'○○중 FC',memo:'골키퍼 집중.\n발 구석 잡기 연습 중. 무릎 주의.',payment_history:[{date:'2026-03-01',amount:500000,sessions:10},{date:'2026-05-01',amount:250000,sessions:5}],used_sessions:8},
-{id:'p2',name:'김철수',birth_date:'2009-04-10',gender:'남성',phone:'010-9876-5432',affiliation:'△△고등학교',memo:'필드 플레이어. 스피드·패스 위주.',payment_history:[{date:'2026-04-10',amount:600000,sessions:12}],used_sessions:11},
-{id:'p3',name:'이영희',birth_date:'2014-05-10',gender:'여성',phone:'010-5555-1234',affiliation:'□□초등부',memo:'주 1회 그룹 레슨 참여.',payment_history:[{date:'2026-05-10',amount:400000,sessions:8}],used_sessions:2},
-{id:'p4',name:'박민수',birth_date:'2002-02-15',gender:'남성',phone:'010-2222-8888',affiliation:'개인 레슨',memo:'성인 취미반. 체력·기술 병행.',payment_history:[{date:'2026-02-15',amount:450000,sessions:10}],used_sessions:4}
+{id:'p1',name:'홍길동',birth_year:2012,gender:'남성',phone:'010-1234-5678',parent_phone:'',affiliation:'○○중 FC',memo:'골키퍼 집중.\n발 구석 잡기 연습 중. 무릎 주의.',payment_history:[{date:'2026-03-01',amount:500000,sessions:10},{date:'2026-05-01',amount:250000,sessions:5}],used_sessions:8},
+{id:'p2',name:'김철수',birth_year:2009,gender:'남성',phone:'010-9876-5432',parent_phone:'',affiliation:'△△고등학교',memo:'필드 플레이어. 스피드·패스 위주.',payment_history:[{date:'2026-04-10',amount:600000,sessions:12}],used_sessions:11},
+{id:'p3',name:'이영희',birth_year:2014,gender:'여성',phone:'010-5555-1234',parent_phone:'',affiliation:'□□초등부',memo:'주 1회 그룹 레슨 참여.',payment_history:[{date:'2026-05-10',amount:400000,sessions:8}],used_sessions:2},
+{id:'p4',name:'박민수',birth_year:2002,gender:'남성',phone:'010-2222-8888',parent_phone:'',affiliation:'개인 레슨',memo:'성인 취미반. 체력·기술 병행.',payment_history:[{date:'2026-02-15',amount:450000,sessions:10}],used_sessions:4}
 ],
 schedules:buildDemoSchedules()
 });
@@ -227,17 +227,30 @@ const md=(r.getMonth()-b.getMonth())*32+(r.getDate()-b.getDate());
 if(md<0)age--;
 return age;
 }
-function ageToBirthDate(age){
-const n=new Date();
-const y=n.getFullYear()-Number(age);
-return fmtISO(new Date(y,n.getMonth(),n.getDate()));
+function getBirthYear(p){
+if(p?.birth_year!=null&&p.birth_year!=='')return Number(p.birth_year);
+if(p?.birth_date)return parseISO(p.birth_date).getFullYear();
+return null;
 }
-function getAge(p){return calcAge(p?.birth_date)??(p?.age!=null&&p.age!==''?Number(p.age):null);}
+function getAge(p){
+const y=getBirthYear(p);
+if(y!=null)return new Date().getFullYear()-y;
+return p?.age!=null&&p.age!==''?Number(p.age):null;
+}
+function birthYearOptions(selected){
+const now=new Date().getFullYear();
+let opts='<option value="">선택</option>';
+for(let y=now;y>=now-80;y--)opts+=`<option value="${y}"${String(selected)===String(y)?' selected':''}>${y}년</option>`;
+return opts;
+}
 function migrateState(){
 state.players.forEach(p=>{
 if(!p.gender)p.gender='남성';
-if(!p.birth_date&&(p.age!=null&&p.age!==''))p.birth_date=ageToBirthDate(p.age);
-if(!p.birth_date)p.birth_date=ageToBirthDate(14);
+if(!p.birth_year&&p.birth_date)p.birth_year=parseISO(p.birth_date).getFullYear();
+if(!p.birth_year&&(p.age!=null&&p.age!==''))p.birth_year=new Date().getFullYear()-Number(p.age);
+if(!p.birth_year)p.birth_year=new Date().getFullYear()-14;
+if(p.parent_phone==null)p.parent_phone='';
+delete p.birth_date;
 delete p.age;
 });
 }
@@ -256,7 +269,8 @@ if(!raw||!Array.isArray(raw.players))return{...demo};
 const players=raw.players.map(p=>({
 ...p,
 gender:p.gender||'남성',
-birth_date:p.birth_date||(p.age!=null?ageToBirthDate(p.age):ageToBirthDate(14)),
+birth_year:p.birth_year||(p.birth_date?parseISO(p.birth_date).getFullYear():(p.age!=null?new Date().getFullYear()-Number(p.age):new Date().getFullYear()-14)),
+parent_phone:p.parent_phone||'',
 payment_history:p.payment_history||[],
 }));
 let schedules=Array.isArray(raw.schedules)?[...raw.schedules]:[];
@@ -790,13 +804,15 @@ window.pickGender=pickGender;
 function renderPlayerForm(id){
 const p=id?getPlayer(id):null;
 const g=p?.gender||'남성';
+const birthYear=getBirthYear(p)||'';
 document.getElementById('sheet').innerHTML=`<div class="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-5"></div>
 <h2 class="text-xl font-bold mb-5">${p?'회원 수정':'회원 등록'}</h2>
 <form id="playerForm" onsubmit="submitPlayer(event,'${p?.id||''}')" class="space-y-4">
 <label class="block"><span class="text-sm text-toss-sub mb-2 block">이름 *</span><input name="name" required class="toss-input" value="${esc(p?.name||'')}" placeholder="홍길동"/></label>
 <label class="block"><span class="text-sm text-toss-sub mb-2 block">연락처 *</span><input name="phone" required class="toss-input" value="${esc(p?.phone||'')}" placeholder="010-0000-0000"/></label>
+<label class="block"><span class="text-sm text-toss-sub mb-2 block">학부모 연락처</span><input name="parent_phone" class="toss-input" value="${esc(p?.parent_phone||'')}" placeholder="010-0000-0000"/></label>
 <label class="block"><span class="text-sm text-toss-sub mb-2 block">성별 *</span>${genderSegment(g)}</label>
-<label class="block"><span class="text-sm text-toss-sub mb-2 block">생년월일 *</span><input name="birth_date" type="date" required class="toss-input" value="${p?.birth_date||''}" max="${todayISO()}"/><p class="text-xs text-toss-muted mt-1.5">생일 기준 만 나이가 자동으로 계산됩니다</p></label>
+<label class="block"><span class="text-sm text-toss-sub mb-2 block">출생연도 *</span><select name="birth_year" required class="toss-input">${birthYearOptions(birthYear)}</select><p class="text-xs text-toss-muted mt-1.5">출생연도 기준 나이가 자동으로 계산됩니다</p></label>
 <label class="block"><span class="text-sm text-toss-sub mb-2 block">소속팀</span><input name="affiliation" class="toss-input" value="${esc(p?.affiliation||'')}" placeholder="학교 / 클럽"/></label>
 <label class="block"><span class="text-sm text-toss-sub mb-2 block">메모</span><textarea name="memo" class="toss-input toss-textarea" placeholder="포지션, 특이사항, 부상 이력 등">${esc(p?.memo||'')}</textarea></label>
 <div class="flex gap-2"><button type="submit" class="btn-toss flex-1">저장</button><button type="button" onclick="closeSheet()" class="btn-toss-ghost flex-1">닫기</button></div>
@@ -858,7 +874,8 @@ const timeline=isUsage?renderUsageTimeline(p.id):renderPaymentTimeline(p);
 document.getElementById('sheet').innerHTML=`<div class="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-5"></div>
 <div class="mb-4"><div class="flex flex-wrap items-center gap-2"><h2 class="text-xl font-bold">${esc(p.name)}</h2>${profileBadge(p)}${badge(p)}</div>
 ${p.affiliation?`<p class="text-sm text-toss-sub mt-1">${esc(p.affiliation)}</p>`:''}
-<a href="tel:${p.phone}" class="text-toss-blue font-medium text-sm mt-1 inline-block">${esc(p.phone)}</a></div>
+<a href="tel:${p.phone}" class="text-toss-blue font-medium text-sm mt-1 inline-block">${esc(p.phone)}</a>
+${p.parent_phone?`<a href="tel:${p.parent_phone}" class="text-toss-blue font-medium text-sm mt-1 block">학부모 ${esc(p.parent_phone)}</a>`:''}</div>
 <div class="grid grid-cols-4 gap-2 mb-5">
 ${detailStatCard(!isUsage,`setDetailTab('${p.id}','payment')`,'누적 결제',shortMoney(p.total_paid))}
 ${detailStatCard(!isUsage,`setDetailTab('${p.id}','payment')`,'충전',p.total_sessions+'회')}
@@ -926,12 +943,13 @@ const gender=fd.get('gender')||'남성';
 const data={
 name:fd.get('name').trim(),
 phone:phone(fd.get('phone')),
+parent_phone:phone(fd.get('parent_phone')||''),
 gender,
-birth_date:fd.get('birth_date'),
+birth_year:Number(fd.get('birth_year')),
 affiliation:(fd.get('affiliation')||'').trim(),
 memo:(fd.get('memo')||'').trim()
 };
-if(id)Object.assign(getPlayer(id),data);
+if(id){const p=getPlayer(id);Object.assign(p,data);delete p.birth_date;}
 else state.players.push({id:uid('p'),...data,payment_history:[],used_sessions:0});
 saveState();closeSheet();render();
 }
