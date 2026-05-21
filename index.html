@@ -257,13 +257,39 @@ body.auth-lock #app,body.auth-lock .bottom-nav,body.auth-lock #fab{visibility:hi
 <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore-compat.js"></script>
 <script>
-const STORAGE_KEY='soccer-lesson-app-v4';
+const STORAGE_KEY_BASE='soccer-lesson-app-v4';
 const DATA_VERSION=4;
 const uid=p=>p+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 const WEEKDAYS=['일','월','화','수','목','금','토'];
 let state={players:[],schedules:[]};
 let currentView='home',calendarMode='month',calendarDate=new Date(),selectedDate=null,detailTab='payment',historyViewMonth=null;
-let cloudSaveTimer=null,cloudUnsub=null,lastCloudPush=0,applyingRemote=false,firebaseReady=false,bootFinished=false;
+let cloudSaveTimer=null,cloudUnsub=null,lastCloudPush=0,applyingRemote=false,firebaseReady=false,bootFinished=false,currentAuthUid=null;
+
+function getStorageKey(authUid){return authUid?STORAGE_KEY_BASE+'-'+authUid:STORAGE_KEY_BASE;}
+function readLocalCache(authUid){
+if(!authUid)return null;
+try{
+const raw=localStorage.getItem(getStorageKey(authUid));
+if(raw){
+const parsed=JSON.parse(raw);
+if(parsed.ownerUid&&parsed.ownerUid!==authUid)return null;
+return parsed;
+}
+const legacy=localStorage.getItem(STORAGE_KEY_BASE);
+if(legacy){
+const parsed=JSON.parse(legacy);
+if(parsed.ownerUid&&parsed.ownerUid!==authUid)return null;
+parsed.ownerUid=authUid;
+localStorage.setItem(getStorageKey(authUid),JSON.stringify(parsed));
+localStorage.removeItem(STORAGE_KEY_BASE);
+return parsed;
+}
+}catch(e){console.error(e);}
+return null;
+}
+function resetAppState(){
+state={_version:DATA_VERSION,players:[],schedules:[]};
+}
 
 function fmtISO(d){const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return`${y}-${m}-${day}`;}
 function todayISO(){return fmtISO(new Date());}
@@ -340,6 +366,7 @@ delete p.age;
 }
 
 function ensureChartSampleData(){
+if(firebaseReady&&currentAuthUid)return;
 const completed=state.schedules.filter(s=>s.status==='completed').length;
 if(completed>=3)return;
 buildDemoSchedules().filter(s=>s.status==='completed').forEach(s=>{
@@ -403,11 +430,13 @@ syncAll();
 purgeOrphanSchedules();
 return true;
 }
-function saveStateLocal(payload){
+function saveStateLocal(payload,authUid){
+const ownerUid=authUid||currentAuthUid||null;
 const data=payload||buildAppPayload();
-const local={_version:data._version,players:data.players,schedules:data.schedules,updatedAt:data.updatedAt||Date.now()};
+const local={_version:data._version,players:data.players,schedules:data.schedules,updatedAt:data.updatedAt||Date.now(),ownerUid:ownerUid||data.ownerUid||''};
 try{
-localStorage.setItem(STORAGE_KEY,JSON.stringify(local));
+if(ownerUid)localStorage.setItem(getStorageKey(ownerUid),JSON.stringify(local));
+else localStorage.setItem(STORAGE_KEY_BASE,JSON.stringify(local));
 state.players=local.players;
 state.schedules=local.schedules;
 state._version=DATA_VERSION;
@@ -470,7 +499,7 @@ const payload=buildCloudPayload(user||{uid,email:''});
 lastCloudPush=payload.updatedAt;
 await cloudDocRef(uid).set(payload);
 await saveProfileToCloud(uid,user);
-saveStateLocal(payload);
+saveStateLocal(payload,uid);
 }
 function scheduleCloudSave(){
 if(!firebaseReady)return;
@@ -491,22 +520,21 @@ updateSyncStatus('error','잠시 후 다시 시도해 주세요');
 async function syncFromCloud(uid){
 const ref=cloudDocRef(uid);
 const snap=await ref.get();
-let localParsed=null;
-try{
-const raw=localStorage.getItem(STORAGE_KEY);
-if(raw)localParsed=JSON.parse(raw);
-}catch(e){console.error(e);}
+const localParsed=readLocalCache(uid);
 if(snap.exists){
 const cloud=snap.data();
 const cloudTime=cloud.updatedAt||0;
 const localTime=localParsed?.updatedAt||0;
-if(cloudTime>=localTime)applyPayload(cloud);
-else if(localParsed)applyPayload(localParsed);
+if(localTime>cloudTime&&localParsed)applyPayload(localParsed);
+else applyPayload(cloud);
 }else if(localParsed&&Array.isArray(localParsed.players)){
 applyPayload(localParsed);
+}else{
+resetAppState();
+syncAll();
 }
 syncAll();
-if(purgeOrphanSchedules())saveStateLocal();
+if(purgeOrphanSchedules())saveStateLocal(undefined,uid);
 await saveStateToCloud(uid);
 }
 function startCloudListener(uid){
@@ -518,19 +546,25 @@ if(!data||!Array.isArray(data.players))return;
 if((data.updatedAt||0)<=lastCloudPush)return;
 applyingRemote=true;
 applyPayload(data);
-saveStateLocal(data);
+saveStateLocal(data,uid);
 applyingRemote=false;
 if(bootFinished)render();
 updateSyncStatus('synced',firebase.auth().currentUser?.email||'');
 },e=>console.error(e));
 }
 async function handleAuthUser(user){
+if(cloudUnsub){cloudUnsub();cloudUnsub=null;}
+lastCloudPush=0;
 if(!user){
+currentAuthUid=null;
+resetAppState();
 showAuthGate();
 updateSyncStatus('offline','로그인이 필요합니다');
 if(bootFinished)render();
 return;
 }
+currentAuthUid=user.uid;
+resetAppState();
 hideAuthGate();
 updateSyncStatus('pending');
 try{
@@ -582,16 +616,18 @@ showAuthError(e.code==='auth/email-already-in-use'?'이미 가입된 이메일�
 }
 async function firebaseLogout(){
 if(!firebaseReady)return;
-const ok=await showConfirm('로그아웃할까요?\n로컬 캐시는 남지만 클라우드 동기화는 중지됩니다.');
+const ok=await showConfirm('로그아웃할까요?\n다른 계정으로 로그인하면 해당 계정 데이터를 불러옵니다.');
 if(!ok)return;
 if(cloudUnsub){cloudUnsub();cloudUnsub=null;}
+currentAuthUid=null;
+resetAppState();
 await firebase.auth().signOut();
 }
 
 function loadState(){
 let shouldSave=false;
 try{
-let raw=localStorage.getItem(STORAGE_KEY);
+let raw=localStorage.getItem(STORAGE_KEY_BASE);
 if(!raw)raw=localStorage.getItem('soccer-lesson-app-v3')||localStorage.getItem('soccer-lesson-app-v2');
 if(raw){
 const parsed=JSON.parse(raw);
@@ -1407,11 +1443,12 @@ bootFinished=true;
 }
 
 function bootApp(){
-loadState();
 if(initFirebase()){
+resetAppState();
 showAuthGate();
 firebase.auth().onAuthStateChanged(handleAuthUser);
 }else{
+loadState();
 updateSyncStatus('local');
 }
 finishBootUI();
