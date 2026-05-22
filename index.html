@@ -11,10 +11,10 @@
 <meta name="theme-color" content="#3182F6"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-title" content="축구레슨"/>
-<link rel="manifest" href="/manifest.webmanifest?v=20260522-paperlogy"/>
-<link rel="icon" href="/icon.svg?v=20260522-paperlogy" type="image/svg+xml"/>
-<link rel="icon" href="/icons/icon-192.png?v=20260522-paperlogy" type="image/png" sizes="192x192"/>
-<link rel="apple-touch-icon" href="/apple-touch-icon.png?v=20260522-paperlogy"/>
+<link rel="manifest" href="/manifest.webmanifest?v=20260522-icon-lg"/>
+<link rel="icon" href="/icon.svg?v=20260522-icon-lg" type="image/svg+xml"/>
+<link rel="icon" href="/icons/icon-192.png?v=20260522-icon-lg" type="image/png" sizes="192x192"/>
+<link rel="apple-touch-icon" href="/apple-touch-icon.png?v=20260522-icon-lg"/>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>tailwind.config={theme:{extend:{colors:{toss:{bg:'#F2F4F6',text:'#191F28',sub:'#4E5968',muted:'#8B95A1',blue:'#3182F6',green:'#0D7A5F',pink:'#F04452',emerald:'#00D084'}},fontFamily:{sans:['Paperlogy','system-ui','sans-serif']},boxShadow:{toss:'0 2px 16px rgba(0,0,0,.06)','toss-lg':'0 8px 24px rgba(0,0,0,.08)'}}}}</script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fonts-archive/Paperlogy/Paperlogy.css"/>
@@ -275,7 +275,7 @@ const WEEKDAYS=['일','월','화','수','목','금','토'];
 let state={players:[],schedules:[]};
 let currentView='home',calendarMode='month',calendarDate=new Date(),selectedDate=null,detailTab='payment',historyViewMonth=null;
 let cloudSaveTimer=null,cloudUnsub=null,lastCloudPush=0,applyingRemote=false,firebaseReady=false,bootFinished=false,currentAuthUid=null,currentSyncSession=0;
-const APP_BUILD='20260522-soccer-v3';
+const APP_BUILD='20260522-soccer-v4';
 
 function getStorageKey(authUid){return authUid?STORAGE_KEY_BASE+'-'+authUid:STORAGE_KEY_BASE;}
 function readLocalCache(authUid){
