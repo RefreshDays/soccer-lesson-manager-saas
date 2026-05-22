@@ -1,6 +1,6 @@
 ﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
 <rect width="512" height="512" rx="112" fill="#F2F4F6"/>
-<text x="256" y="188" text-anchor="middle" dominant-baseline="middle" font-family="Paperlogy" font-size="68" font-weight="800" fill="#3182F6" letter-spacing="-2">SOCCER</text>
+<text x="256" y="180" text-anchor="middle" dominant-baseline="middle" font-family="Paperlogy" font-size="68" font-weight="800" fill="#3182F6" letter-spacing="-2">SOCCER</text>
 <text x="256" y="256" text-anchor="middle" dominant-baseline="middle" font-family="Paperlogy" font-size="68" font-weight="800" fill="#3182F6" letter-spacing="-2">LESSON</text>
-<text x="256" y="324" text-anchor="middle" dominant-baseline="middle" font-family="Paperlogy" font-size="68" font-weight="800" fill="#3182F6" letter-spacing="-2">MANAGER</text>
+<text x="256" y="332" text-anchor="middle" dominant-baseline="middle" font-family="Paperlogy" font-size="68" font-weight="800" fill="#3182F6" letter-spacing="-2">MANAGER</text>
 </svg>
