@@ -120,7 +120,7 @@ pointer-events:auto;
 #sheet.hidden{transform:translate(-50%,100%)}
 }
 body.sheet-open,body.confirm-open{overflow:hidden}
-#confirmBackdrop{display:none;align-items:center;justify-content:center;padding:24px;background:rgba(0,0,0,.45);z-index:80;opacity:0;transition:opacity .22s ease}
+#confirmBackdrop{display:none;align-items:center;justify-content:center;padding:24px;background:rgba(0,0,0,.45);z-index:110;opacity:0;transition:opacity .22s ease}
 #confirmBackdrop.is-open{display:flex!important;opacity:1}
 #confirmDialog{width:100%;max-width:300px;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.18);transform:scale(.94);opacity:0;transition:transform .25s cubic-bezier(.32,.72,0,1),opacity .22s ease}
 #confirmBackdrop.is-open #confirmDialog{transform:scale(1);opacity:1}
@@ -308,7 +308,7 @@ const WEEKDAYS=['일','월','화','수','목','금','토'];
 let state={players:[],schedules:[]};
 let currentView='home',calendarMode='month',calendarDate=new Date(),selectedDate=null,detailTab='payment',historyViewMonth=null;
 let cloudSaveTimer=null,cloudUnsub=null,profileUnsub=null,lastCloudPush=0,applyingRemote=false,firebaseReady=false,bootFinished=false,currentAuthUid=null,currentSyncSession=0,currentSubscription=null;
-const APP_BUILD='20260522-saas-toss3';
+const APP_BUILD='20260522-saas-toss4';
 const SAAS_TRIAL_DAYS=14;
 const SAAS_SUBSCRIBE_AMOUNT=9900;
 const SAAS_SUBSCRIBE_ORDER_NAME='축구 레슨 매니저 월 구독';
