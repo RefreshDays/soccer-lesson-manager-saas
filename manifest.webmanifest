@@ -1,7 +1,7 @@
 {
-  "id": "https://soccer-lesson-app-public.vercel.app/",
+  "id": "https://soccer-lesson-manager-saas.vercel.app/",
   "name": "축구 레슨 매니저",
-  "short_name": "축구레슨",
+  "short_name": "축구레슨S",
   "description": "축구 선불 회차 · 일정 · 통계 관리",
   "start_url": "/?source=pwa",
   "scope": "/",
@@ -11,25 +11,25 @@
   "lang": "ko",
   "icons": [
     {
-      "src": "/icon.svg?v=20260522-icon-center",
+      "src": "/icon.svg?v=20260522-saas",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
     },
     {
-      "src": "/icons/icon-192.png?v=20260522-icon-center",
+      "src": "/icons/icon-192.png?v=20260522-saas",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/icon-512.png?v=20260522-icon-center",
+      "src": "/icons/icon-512.png?v=20260522-saas",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/icon-512.png?v=20260522-icon-center",
+      "src": "/icons/icon-512.png?v=20260522-saas",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
