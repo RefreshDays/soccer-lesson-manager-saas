@@ -1,4 +1,12 @@
 {
+  "env": {
+    "TOSS_SECRET_KEY": "test_sk_eqRGgYO1r5yD00Pk41oarQnN2Eya",
+    "TOSS_SUBSCRIBE_AMOUNT": "9900",
+    "TOSS_SUBSCRIBE_ORDER_NAME": "축구 레슨 매니저 월 구독",
+    "TOSS_SUBSCRIBE_DAYS": "30",
+    "SITE_URL": "https://soccer-lesson-manager-saas.vercel.app",
+    "FIREBASE_API_KEY": "AIzaSyCVpw06hpU1CYQCvfMggCVenGCbNO-ftlE"
+  },
   "headers": [
     {
       "source": "/(.*)",

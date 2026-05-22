@@ -1,4 +1,3 @@
-import { getAdmin } from '../lib/firebase-admin.js';
 import { approveBillingPayment, getSiteOrigin, getSubscribeConfig, issueBillingKey } from '../lib/toss.js';
 
 export default async function handler(req, res) {
@@ -20,7 +19,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { amount, orderName, days } = getSubscribeConfig();
+    const { amount, orderName } = getSubscribeConfig();
     const billing = await issueBillingKey(String(authKey), String(customerKey));
     const orderId = `sub_${customerKey}_${Date.now()}`;
     const payment = await approveBillingPayment(billing.billingKey, {
@@ -30,31 +29,14 @@ export default async function handler(req, res) {
       orderName,
     });
 
-    const admin = getAdmin();
-    const now = Date.now();
-    const expiresAt = now + days * 86400000;
+    const params = new URLSearchParams({
+      subscribe: 'success',
+      paymentKey: payment.paymentKey,
+      orderId,
+      billingKey: billing.billingKey,
+    });
 
-    await admin.firestore().doc(`users/${customerKey}`).set(
-      {
-        subscription: {
-          status: 'active',
-          plan: 'monthly',
-          startedAt: now,
-          expiresAt,
-          billingKey: billing.billingKey,
-          customerKey: String(customerKey),
-          lastPaymentKey: payment.paymentKey,
-          lastOrderId: orderId,
-          amount,
-          provider: 'toss',
-          updatedAt: now,
-        },
-        updatedAt: now,
-      },
-      { merge: true }
-    );
-
-    res.writeHead(302, { Location: `${origin}/?subscribe=success` });
+    res.writeHead(302, { Location: `${origin}/?${params.toString()}` });
     res.end();
   } catch (error) {
     console.error('[toss billing-success]', error);

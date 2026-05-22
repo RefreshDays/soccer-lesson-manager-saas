@@ -308,7 +308,7 @@ const WEEKDAYS=['일','월','화','수','목','금','토'];
 let state={players:[],schedules:[]};
 let currentView='home',calendarMode='month',calendarDate=new Date(),selectedDate=null,detailTab='payment',historyViewMonth=null;
 let cloudSaveTimer=null,cloudUnsub=null,profileUnsub=null,lastCloudPush=0,applyingRemote=false,firebaseReady=false,bootFinished=false,currentAuthUid=null,currentSyncSession=0,currentSubscription=null;
-const APP_BUILD='20260522-saas-toss1';
+const APP_BUILD='20260522-saas-toss2';
 const SAAS_TRIAL_DAYS=14;
 const SAAS_SUBSCRIBE_AMOUNT=9900;
 const SAAS_SUBSCRIBE_ORDER_NAME='축구 레슨 매니저 월 구독';
@@ -580,9 +580,41 @@ const params=new URLSearchParams(window.location.search);
 const status=params.get('subscribe');
 if(!status)return;
 const message=params.get('message');
+const paymentKey=params.get('paymentKey');
+const orderId=params.get('orderId');
+const billingKey=params.get('billingKey');
 history.replaceState({},'',window.location.pathname);
+if(status==='success'&&paymentKey&&orderId&&billingKey){
+finalizeSubscription(paymentKey,orderId,billingKey);
+return;
+}
 if(status==='success')alert('구독이 완료되었습니다.\n잠시 후 앱을 이용할 수 있습니다.');
 else alert(message?decodeURIComponent(message):'구독이 완료되지 않았습니다.');
+}
+async function finalizeSubscription(paymentKey,orderId,billingKey){
+const user=firebase.auth().currentUser;
+if(!user){
+alert('로그인이 필요합니다.\n다시 로그인한 뒤 구독을 진행해 주세요.');
+return;
+}
+try{
+const idToken=await user.getIdToken();
+const res=await fetch('/api/toss/verify-subscription',{
+method:'POST',
+headers:{'Content-Type':'application/json'},
+body:JSON.stringify({paymentKey,orderId,billingKey,idToken})
+});
+const data=await res.json();
+if(!res.ok)throw new Error(data.error||'구독 확인 실패');
+await firebase.firestore().doc('users/'+user.uid).set({
+subscription:data.subscription,
+updatedAt:Date.now()
+},{merge:true});
+alert('구독이 완료되었습니다.\n이제 앱을 이용할 수 있습니다.');
+}catch(e){
+console.error(e);
+alert(e.message||'구독 활성화에 실패했습니다.');
+}
 }
 async function ensureTossPayment(){
 const uid=firebase.auth().currentUser?.uid;

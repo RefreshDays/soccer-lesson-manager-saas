@@ -43,6 +43,30 @@ export async function approveBillingPayment(billingKey, payload) {
   return parseTossResponse(res);
 }
 
+export async function getPayment(paymentKey) {
+  const res = await fetch(`https://api.tosspayments.com/v1/payments/${paymentKey}`, {
+    headers: {
+      Authorization: tossAuthHeader(),
+    },
+  });
+  return parseTossResponse(res);
+}
+
+export async function verifyFirebaseIdToken(idToken) {
+  const apiKey = process.env.FIREBASE_API_KEY;
+  if (!apiKey) throw new Error('FIREBASE_API_KEY 환경변수가 필요합니다.');
+  const res = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${apiKey}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ idToken }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || !data.users?.[0]?.localId) {
+    throw new Error('로그인이 만료되었습니다. 다시 로그인해 주세요.');
+  }
+  return data.users[0].localId;
+}
+
 export function getSubscribeConfig() {
   return {
     amount: Number(process.env.TOSS_SUBSCRIBE_AMOUNT || 9900),
