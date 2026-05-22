@@ -10,8 +10,8 @@
 <meta name="description" content="선불 회차 · 일정 · 통계 관리"/>
 <meta name="theme-color" content="#3182F6"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
-<meta name="apple-mobile-web-app-title" content="레슨 매니저"/>
-<link rel="manifest" href="/manifest.webmanifest"/>
+<meta name="apple-mobile-web-app-title" content="레슨M"/>
+<link rel="manifest" href="/manifest.webmanifest?v=20260522"/>
 <link rel="icon" href="/icon.svg" type="image/svg+xml"/>
 <link rel="icon" href="/icons/icon-192.png" type="image/png" sizes="192x192"/>
 <link rel="apple-touch-icon" href="/apple-touch-icon.png"/>
@@ -275,7 +275,7 @@ const WEEKDAYS=['일','월','화','수','목','금','토'];
 let state={players:[],schedules:[]};
 let currentView='home',calendarMode='month',calendarDate=new Date(),selectedDate=null,detailTab='payment',historyViewMonth=null;
 let cloudSaveTimer=null,cloudUnsub=null,lastCloudPush=0,applyingRemote=false,firebaseReady=false,bootFinished=false,currentAuthUid=null,currentSyncSession=0;
-const APP_BUILD='20260521-accounts';
+const APP_BUILD='20260522-public';
 
 function getStorageKey(authUid){return authUid?STORAGE_KEY_BASE+'-'+authUid:STORAGE_KEY_BASE;}
 function readLocalCache(authUid){

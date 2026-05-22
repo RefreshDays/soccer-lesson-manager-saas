@@ -1,8 +1,10 @@
 {
+  "id": "https://soccer-lesson-app-public.vercel.app/",
   "name": "레슨 매니저",
-  "short_name": "레슨 매니저",
+  "short_name": "레슨M",
   "description": "선불 회차 · 일정 · 통계 관리",
-  "start_url": "/",
+  "start_url": "/?source=pwa",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#F2F4F6",
   "theme_color": "#3182F6",
