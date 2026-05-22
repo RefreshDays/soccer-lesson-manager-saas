@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>축구 레슨 매니저 · 관리자</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config={theme:{extend:{colors:{toss:{bg:'#F2F4F6',text:'#191F28',sub:'#4E5968',muted:'#8B95A1',blue:'#3182F6'}},fontFamily:{sans:['Paperlogy','system-ui','sans-serif']}}}}</script>
+<style>
+@font-face{font-family:Paperlogy;font-weight:400;font-display:swap;src:local('Paperlogy'),local('Apple SD Gothic Neo'),local('Malgun Gothic')}
+body{margin:0;background:#F2F4F6;color:#191F28;font-family:Paperlogy,system-ui,sans-serif}
+.toss-card{background:#fff;border-radius:20px;box-shadow:0 2px 16px rgba(0,0,0,.06)}
+.toss-input{background:#F2F4F6;border:none;border-radius:14px;min-height:48px;font-size:15px;width:100%;padding:0 14px;box-sizing:border-box}
+.toss-input:focus{outline:2px solid #3182F6;background:#fff}
+.btn{display:inline-flex;align-items:center;justify-content:center;border:none;border-radius:14px;min-height:44px;padding:0 14px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;text-decoration:none}
+.btn-primary{background:#3182F6;color:#fff}
+.btn-ghost{background:#F2F4F6;color:#4E5968}
+.btn-danger{background:#FFF0F0;color:#F04452}
+.btn-sm{min-height:36px;font-size:13px;padding:0 12px}
+.badge{display:inline-flex;align-items:center;padding:4px 8px;border-radius:9999px;font-size:11px;font-weight:700}
+.badge-pending{background:#FFF4E6;color:#E65100}
+.badge-active{background:#E6FAF3;color:#0D7A5F}
+.badge-trial{background:#E8F3FF;color:#3182F6}
+.badge-expired{background:#F2F4F6;color:#8B95A1}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 0;border-bottom:1px solid #F2F4F6}
+.row:last-child{border-bottom:none}
+.tabs{display:flex;gap:6px;background:#F2F4F6;padding:4px;border-radius:12px;margin-bottom:16px}
+.tab{flex:1;border:none;background:transparent;border-radius:9px;padding:10px;font-size:13px;font-weight:600;color:#4E5968;cursor:pointer}
+.tab.active{background:#fff;color:#3182F6;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.hidden{display:none!important}
+.auth-error{margin-top:14px;font-size:13px;color:#F04452;line-height:1.5;white-space:pre-line}
+.empty{padding:32px 12px;text-align:center;color:#8B95A1;font-size:14px}
+</style>
+</head>
+<body>
+<div id="loginGate" class="min-h-screen flex items-center justify-center p-6">
+<div class="toss-card p-6 w-full max-w-sm">
+<h1 class="text-lg font-bold mb-1">관리자 로그인</h1>
+<p class="text-sm text-toss-sub mb-4">축구 레슨 매니저 · 구독·입금 관리</p>
+<label class="block mb-2"><input type="email" id="adminEmail" class="toss-input" placeholder="관리자 이메일" autocomplete="username"/></label>
+<label class="block mb-4"><input type="password" id="adminPassword" class="toss-input" placeholder="비밀번호" autocomplete="current-password"/></label>
+<button type="button" id="adminLoginBtn" class="btn btn-primary w-full">로그인</button>
+<p id="loginError" class="auth-error hidden"></p>
+</div>
+</div>
+
+<div id="adminApp" class="hidden max-w-3xl mx-auto p-4 pb-10">
+<header class="flex items-center justify-between gap-3 mb-4 pt-2">
+<div>
+<h1 class="text-lg font-bold">관리자</h1>
+<p id="adminUserLine" class="text-xs text-toss-muted mt-0.5"></p>
+</div>
+<button type="button" id="adminLogoutBtn" class="btn btn-ghost btn-sm">로그아웃</button>
+</header>
+
+<div class="toss-card p-4 mb-4">
+<div class="tabs">
+<button type="button" class="tab active" data-tab="pending">입금 대기 <span id="pendingCount"></span></button>
+<button type="button" class="tab" data-tab="users">회원 목록</button>
+</div>
+<div id="panelPending">
+<div id="pendingList"></div>
+</div>
+<div id="panelUsers" class="hidden">
+<label class="block mb-3"><input type="search" id="userSearch" class="toss-input" placeholder="이메일 검색"/></label>
+<div id="userList"></div>
+</div>
+</div>
+
+<p class="text-center text-xs text-toss-muted">admin · soccer-lesson-manager-saas</p>
+</div>
+
+<script src="/firebase-config.js"></script>
+<script src="/saas-config.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore-compat.js"></script>
+<script>
+const ADMIN_EMAILS=(window.SAAS_CONFIG&&window.SAAS_CONFIG.ADMIN_EMAILS)||['sonkh@rubycell.co.kr'];
+const SUBSCRIBE_AMOUNT=9900;
+const SUBSCRIBE_DAYS=Number((window.SAAS_CONFIG&&window.SAAS_CONFIG.SUBSCRIBE_DAYS)||30);
+let firebaseReady=false;
+let pendingUnsub=null;
+let usersUnsub=null;
+
+function esc(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');}
+function formatWon(n){return Number(n).toLocaleString('ko-KR')+'원';}
+function formatDate(ms){if(!ms)return '-';return new Date(ms).toLocaleString('ko-KR');}
+function formatSubBadge(sub){
+if(!sub)return '<span class="badge badge-expired">없음</span>';
+const now=Date.now();
+if(sub.status==='active'&&(sub.expiresAt||0)>now)return '<span class="badge badge-active">구독 중</span>';
+if(sub.status==='trial'&&((sub.trialEndsAt||sub.expiresAt||0)>now))return '<span class="badge badge-trial">체험</span>';
+return '<span class="badge badge-expired">만료</span>';
+}
+
+function initFirebase(){
+if(!window.FIREBASE_CONFIG||!window.FIREBASE_CONFIG.apiKey)return false;
+if(!firebase.apps.length)firebase.initializeApp(window.FIREBASE_CONFIG);
+firebaseReady=true;
+return true;
+}
+function isAdminUser(user){
+return!!user&&ADMIN_EMAILS.includes((user.email||'').toLowerCase());
+}
+function showLoginError(msg){
+const el=document.getElementById('loginError');
+if(!el)return;
+el.textContent=msg||'';
+el.classList.toggle('hidden',!msg);
+}
+function showLogin(){
+document.getElementById('loginGate').classList.remove('hidden');
+document.getElementById('adminApp').classList.add('hidden');
+}
+function showAdmin(user){
+document.getElementById('loginGate').classList.add('hidden');
+document.getElementById('adminApp').classList.remove('hidden');
+document.getElementById('adminUserLine').textContent=user.email||'';
+startListeners();
+}
+async function adminLogin(){
+if(!firebaseReady)return;
+const email=(document.getElementById('adminEmail').value||'').trim();
+const pw=document.getElementById('adminPassword').value||'';
+showLoginError('');
+if(!email||!pw){showLoginError('이메일과 비밀번호를 입력해 주세요.');return;}
+try{
+await firebase.auth().signInWithEmailAndPassword(email,pw);
+}catch(e){
+showLoginError('로그인에 실패했습니다. 이메일·비밀번호를 확인해 주세요.');
+}
+}
+async function adminLogout(){
+stopListeners();
+await firebase.auth().signOut();
+}
+
+function stopListeners(){
+if(pendingUnsub){pendingUnsub();pendingUnsub=null;}
+if(usersUnsub){usersUnsub();usersUnsub=null;}
+}
+function startListeners(){
+renderPending();
+renderUsers();
+}
+
+function renderPending(){
+if(pendingUnsub){pendingUnsub();pendingUnsub=null;}
+const list=document.getElementById('pendingList');
+list.innerHTML='<div class="empty">불러오는 중...</div>';
+pendingUnsub=firebase.firestore().collection('activationRequests').where('status','==','pending').onSnapshot(snap=>{
+document.getElementById('pendingCount').textContent=snap.size?'('+snap.size+')':'';
+if(snap.empty){list.innerHTML='<div class="empty">대기 중인 입금 신청이 없습니다.</div>';return;}
+const rows=snap.docs.map(d=>{const r=d.data();return `<div class="row items-start">
+<div class="min-w-0 flex-1">
+<p class="font-semibold text-sm">${esc(r.email||'-')}</p>
+<p class="text-xs text-toss-sub mt-1">입금자명 ${esc(r.depositorName||'-')} · ${formatWon(r.amount||SUBSCRIBE_AMOUNT)}</p>
+<p class="text-xs text-toss-muted mt-1">${formatDate(r.createdAt)}</p>
+</div>
+<div class="flex flex-col gap-2 shrink-0">
+<button type="button" class="btn btn-primary btn-sm" onclick="approveRequest('${d.id}','${r.uid}')">승인</button>
+<button type="button" class="btn btn-danger btn-sm" onclick="rejectRequest('${d.id}')">거절</button>
+</div></div>`;}).join('');
+list.innerHTML=rows;
+},err=>{
+console.error(err);
+list.innerHTML='<div class="empty">목록을 불러오지 못했습니다.<br>'+esc(err.message)+'</div>';
+});
+}
+
+function renderUsers(){
+if(usersUnsub){usersUnsub();usersUnsub=null;}
+const list=document.getElementById('userList');
+const q=(document.getElementById('userSearch').value||'').trim().toLowerCase();
+list.innerHTML='<div class="empty">불러오는 중...</div>';
+usersUnsub=firebase.firestore().collection('users').onSnapshot(snap=>{
+let docs=snap.docs.map(d=>({id:d.id,...d.data()}));
+if(q)docs=docs.filter(u=>(u.email||'').toLowerCase().includes(q));
+docs.sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
+if(!docs.length){list.innerHTML='<div class="empty">회원이 없습니다.</div>';return;}
+list.innerHTML=docs.map(u=>{
+const sub=u.subscription||{};
+const exp=sub.expiresAt||sub.trialEndsAt;
+return `<div class="row items-start">
+<div class="min-w-0 flex-1">
+<p class="font-semibold text-sm">${esc(u.email||u.id)}</p>
+<p class="text-xs text-toss-sub mt-1">${formatSubBadge(sub)} · 회원 ${u.memberCount||0} · 일정 ${u.scheduleCount||0}</p>
+<p class="text-xs text-toss-muted mt-1">만료 ${formatDate(exp)}</p>
+</div>
+<div class="flex flex-col gap-2 shrink-0">
+<button type="button" class="btn btn-primary btn-sm" onclick="activateUser('${u.id}')">30일 활성</button>
+<button type="button" class="btn btn-ghost btn-sm" onclick="extendTrial('${u.id}',14)">체험 +14일</button>
+</div></div>`;
+}).join('');
+},err=>{
+list.innerHTML='<div class="empty">회원 목록 오류<br>'+esc(err.message)+'</div>';
+});
+}
+
+async function approveRequest(requestId,uid){
+if(!confirm('입금을 확인하고 30일 구독을 활성화할까요?'))return;
+const now=Date.now();
+const expiresAt=now+SUBSCRIBE_DAYS*86400000;
+const batch=firebase.firestore().batch();
+batch.update(firebase.firestore().doc('activationRequests/'+requestId),{
+status:'approved',
+updatedAt:now,
+approvedAt:now,
+approvedBy:firebase.auth().currentUser?.email||''
+});
+batch.set(firebase.firestore().doc('users/'+uid),{
+subscription:{
+status:'active',
+plan:'monthly',
+startedAt:now,
+expiresAt,
+amount:SUBSCRIBE_AMOUNT,
+provider:'bank_transfer',
+updatedAt:now
+},
+updatedAt:now
+},{merge:true});
+try{
+await batch.commit();
+alert('승인되었습니다.');
+}catch(e){
+alert(e.message||'승인 실패');
+}
+}
+async function rejectRequest(requestId){
+const note=prompt('거절 사유 (선택)','');
+if(note===null)return;
+try{
+await firebase.firestore().doc('activationRequests/'+requestId).update({
+status:'rejected',
+updatedAt:Date.now(),
+adminNote:note||'',
+rejectedBy:firebase.auth().currentUser?.email||''
+});
+}catch(e){alert(e.message||'거절 실패');}
+}
+async function activateUser(uid){
+if(!confirm('30일 구독을 활성화할까요?'))return;
+const now=Date.now();
+try{
+await firebase.firestore().doc('users/'+uid).set({
+subscription:{
+status:'active',
+plan:'monthly',
+startedAt:now,
+expiresAt:now+SUBSCRIBE_DAYS*86400000,
+amount:SUBSCRIBE_AMOUNT,
+provider:'admin',
+updatedAt:now
+},
+updatedAt:now
+},{merge:true});
+alert('활성화되었습니다.');
+}catch(e){alert(e.message||'실패');}
+}
+async function extendTrial(uid,days){
+if(!confirm('체험을 '+days+'일 연장할까요?'))return;
+const now=Date.now();
+const ref=firebase.firestore().doc('users/'+uid);
+const snap=await ref.get();
+const sub=snap.exists?snap.data()?.subscription||{}:{};
+const base=Math.max(sub.trialEndsAt||sub.expiresAt||0,now);
+const trialEndsAt=base+days*86400000;
+try{
+await ref.set({
+subscription:{
+...sub,
+status:'trial',
+plan:'trial',
+trialEndsAt,
+expiresAt:trialEndsAt,
+updatedAt:now
+},
+updatedAt:now
+},{merge:true});
+alert('체험이 연장되었습니다.');
+}catch(e){alert(e.message||'실패');}
+}
+
+document.querySelectorAll('.tab').forEach(btn=>{
+btn.addEventListener('click',()=>{
+document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+btn.classList.add('active');
+const tab=btn.dataset.tab;
+document.getElementById('panelPending').classList.toggle('hidden',tab!=='pending');
+document.getElementById('panelUsers').classList.toggle('hidden',tab!=='users');
+});
+});
+document.getElementById('userSearch')?.addEventListener('input',()=>renderUsers());
+document.getElementById('adminLoginBtn')?.addEventListener('click',adminLogin);
+document.getElementById('adminLogoutBtn')?.addEventListener('click',adminLogout);
+document.getElementById('adminPassword')?.addEventListener('keydown',e=>{if(e.key==='Enter')adminLogin();});
+
+window.approveRequest=approveRequest;
+window.rejectRequest=rejectRequest;
+window.activateUser=activateUser;
+window.extendTrial=extendTrial;
+
+if(initFirebase()){
+firebase.auth().onAuthStateChanged(user=>{
+if(user&&isAdminUser(user))showAdmin(user);
+else{
+if(user&&!isAdminUser(user)){
+firebase.auth().signOut();
+showLoginError('관리자 계정만 접근할 수 있습니다.');
+}
+showLogin();
+}
+});
+}else{
+showLoginError('Firebase 설정이 필요합니다.');
+}
+</script>
+</body>
+</html>

@@ -199,6 +199,18 @@ body.auth-lock #app,body.auth-lock .bottom-nav,body.auth-lock #fab{visibility:hi
 .subscribe-trial-headline.hidden{display:none}
 .subscribe-price{font-size:13px;font-weight:600;color:#3182F6;line-height:1.45;margin:-8px 0 16px}
 .subscribe-price.hidden{display:none}
+.subscribe-tabs{display:flex;gap:6px;background:#F2F4F6;padding:4px;border-radius:12px;margin-bottom:16px}
+.subscribe-tab{flex:1;border:none;background:transparent;border-radius:9px;padding:10px 8px;font-size:13px;font-weight:600;color:#4E5968;cursor:pointer;font-family:inherit}
+.subscribe-tab.active{background:#fff;color:#3182F6;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.subscribe-panel.hidden{display:none}
+.bank-info{background:#F8FAFC;border:1px solid #EEF2F7;border-radius:14px;padding:14px;margin-bottom:12px;font-size:13px;line-height:1.6;color:#4E5968}
+.bank-info strong{display:block;color:#191F28;font-size:15px;margin-bottom:8px}
+.bank-row{display:flex;justify-content:space-between;gap:12px;padding:4px 0}
+.bank-row span:last-child{font-weight:600;color:#191F28;text-align:right}
+.subscribe-pending{background:#FFF8EB;border:1px solid #FFE8C2;border-radius:14px;padding:14px;margin-bottom:12px}
+.subscribe-pending strong{display:block;color:#E65100;font-size:14px;margin-bottom:6px}
+.subscribe-pending p{margin:0;font-size:13px;color:#4E5968;line-height:1.5}
+.subscribe-note{font-size:12px;color:#8B95A1;line-height:1.45;margin:0 0 12px}
 .auth-error{margin-top:20px;font-size:13px;color:#F04452;line-height:1.5;padding-top:4px;white-space:pre-line}
 .sync-bar{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:12px 14px;background:#fff;border-radius:14px;box-shadow:0 2px 12px rgba(0,0,0,.05);margin-bottom:12px}
 .sync-bar.hidden{display:none!important}
@@ -289,12 +301,32 @@ body.auth-lock #app,body.auth-lock .bottom-nav,body.auth-lock #fab{visibility:hi
 <h2>구독이 필요합니다</h2>
 <p id="subscribeTrialHeadline" class="subscribe-trial-headline hidden">체험 14일이 종료되었습니다.</p>
 <p id="subscribeMsg">이용을 계속하려면 아래에서 구독해 주세요.</p>
+<div id="subscribePendingBox" class="subscribe-pending hidden">
+<strong>입금 확인 중입니다</strong>
+<p id="subscribePendingMsg">입금 확인 후 이용 가능합니다. 보통 24시간 이내 처리됩니다.</p>
+</div>
+<div id="subscribePayArea">
 <p id="subscribePrice" class="subscribe-price hidden"></p>
+<div class="subscribe-tabs">
+<button type="button" id="subscribeTabCard" class="subscribe-tab active">카드 결제</button>
+<button type="button" id="subscribeTabBank" class="subscribe-tab">계좌 입금</button>
+</div>
+<div id="subscribePanelCard" class="subscribe-panel">
 <button type="button" id="subscribeBtn" class="btn-toss mb-2">구독하기</button>
+<p class="subscribe-note">토스페이먼츠 카드 자동결제 · 즉시 이용 가능</p>
+</div>
+<div id="subscribePanelBank" class="subscribe-panel hidden">
+<div id="subscribeBankInfo" class="bank-info"></div>
+<label class="block mb-3"><span class="text-sm text-toss-sub mb-2 block">입금자명</span><input type="text" id="subscribeDepositor" class="toss-input" placeholder="입금 시 사용할 이름"/></label>
+<button type="button" id="subscribeBankBtn" class="btn-toss mb-2">입금 신청 완료</button>
+<p class="subscribe-note">입금 확인 후 관리자 승인 시 이용 가능합니다.</p>
+</div>
+</div>
 <button type="button" id="subscribeLogout" class="btn-toss-ghost">로그아웃</button>
 </div>
 </div>
 <script src="/firebase-config.js"></script>
+<script src="/saas-config.js"></script>
 <script src="/toss-config.js"></script>
 <script src="https://js.tosspayments.com/v2/standard"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js"></script>
@@ -308,12 +340,16 @@ const WEEKDAYS=['일','월','화','수','목','금','토'];
 let state={players:[],schedules:[]};
 let currentView='home',calendarMode='month',calendarDate=new Date(),selectedDate=null,detailTab='payment',historyViewMonth=null;
 let cloudSaveTimer=null,cloudUnsub=null,profileUnsub=null,lastCloudPush=0,applyingRemote=false,firebaseReady=false,bootFinished=false,currentAuthUid=null,currentSyncSession=0,currentSubscription=null;
-const APP_BUILD='20260522-saas-toss5';
+const APP_BUILD='20260522-saas-admin1';
 const SAAS_TRIAL_DAYS=14;
 const SAAS_SUBSCRIBE_AMOUNT=9900;
 const SAAS_SUBSCRIBE_ORDER_NAME='축구 레슨 매니저 월 구독';
 const SAAS_CONTACT_EMAIL='wonzia80@gmail.com';
+function getSaasConfig(){return window.SAAS_CONFIG||{};}
+function getBankInfo(){return getSaasConfig().BANK||{};}
+function getSubscribeDays(){return Number(getSaasConfig().SUBSCRIBE_DAYS||30);}
 let tossPaymentInstance=null;
+let subscribePayMode='card';
 
 function getStorageKey(authUid){return authUid?STORAGE_KEY_BASE+'-'+authUid:STORAGE_KEY_BASE;}
 function readLocalCache(authUid){
@@ -648,16 +684,92 @@ alert(e.message||'결제창을 열 수 없습니다.');
 function initSubscribeGate(){
 const btn=document.getElementById('subscribeBtn');
 const priceEl=document.getElementById('subscribePrice');
+const bankInfo=document.getElementById('subscribeBankInfo');
+const bank=getBankInfo();
 if(priceEl){
 priceEl.textContent='월 '+formatWon(SAAS_SUBSCRIBE_AMOUNT)+' · '+SAAS_SUBSCRIBE_ORDER_NAME;
 priceEl.classList.remove('hidden');
 }
-if(!btn)return;
+if(bankInfo){
+bankInfo.innerHTML=`<strong>입금 계좌</strong>
+<div class="bank-row"><span>은행</span><span>${esc(bank.bankName||'-')}</span></div>
+<div class="bank-row"><span>계좌번호</span><span>${esc(bank.accountNumber||'-')}</span></div>
+<div class="bank-row"><span>예금주</span><span>${esc(bank.accountHolder||'-')}</span></div>
+<div class="bank-row"><span>입금액</span><span>${formatWon(SAAS_SUBSCRIBE_AMOUNT)}</span></div>`;
+}
+const depositor=document.getElementById('subscribeDepositor');
+if(depositor&&!depositor.value){
+const email=firebase.auth().currentUser?.email||'';
+depositor.value=email.split('@')[0]||'';
+}
+if(btn){
 btn.textContent='구독하기 · 월 '+formatWon(SAAS_SUBSCRIBE_AMOUNT);
 btn.onclick=()=>startTossSubscribe();
 if(!getTossClientKey()){
 btn.classList.add('btn-toss--disabled');
 btn.setAttribute('aria-disabled','true');
+}
+}
+document.getElementById('subscribeTabCard')?.addEventListener('click',()=>setSubscribePayMode('card'));
+document.getElementById('subscribeTabBank')?.addEventListener('click',()=>setSubscribePayMode('bank'));
+document.getElementById('subscribeBankBtn')?.addEventListener('click',submitBankTransferRequest);
+setSubscribePayMode('card');
+}
+function setSubscribePayMode(mode){
+subscribePayMode=mode;
+document.getElementById('subscribeTabCard')?.classList.toggle('active',mode==='card');
+document.getElementById('subscribeTabBank')?.classList.toggle('active',mode==='bank');
+document.getElementById('subscribePanelCard')?.classList.toggle('hidden',mode!=='card');
+document.getElementById('subscribePanelBank')?.classList.toggle('hidden',mode!=='bank');
+}
+async function getPendingActivationRequest(uid){
+if(!uid||!firebaseReady)return null;
+const snap=await firebase.firestore().collection('activationRequests').where('uid','==',uid).where('status','==','pending').limit(1).get();
+return snap.empty?null:{id:snap.docs[0].id,...snap.docs[0].data()};
+}
+async function refreshSubscribePendingUI(){
+const user=firebase.auth().currentUser;
+const pending=await getPendingActivationRequest(user?.uid);
+const pendingBox=document.getElementById('subscribePendingBox');
+const payArea=document.getElementById('subscribePayArea');
+const msg=document.getElementById('subscribePendingMsg');
+if(pending){
+pendingBox?.classList.remove('hidden');
+payArea?.classList.add('hidden');
+if(msg){
+const when=pending.createdAt?new Date(pending.createdAt).toLocaleString('ko-KR'):'';
+msg.textContent='입금 신청이 접수되었습니다.'+(when?` (${when})`:'')+' 확인 후 이용 가능합니다.';
+}
+}else{
+pendingBox?.classList.add('hidden');
+payArea?.classList.remove('hidden');
+}
+}
+async function submitBankTransferRequest(){
+const user=firebase.auth().currentUser;
+if(!user){alert('로그인이 필요합니다.');return;}
+const existing=await getPendingActivationRequest(user.uid);
+if(existing){await refreshSubscribePendingUI();alert('이미 입금 확인 요청이 접수되어 있습니다.');return;}
+const depositor=(document.getElementById('subscribeDepositor')?.value||'').trim();
+if(!depositor){alert('입금자명을 입력해 주세요.');return;}
+const ok=await showConfirm('입금 '+formatWon(SAAS_SUBSCRIBE_AMOUNT)+'을 완료하셨나요?\n신청 후 관리자 확인까지 이용이 제한됩니다.');
+if(!ok)return;
+try{
+await firebase.firestore().collection('activationRequests').add({
+uid:user.uid,
+email:user.email||'',
+status:'pending',
+type:'bank_transfer',
+amount:SAAS_SUBSCRIBE_AMOUNT,
+depositorName:depositor,
+createdAt:Date.now(),
+updatedAt:Date.now()
+});
+await refreshSubscribePendingUI();
+alert('입금 신청이 접수되었습니다.\n확인 후 이용 가능합니다.');
+}catch(e){
+console.error(e);
+alert(e.message||'신청에 실패했습니다.');
 }
 }
 function isExpiredTrial(sub){
@@ -682,6 +794,7 @@ if(trialExpired)msg.textContent='이용을 계속하려면 아래에서 구독�
 else msg.textContent='구독 후 다시 로그인해 주세요.';
 }
 if(gate){gate.classList.remove('hidden');gate.setAttribute('aria-hidden','false');}
+refreshSubscribePendingUI();
 }
 function hideSubscribeGate(){
 const gate=document.getElementById('subscribeGate');

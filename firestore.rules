@@ -1,11 +1,33 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.token.email == 'sonkh@rubycell.co.kr';
+    }
+
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
+      allow create: if request.auth != null && request.auth.uid == userId;
+      allow update: if isAdmin()
+        || (request.auth != null && request.auth.uid == userId);
+      allow delete: if isAdmin();
+
       match /{document=**} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
+    }
+
+    match /activationRequests/{requestId} {
+      allow read: if isAdmin()
+        || (request.auth != null && resource.data.uid == request.auth.uid);
+      allow create: if request.auth != null
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.status == 'pending'
+        && request.resource.data.type == 'bank_transfer'
+        && request.resource.data.email == request.auth.token.email;
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
     }
   }
 }
