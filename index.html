@@ -192,16 +192,23 @@ body.auth-lock #app,body.auth-lock .bottom-nav,body.auth-lock #fab{visibility:hi
 .auth-card h2{font-size:1.125rem;font-weight:700;margin:0 0 6px}
 .auth-card p{font-size:13px;color:#4E5968;line-height:1.45;margin:0 0 16px}
 .auth-error{margin-top:10px;font-size:13px;color:#F04452;line-height:1.4}
-.sync-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;background:#fff;border-radius:14px;box-shadow:0 2px 12px rgba(0,0,0,.05);margin-bottom:12px}
+.sync-bar{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:12px 14px;background:#fff;border-radius:14px;box-shadow:0 2px 12px rgba(0,0,0,.05);margin-bottom:12px}
 .sync-bar.hidden{display:none!important}
-.sync-bar-text{font-size:12px;color:#4E5968;line-height:1.35;min-width:0}
+.sync-bar-main{flex:1;min-width:0}
+.sync-bar-row{display:flex;align-items:flex-start;gap:8px}
+.sync-bar-row .sync-dot{margin-top:5px;flex-shrink:0}
+.sync-bar-text{font-size:12px;color:#4E5968;line-height:1.4;min-width:0}
 .sync-bar-text strong{color:#191F28;font-weight:600}
+.sync-sub-line{margin-top:8px;padding-left:16px}
+.sync-trial-badge{display:inline-flex;align-items:center;font-size:13px;font-weight:700;color:#E65100;background:#FFF4E6;padding:7px 12px;border-radius:10px;line-height:1.2;letter-spacing:-.02em}
+.sync-trial-badge--active{color:#0D7A5F;background:#E6FAF3}
+.sync-build{font-size:11px;color:#8B95A1}
 .sync-bar-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
 .sync-dot{width:8px;height:8px;border-radius:9999px;background:#8B95A1}
 .sync-dot.is-synced{background:#00D084}
 .sync-dot.is-pending{background:#E65100}
 .sync-dot.is-error{background:#F04452}
-.sync-logout{font-size:12px;font-weight:600;color:#8B95A1;background:transparent;border:0;padding:0;cursor:pointer;font-family:inherit}
+.sync-logout{font-size:12px;font-weight:600;color:#8B95A1;background:transparent;border:0;padding:0;cursor:pointer;font-family:inherit;flex-shrink:0;margin-top:2px;white-space:nowrap}
 </style>
 </head>
 <body class="min-h-screen font-sans antialiased pb-24 app-boot">
@@ -215,7 +222,10 @@ body.auth-lock #app,body.auth-lock .bottom-nav,body.auth-lock #fab{visibility:hi
 </header>
 <main class="px-5 pb-4 pt-5">
 <section id="syncStatusBar" class="sync-bar hidden mb-3" aria-live="polite">
-<div class="sync-bar-text"><span class="sync-dot" id="syncDot"></span> <span id="syncText">동기화 준비 중</span></div>
+<div class="sync-bar-main">
+<div class="sync-bar-row"><span class="sync-dot" id="syncDot"></span><span class="sync-bar-text" id="syncText">동기화 준비 중</span></div>
+<div id="syncSubLine" class="sync-sub-line hidden" aria-live="polite"></div>
+</div>
 <button type="button" id="syncLogout" class="sync-logout hidden">로그아웃</button>
 </section>
 <section id="statsSection" class="mb-5"></section>
@@ -285,7 +295,7 @@ const WEEKDAYS=['일','월','화','수','목','금','토'];
 let state={players:[],schedules:[]};
 let currentView='home',calendarMode='month',calendarDate=new Date(),selectedDate=null,detailTab='payment',historyViewMonth=null;
 let cloudSaveTimer=null,cloudUnsub=null,profileUnsub=null,lastCloudPush=0,applyingRemote=false,firebaseReady=false,bootFinished=false,currentAuthUid=null,currentSyncSession=0,currentSubscription=null;
-const APP_BUILD='20260522-saas-sub1';
+const APP_BUILD='20260522-saas-sub2';
 const SAAS_TRIAL_DAYS=14;
 const SAAS_CONTACT_EMAIL='wonzia80@gmail.com';
 
@@ -461,21 +471,29 @@ alert('저장에 실패했습니다. 브라우저 저장 공간을 확인해 주
 return false;
 }
 }
-function updateSyncStatus(mode,detail){
+function updateSyncStatus(mode,detail,subHtml){
 const bar=document.getElementById('syncStatusBar');
 const dot=document.getElementById('syncDot');
 const text=document.getElementById('syncText');
+const subLine=document.getElementById('syncSubLine');
 const logout=document.getElementById('syncLogout');
 if(!bar||!dot||!text)return;
 if(!isFirebaseEnabled()){bar.classList.add('hidden');return;}
 bar.classList.remove('hidden');
 dot.className='sync-dot';
-if(mode==='synced'){dot.classList.add('is-synced');text.innerHTML='<strong>클라우드 저장됨</strong>'+(detail?' · '+esc(detail):'')+' <span class="text-toss-muted">('+APP_BUILD+')</span>';}
-else if(mode==='pending'){dot.classList.add('is-pending');text.innerHTML='<strong>저장 중…</strong>';}
-else if(mode==='error'){dot.classList.add('is-error');text.innerHTML='<strong>동기화 실패</strong>'+(detail?' · '+esc(detail):'');}
+if(subLine){
+if(subHtml){subLine.innerHTML=subHtml;subLine.classList.remove('hidden');}
+else{subLine.innerHTML='';subLine.classList.add('hidden');}
+}
+if(mode==='synced'){dot.classList.add('is-synced');text.innerHTML='<strong>클라우드 저장됨</strong>'+(detail?' · '+esc(detail):'')+' <span class="sync-build">('+APP_BUILD+')</span>';}
+else if(mode==='pending'){dot.classList.add('is-pending');text.innerHTML='<strong>저장 중…</strong>';if(subLine){subLine.innerHTML='';subLine.classList.add('hidden');}}
+else if(mode==='error'){dot.classList.add('is-error');text.innerHTML='<strong>동기화 실패</strong>'+(detail?' · '+esc(detail):'');if(subLine){subLine.innerHTML='';subLine.classList.add('hidden');}}
 else if(mode==='local'){bar.classList.add('hidden');return;}
-else{text.textContent=detail||'동기화 준비 중';}
+else{text.textContent=detail||'동기화 준비 중';if(subLine){subLine.innerHTML='';subLine.classList.add('hidden');}}
 if(logout)logout.classList.toggle('hidden',mode!=='synced'&&mode!=='pending'&&mode!=='error');
+}
+function renderSyncedStatus(email){
+updateSyncStatus('synced',email||'',formatSubscriptionBadge(currentSubscription));
 }
 function resetAuthForm(){
 const pw=document.getElementById('authPassword');
@@ -516,10 +534,10 @@ if(!sub)return 0;
 const end=sub.trialEndsAt||sub.expiresAt||0;
 return Math.max(0,Math.ceil((end-Date.now())/86400000));
 }
-function formatSubscriptionDetail(sub){
-if(!sub)return'';
-if(sub.status==='trial'&&isSubscriptionActive(sub))return'체험 '+getTrialDaysLeft(sub)+'일 남음';
-if(sub.status==='active'&&isSubscriptionActive(sub))return'구독 이용 중';
+function formatSubscriptionBadge(sub){
+if(!sub||!isSubscriptionActive(sub))return'';
+if(sub.status==='trial')return'<span class="sync-trial-badge">체험 '+getTrialDaysLeft(sub)+'일 남음</span>';
+if(sub.status==='active')return'<span class="sync-trial-badge sync-trial-badge--active">구독 이용 중</span>';
 return'';
 }
 async function loadSubscription(uid){
@@ -566,8 +584,8 @@ if(gate&&!gate.classList.contains('hidden')){
 hideSubscribeGate();
 await enterAppAsUser(firebase.auth().currentUser,sessionId);
 }else{
-const detail=[firebase.auth().currentUser.email||'',formatSubscriptionDetail(sub)].filter(Boolean).join(' · ');
-updateSyncStatus('synced',detail);
+const detail=firebase.auth().currentUser?.email||'';
+renderSyncedStatus(detail);
 }
 return;
 }
@@ -584,8 +602,8 @@ updateSyncStatus('pending');
 await syncFromCloud(user.uid,sessionId);
 if(sessionId!==currentSyncSession)return;
 startCloudListener(user.uid,sessionId);
-const detail=[user.email||'',formatSubscriptionDetail(currentSubscription)].filter(Boolean).join(' · ');
-updateSyncStatus('synced',detail);
+const detail=user.email||'';
+renderSyncedStatus(detail);
 if(bootFinished)render();
 }
 async function saveProfileToCloud(uid,user){
@@ -621,7 +639,7 @@ clearTimeout(cloudSaveTimer);
 cloudSaveTimer=setTimeout(async()=>{
 try{
 await saveStateToCloud(user.uid);
-updateSyncStatus('synced',user.email||'');
+updateSyncStatus('synced',user.email||'',formatSubscriptionBadge(currentSubscription));
 }catch(e){
 console.error(e);
 updateSyncStatus('error','잠시 후 다시 시도해 주세요');
@@ -657,7 +675,7 @@ applyPayload(data);
 saveStateLocal(data,uid);
 applyingRemote=false;
 if(bootFinished)render();
-updateSyncStatus('synced',firebase.auth().currentUser?.email||'');
+renderSyncedStatus(firebase.auth().currentUser?.email||'');
 },e=>console.error(e));
 }
 async function handleAuthUser(user){
