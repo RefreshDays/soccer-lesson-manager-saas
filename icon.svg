@@ -1,15 +1,6 @@
 ﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-<style>
-@font-face{
-font-family:'Paperlogy';
-font-weight:800;
-font-style:normal;
-src:url('https://cdn.jsdelivr.net/gh/fonts-archive/Paperlogy/Paperlogy-8ExtraBold.woff2') format('woff2');
-}
-.icon-text{font-family:'Paperlogy',sans-serif;font-weight:800;}
-</style>
 <rect width="512" height="512" rx="112" fill="#F2F4F6"/>
-<text class="icon-text" x="256" y="188" text-anchor="middle" font-size="46" fill="#3182F6" letter-spacing="-1">SOCCER</text>
-<text class="icon-text" x="256" y="252" text-anchor="middle" font-size="46" fill="#3182F6" letter-spacing="-1">LESSON</text>
-<text class="icon-text" x="256" y="316" text-anchor="middle" font-size="46" fill="#3182F6" letter-spacing="-1">MANAGER</text>
+<text x="256" y="188" text-anchor="middle" font-family="Paperlogy" font-size="46" font-weight="800" fill="#3182F6" letter-spacing="-1">SOCCER</text>
+<text x="256" y="252" text-anchor="middle" font-family="Paperlogy" font-size="46" font-weight="800" fill="#3182F6" letter-spacing="-1">LESSON</text>
+<text x="256" y="316" text-anchor="middle" font-family="Paperlogy" font-size="46" font-weight="800" fill="#3182F6" letter-spacing="-1">MANAGER</text>
 </svg>
