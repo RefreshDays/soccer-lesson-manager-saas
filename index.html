@@ -151,6 +151,15 @@ body.sheet-open,body.confirm-open{overflow:hidden}
 .month-mini-stat-label{font-size:10px;color:#8B95A1;margin-bottom:4px;line-height:1.3}
 .month-mini-stat-value{font-size:15px;font-weight:700;color:#191F28;letter-spacing:-.02em}
 .month-mini-stat-unit{font-size:11px;font-weight:600;color:#8B95A1;margin-left:1px}
+.month-picker{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#F2F4F6;border-radius:14px;padding:6px 8px;margin-bottom:14px}
+.month-picker-btn{width:40px;height:40px;border:0;background:#fff;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#191F28;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.06);font-family:inherit;font-size:22px;line-height:1}
+.month-picker-btn:disabled{opacity:.3;cursor:default;box-shadow:none}
+.month-picker-label{flex:1;border:0;background:transparent;font-size:16px;font-weight:700;color:#191F28;cursor:pointer;font-family:inherit;letter-spacing:-.02em;padding:8px 4px}
+.month-grid-year{font-size:13px;font-weight:600;color:#8B95A1;margin:16px 0 8px}
+.month-grid-year:first-child{margin-top:0}
+.month-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:4px}
+.month-grid-cell{min-height:46px;border:0;border-radius:12px;background:#F2F4F6;font-size:15px;font-weight:600;color:#191F28;cursor:pointer;font-family:inherit;transition:background .15s,color .15s}
+.month-grid-cell.active{background:#3182F6;color:#fff}
 .member-head{margin-bottom:12px}
 .member-head--compact{margin-bottom:10px}
 .member-head-row{display:flex;align-items:flex-start;justify-content:space-between;gap:10px 14px}
@@ -1041,11 +1050,17 @@ const months=getPastMonthsForHistory();
 if(!months.length)return'';
 if(!historyViewMonth||!months.some(m=>m.ym===historyViewMonth))historyViewMonth=months[0].ym;
 const stats=getStatsForMonth(historyViewMonth);
+const idx=months.findIndex(m=>m.ym===historyViewMonth);
+const canOlder=idx>=0&&idx<months.length-1;
+const canNewer=idx>0;
 return`<section class="mt-6">
-<h2 class="text-lg font-bold mb-1">월별 현황</h2>
-<p class="text-sm text-toss-sub mb-3">월을 선택해 지난 실적을 확인하세요</p>
-<label class="block mb-3"><span class="sr-only">월 선택</span><select class="toss-select" onchange="setHistoryMonth(this.value)">${months.map(m=>`<option value="${m.ym}"${m.ym===historyViewMonth?' selected':''}>${formatMonthTitle(m.ym)}</option>`).join('')}</select></label>
+<h2 class="text-lg font-bold mb-3">월별 현황</h2>
 <div class="toss-card p-4">
+<div class="month-picker">
+<button type="button" class="month-picker-btn" onclick="navigateHistoryMonth(1)"${canOlder?'':' disabled'} aria-label="이전 달">‹</button>
+<button type="button" class="month-picker-label" onclick="openHistoryMonthPicker()">${formatMonthTitle(historyViewMonth)}</button>
+<button type="button" class="month-picker-btn" onclick="navigateHistoryMonth(-1)"${canNewer?'':' disabled'} aria-label="다음 달">›</button>
+</div>
 <p class="text-xs text-toss-muted mb-3">입금 ${formatDeposit(stats.totalDeposits)} · 레슨 ${stats.totalLessons}회</p>
 <div class="month-history-body">
 ${monthMiniStat('신규 등록',stats.registered,'명',false)}
@@ -1061,6 +1076,43 @@ const el=document.getElementById('monthHistorySection');
 if(el)el.innerHTML=renderMonthlyHistoryHTML();
 }
 function setHistoryMonth(ym){historyViewMonth=ym;renderMonthlyHistory();}
+function navigateHistoryMonth(dir){
+const months=getPastMonthsForHistory();
+const idx=months.findIndex(m=>m.ym===historyViewMonth);
+const next=idx+dir;
+if(next<0||next>=months.length)return;
+setHistoryMonth(months[next].ym);
+}
+function renderHistoryMonthPicker(){
+const months=getPastMonthsForHistory();
+const byYear={};
+months.forEach(m=>{
+const y=m.ym.split('-')[0];
+(byYear[y]=byYear[y]||[]).push(m);
+});
+const years=Object.keys(byYear).sort((a,b)=>Number(b)-Number(a));
+const grids=years.map(y=>{
+const cells=byYear[y].map(m=>{
+const mon=Number(m.ym.split('-')[1]);
+const active=m.ym===historyViewMonth;
+return`<button type="button" class="month-grid-cell${active?' active':''}" onclick="pickHistoryMonth('${m.ym}')">${mon}월</button>`;
+}).join('');
+return`<p class="month-grid-year">${y}년</p><div class="month-grid">${cells}</div>`;
+}).join('');
+document.getElementById('sheet').innerHTML=`<div class="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-5"></div>
+<h2 class="text-xl font-bold mb-1">월 선택</h2>
+<p class="text-sm text-toss-sub mb-5">조회할 월을 선택하세요</p>
+${grids}
+<button type="button" onclick="closeSheet()" class="btn-toss-ghost mt-2">닫기</button>`;
+}
+function openHistoryMonthPicker(){
+renderHistoryMonthPicker();
+const sheet=document.getElementById('sheet'),bd=document.getElementById('sheetBackdrop');
+bd.classList.remove('hidden');sheet.classList.remove('hidden');
+document.body.classList.add('sheet-open');
+requestAnimationFrame(()=>{bd.classList.add('is-open');sheet.classList.add('is-open');});
+}
+function pickHistoryMonth(ym){setHistoryMonth(ym);closeSheet();}
 function renderStats(){
 const now=new Date();
 const curYm=monthYM(now);
@@ -1416,7 +1468,7 @@ saveState();closeSheet();setView('calendar');
 window.setView=setView;window.openSheet=openSheet;window.closeSheet=closeSheet;
 window.completeLesson=completeLesson;window.cancelSchedule=cancelSchedule;window.deletePlayer=deletePlayer;
 window.submitPlayer=submitPlayer;window.submitPayment=submitPayment;window.submitSchedule=submitSchedule;
-window.setCalMode=setCalMode;window.calNav=calNav;window.selectCalDay=selectCalDay;window.setDetailTab=setDetailTab;window.setHistoryMonth=setHistoryMonth;
+window.setCalMode=setCalMode;window.calNav=calNav;window.selectCalDay=selectCalDay;window.setDetailTab=setDetailTab;window.setHistoryMonth=setHistoryMonth;window.navigateHistoryMonth=navigateHistoryMonth;window.openHistoryMonthPicker=openHistoryMonthPicker;window.pickHistoryMonth=pickHistoryMonth;
 window.firebaseLogout=firebaseLogout;
 
 document.getElementById('authLogin')?.addEventListener('click',firebaseLogin);
