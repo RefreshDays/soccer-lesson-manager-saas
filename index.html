@@ -197,6 +197,8 @@ body.auth-lock #app,body.auth-lock .bottom-nav,body.auth-lock #fab{visibility:hi
 .auth-card p{font-size:13px;color:#4E5968;line-height:1.45;margin:0 0 16px}
 .subscribe-trial-headline{font-size:15px;font-weight:500;color:#E65100;line-height:1.45;margin:0 0 8px;letter-spacing:-.02em}
 .subscribe-trial-headline.hidden{display:none}
+.subscribe-price{font-size:13px;font-weight:600;color:#3182F6;line-height:1.45;margin:-8px 0 16px}
+.subscribe-price.hidden{display:none}
 .auth-error{margin-top:10px;font-size:13px;color:#F04452;line-height:1.4}
 .sync-bar{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:12px 14px;background:#fff;border-radius:14px;box-shadow:0 2px 12px rgba(0,0,0,.05);margin-bottom:12px}
 .sync-bar.hidden{display:none!important}
@@ -286,12 +288,15 @@ body.auth-lock #app,body.auth-lock .bottom-nav,body.auth-lock #fab{visibility:hi
 <div class="auth-card toss-card p-6">
 <h2>구독이 필요합니다</h2>
 <p id="subscribeTrialHeadline" class="subscribe-trial-headline hidden">체험 14일이 종료되었습니다.</p>
-<p id="subscribeMsg">이용을 계속하려면 구독해 주세요.</p>
-<a id="subscribeBtn" href="#" class="btn-toss mb-2">구독하기</a>
+<p id="subscribeMsg">이용을 계속하려면 아래에서 구독해 주세요.</p>
+<p id="subscribePrice" class="subscribe-price hidden"></p>
+<button type="button" id="subscribeBtn" class="btn-toss mb-2">구독하기</button>
 <button type="button" id="subscribeLogout" class="btn-toss-ghost">로그아웃</button>
 </div>
 </div>
 <script src="/firebase-config.js"></script>
+<script src="/toss-config.js"></script>
+<script src="https://js.tosspayments.com/v2/standard"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore-compat.js"></script>
@@ -303,10 +308,12 @@ const WEEKDAYS=['일','월','화','수','목','금','토'];
 let state={players:[],schedules:[]};
 let currentView='home',calendarMode='month',calendarDate=new Date(),selectedDate=null,detailTab='payment',historyViewMonth=null;
 let cloudSaveTimer=null,cloudUnsub=null,profileUnsub=null,lastCloudPush=0,applyingRemote=false,firebaseReady=false,bootFinished=false,currentAuthUid=null,currentSyncSession=0,currentSubscription=null;
-const APP_BUILD='20260522-saas-sub7';
+const APP_BUILD='20260522-saas-toss1';
 const SAAS_TRIAL_DAYS=14;
-const SAAS_SUBSCRIBE_URL='';
+const SAAS_SUBSCRIBE_AMOUNT=9900;
+const SAAS_SUBSCRIBE_ORDER_NAME='축구 레슨 매니저 월 구독';
 const SAAS_CONTACT_EMAIL='wonzia80@gmail.com';
+let tossPaymentInstance=null;
 
 function getStorageKey(authUid){return authUid?STORAGE_KEY_BASE+'-'+authUid:STORAGE_KEY_BASE;}
 function readLocalCache(authUid){
@@ -566,20 +573,59 @@ await ref.set({subscription:sub,updatedAt:Date.now()},{merge:true});
 currentSubscription=sub;
 return sub;
 }
+function formatWon(n){return Number(n).toLocaleString('ko-KR')+'원';}
+function getTossClientKey(){return(window.TOSS_CLIENT_KEY||'').trim();}
+function handleSubscribeCallback(){
+const params=new URLSearchParams(window.location.search);
+const status=params.get('subscribe');
+if(!status)return;
+const message=params.get('message');
+history.replaceState({},'',window.location.pathname);
+if(status==='success')alert('구독이 완료되었습니다.\n잠시 후 앱을 이용할 수 있습니다.');
+else alert(message?decodeURIComponent(message):'구독이 완료되지 않았습니다.');
+}
+async function ensureTossPayment(){
+const uid=firebase.auth().currentUser?.uid;
+if(!uid)throw new Error('로그인이 필요합니다.');
+const clientKey=getTossClientKey();
+if(!clientKey)throw new Error('토스 클라이언트 키가 설정되지 않았습니다.\ntoss-config.js를 확인해 주세요.');
+if(typeof TossPayments==='undefined')throw new Error('토스 결제 SDK를 불러오지 못했습니다.');
+if(tossPaymentInstance&&tossPaymentInstance.__uid===uid)return tossPaymentInstance;
+const tossPayments=TossPayments(clientKey);
+tossPaymentInstance=tossPayments.payment({customerKey:uid});
+tossPaymentInstance.__uid=uid;
+return tossPaymentInstance;
+}
+async function startTossSubscribe(){
+const user=firebase.auth().currentUser;
+if(!user){alert('로그인이 필요합니다.');return;}
+try{
+const payment=await ensureTossPayment();
+await payment.requestBillingAuth({
+method:'CARD',
+successUrl:window.location.origin+'/api/toss/billing-success',
+failUrl:window.location.origin+'/api/toss/billing-fail',
+customerEmail:user.email||undefined,
+customerName:(user.email||'회원').split('@')[0]
+});
+}catch(e){
+console.error(e);
+alert(e.message||'결제창을 열 수 없습니다.');
+}
+}
 function initSubscribeGate(){
 const btn=document.getElementById('subscribeBtn');
+const priceEl=document.getElementById('subscribePrice');
+if(priceEl){
+priceEl.textContent='월 '+formatWon(SAAS_SUBSCRIBE_AMOUNT)+' · '+SAAS_SUBSCRIBE_ORDER_NAME;
+priceEl.classList.remove('hidden');
+}
 if(!btn)return;
-if(SAAS_SUBSCRIBE_URL){
-btn.href=SAAS_SUBSCRIBE_URL;
-btn.target='_blank';
-btn.rel='noopener noreferrer';
-btn.classList.remove('btn-toss--disabled');
-btn.removeAttribute('aria-disabled');
-}else{
-btn.href='#';
+btn.textContent='구독하기 · 월 '+formatWon(SAAS_SUBSCRIBE_AMOUNT);
+btn.onclick=()=>startTossSubscribe();
+if(!getTossClientKey()){
 btn.classList.add('btn-toss--disabled');
 btn.setAttribute('aria-disabled','true');
-btn.addEventListener('click',e=>{e.preventDefault();alert('구독 페이지 URL이 아직 설정되지 않았습니다.\nindex.html의 SAAS_SUBSCRIBE_URL을 등록해 주세요.');});
 }
 }
 function isExpiredTrial(sub){
@@ -1681,6 +1727,7 @@ bootFinished=true;
 }
 
 function bootApp(){
+handleSubscribeCallback();
 if(initFirebase()){
 resetAppState();
 showAuthGate();
