@@ -44,6 +44,7 @@ background-size:20px;
 }
 .toss-select:focus{outline:none;border-color:#3182F6;box-shadow:0 0 0 2px rgba(49,130,246,.12)}
 .toss-textarea{min-height:120px;padding:14px 16px;resize:vertical}
+.btn-toss,.btn-toss-secondary,.btn-toss-ghost{display:inline-flex;align-items:center;justify-content:center;text-align:center;box-sizing:border-box;border:none;cursor:pointer;padding:0 16px;font-family:inherit;line-height:1.2;text-decoration:none}
 .btn-toss{background:#3182F6;color:#fff;border-radius:16px;min-height:52px;font-weight:600;font-size:16px;width:100%}
 .btn-toss-secondary{background:#E8F3FF;color:#3182F6;border-radius:16px;min-height:52px;font-weight:600;width:100%}
 .btn-toss-ghost{background:#F2F4F6;color:#4E5968;border-radius:16px;font-weight:600;min-height:48px;width:100%}
@@ -193,6 +194,8 @@ body.auth-lock #app,body.auth-lock .bottom-nav,body.auth-lock #fab{visibility:hi
 .auth-card{width:100%;max-width:22rem}
 .auth-card h2{font-size:1.125rem;font-weight:700;margin:0 0 6px}
 .auth-card p{font-size:13px;color:#4E5968;line-height:1.45;margin:0 0 16px}
+.subscribe-trial-headline{font-size:15px;font-weight:700;color:#191F28;line-height:1.45;margin:0 0 8px}
+.subscribe-trial-headline.hidden{display:none}
 .auth-error{margin-top:10px;font-size:13px;color:#F04452;line-height:1.4}
 .sync-bar{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:12px 14px;background:#fff;border-radius:14px;box-shadow:0 2px 12px rgba(0,0,0,.05);margin-bottom:12px}
 .sync-bar.hidden{display:none!important}
@@ -281,9 +284,10 @@ body.auth-lock #app,body.auth-lock .bottom-nav,body.auth-lock #fab{visibility:hi
 <div id="subscribeGate" class="subscribe-gate hidden" aria-hidden="true">
 <div class="auth-card toss-card p-6">
 <h2>구독이 필요합니다</h2>
-<p id="subscribeMsg">체험 기간이 종료되었습니다. 이용을 계속하려면 구독해 주세요.</p>
+<p id="subscribeTrialHeadline" class="subscribe-trial-headline hidden">체험 14일이 종료되었습니다.</p>
+<p id="subscribeMsg">이용을 계속하려면 구독해 주세요.</p>
 <p class="text-sm text-toss-sub mb-4">축구 지도자용 레슨·회원·스케줄 관리</p>
-<a id="subscribeContact" href="mailto:wonzia80@gmail.com?subject=축구%20레슨%20매니저%20구독%20문의" class="btn-toss mb-2 block text-center no-underline">이용 문의하기</a>
+<a id="subscribeContact" href="mailto:wonzia80@gmail.com?subject=축구%20레슨%20매니저%20구독%20문의" class="btn-toss mb-2">이용 문의하기</a>
 <button type="button" id="subscribeLogout" class="btn-toss-ghost">로그아웃</button>
 </div>
 </div>
@@ -299,7 +303,7 @@ const WEEKDAYS=['일','월','화','수','목','금','토'];
 let state={players:[],schedules:[]};
 let currentView='home',calendarMode='month',calendarDate=new Date(),selectedDate=null,detailTab='payment',historyViewMonth=null;
 let cloudSaveTimer=null,cloudUnsub=null,profileUnsub=null,lastCloudPush=0,applyingRemote=false,firebaseReady=false,bootFinished=false,currentAuthUid=null,currentSyncSession=0,currentSubscription=null;
-const APP_BUILD='20260522-saas-sub4';
+const APP_BUILD='20260522-saas-sub6';
 const SAAS_TRIAL_DAYS=14;
 const SAAS_CONTACT_EMAIL='wonzia80@gmail.com';
 
@@ -561,14 +565,26 @@ await ref.set({subscription:sub,updatedAt:Date.now()},{merge:true});
 currentSubscription=sub;
 return sub;
 }
+function isExpiredTrial(sub){
+if(!sub)return false;
+if(sub.status==='active'&&(sub.expiresAt||0)>Date.now())return false;
+if(sub.trialEndsAt&&sub.trialEndsAt<=Date.now())return true;
+return sub.status==='trial'||sub.plan==='trial';
+}
 function showSubscribeGate(sub){
 const gate=document.getElementById('subscribeGate');
+const headline=document.getElementById('subscribeTrialHeadline');
 const msg=document.getElementById('subscribeMsg');
+const trialExpired=isExpiredTrial(sub);
 document.body.classList.add('auth-lock');
 hideAuthGate();
+if(headline){
+headline.classList.toggle('hidden',!trialExpired);
+if(trialExpired)headline.textContent='체험 '+SAAS_TRIAL_DAYS+'일이 종료되었습니다.';
+}
 if(msg){
-if(sub&&sub.status==='trial')msg.textContent='체험 '+SAAS_TRIAL_DAYS+'일이 종료되었습니다. 이용을 계속하려면 구독해 주세요.';
-else msg.textContent='구독이 필요합니다. 이용 문의 후 계정을 활성화해 주세요.';
+if(trialExpired)msg.textContent='이용을 계속하려면 구독해 주세요. 아래 버튼으로 문의해 주세요.';
+else msg.textContent='이용 문의 후 계정을 활성화해 주세요.';
 }
 if(gate){gate.classList.remove('hidden');gate.setAttribute('aria-hidden','false');}
 }
