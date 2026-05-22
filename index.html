@@ -199,7 +199,7 @@ body.auth-lock #app,body.auth-lock .bottom-nav,body.auth-lock #fab{visibility:hi
 .subscribe-trial-headline.hidden{display:none}
 .subscribe-price{font-size:13px;font-weight:600;color:#3182F6;line-height:1.45;margin:-8px 0 16px}
 .subscribe-price.hidden{display:none}
-.auth-error{margin-top:10px;font-size:13px;color:#F04452;line-height:1.4}
+.auth-error{margin-top:20px;font-size:13px;color:#F04452;line-height:1.5;padding-top:4px;white-space:pre-line}
 .sync-bar{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:12px 14px;background:#fff;border-radius:14px;box-shadow:0 2px 12px rgba(0,0,0,.05);margin-bottom:12px}
 .sync-bar.hidden{display:none!important}
 .sync-bar-main{flex:1;min-width:0}
@@ -276,11 +276,11 @@ body.auth-lock #app,body.auth-lock .bottom-nav,body.auth-lock #fab{visibility:hi
 <div id="authGate" class="auth-gate hidden" aria-hidden="true">
 <div class="auth-card toss-card p-6">
 <h2>클라우드 로그인</h2>
-<p>회원·스케줄·결제 데이터를 Firebase에 저장합니다. 기기를 바꿔도 같은 계정으로 불러올 수 있어요.</p>
+<p>회원·스케줄·결제 데이터를 클라우드에 저장합니다. 기기를 바꿔도 같은 계정으로 불러올 수 있어요.</p>
 <label class="block mb-2"><span class="sr-only">이메일</span><input type="email" id="authEmail" class="toss-input" placeholder="이메일" autocomplete="username"/></label>
 <label class="block mb-4"><span class="sr-only">비밀번호</span><input type="password" id="authPassword" class="toss-input" placeholder="비밀번호 (6자 이상)" autocomplete="new-password"/></label>
 <button type="button" id="authLogin" class="btn-toss mb-2">로그인</button>
-<button type="button" id="authRegister" class="btn-toss-secondary">처음 사용 (가입)</button>
+<button type="button" id="authRegister" class="btn-toss-secondary mb-1">처음 사용 (가입)</button>
 <p id="authError" class="auth-error hidden" role="alert"></p>
 </div>
 </div>
@@ -308,7 +308,7 @@ const WEEKDAYS=['일','월','화','수','목','금','토'];
 let state={players:[],schedules:[]};
 let currentView='home',calendarMode='month',calendarDate=new Date(),selectedDate=null,detailTab='payment',historyViewMonth=null;
 let cloudSaveTimer=null,cloudUnsub=null,profileUnsub=null,lastCloudPush=0,applyingRemote=false,firebaseReady=false,bootFinished=false,currentAuthUid=null,currentSyncSession=0,currentSubscription=null;
-const APP_BUILD='20260522-saas-toss4';
+const APP_BUILD='20260522-saas-toss5';
 const SAAS_TRIAL_DAYS=14;
 const SAAS_SUBSCRIBE_AMOUNT=9900;
 const SAAS_SUBSCRIBE_ORDER_NAME='축구 레슨 매니저 월 구독';
@@ -841,16 +841,29 @@ if(!err)return;
 err.textContent=msg;
 err.classList.remove('hidden');
 }
+function clearAuthError(){
+const err=document.getElementById('authError');
+if(!err)return;
+err.textContent='';
+err.classList.add('hidden');
+}
+function authLoginErrorMessage(code){
+if(code==='auth/invalid-credential'||code==='auth/wrong-password'||code==='auth/user-not-found'||code==='auth/invalid-email'){
+return '이메일 또는 비밀번호가 올바르지 않습니다.\n가입할 때 사용한 이메일·비밀번호를 확인해 주세요.';
+}
+return '';
+}
 async function firebaseLogin(){
 if(!firebaseReady)return;
 const email=(document.getElementById('authEmail')?.value||'').trim();
 const pw=document.getElementById('authPassword')?.value||'';
+clearAuthError();
 if(!email||!pw){showAuthError('이메일과 비밀번호를 입력해 주세요.');return;}
 setAuthBusy(true);
 try{
 await firebase.auth().signInWithEmailAndPassword(email,pw);
 }catch(e){
-showAuthError(e.code==='auth/invalid-credential'||e.code==='auth/wrong-password'?'이메일 또는 비밀번호가 올바르지 않습니다.':(e.message||'로그인에 실패했습니다.'));
+showAuthError(authLoginErrorMessage(e.code)||e.message||'로그인에 실패했습니다.');
 }finally{setAuthBusy(false);}
 }
 async function firebaseRegister(){
