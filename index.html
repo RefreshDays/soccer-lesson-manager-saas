@@ -185,8 +185,9 @@ body.sheet-open,body.confirm-open{overflow:hidden}
 body.app-boot #app{opacity:0}
 body.app-boot .bottom-nav,body.app-boot #fab{opacity:0}
 body.auth-lock #app,body.auth-lock .bottom-nav,body.auth-lock #fab{visibility:hidden;pointer-events:none}
-.auth-gate{position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;padding:24px;background:#F2F4F6}
-.auth-gate.hidden{display:none!important}
+.auth-gate,.subscribe-gate{position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;padding:24px;background:#F2F4F6}
+.auth-gate.hidden,.subscribe-gate.hidden{display:none!important}
+.subscribe-badge{display:inline-flex;align-items:center;font-size:11px;font-weight:600;color:#E65100;background:#FFF4E6;padding:4px 8px;border-radius:9999px;margin-left:6px;vertical-align:middle}
 .auth-card{width:100%;max-width:22rem}
 .auth-card h2{font-size:1.125rem;font-weight:700;margin:0 0 6px}
 .auth-card p{font-size:13px;color:#4E5968;line-height:1.45;margin:0 0 16px}
@@ -263,6 +264,15 @@ body.auth-lock #app,body.auth-lock .bottom-nav,body.auth-lock #fab{visibility:hi
 <p id="authError" class="auth-error hidden" role="alert"></p>
 </div>
 </div>
+<div id="subscribeGate" class="subscribe-gate hidden" aria-hidden="true">
+<div class="auth-card toss-card p-6">
+<h2>구독이 필요합니다</h2>
+<p id="subscribeMsg">체험 기간이 종료되었습니다. 이용을 계속하려면 구독해 주세요.</p>
+<p class="text-sm text-toss-sub mb-4">축구 지도자용 레슨·회원·스케줄 관리</p>
+<a id="subscribeContact" href="mailto:wonzia80@gmail.com?subject=축구%20레슨%20매니저%20구독%20문의" class="btn-toss mb-2 block text-center no-underline">이용 문의하기</a>
+<button type="button" id="subscribeLogout" class="btn-toss-ghost">로그아웃</button>
+</div>
+</div>
 <script src="/firebase-config.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-auth-compat.js"></script>
@@ -274,8 +284,10 @@ const uid=p=>p+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 const WEEKDAYS=['일','월','화','수','목','금','토'];
 let state={players:[],schedules:[]};
 let currentView='home',calendarMode='month',calendarDate=new Date(),selectedDate=null,detailTab='payment',historyViewMonth=null;
-let cloudSaveTimer=null,cloudUnsub=null,lastCloudPush=0,applyingRemote=false,firebaseReady=false,bootFinished=false,currentAuthUid=null,currentSyncSession=0;
-const APP_BUILD='20260522-saas';
+let cloudSaveTimer=null,cloudUnsub=null,profileUnsub=null,lastCloudPush=0,applyingRemote=false,firebaseReady=false,bootFinished=false,currentAuthUid=null,currentSyncSession=0,currentSubscription=null;
+const APP_BUILD='20260522-saas-sub1';
+const SAAS_TRIAL_DAYS=14;
+const SAAS_CONTACT_EMAIL='wonzia80@gmail.com';
 
 function getStorageKey(authUid){return authUid?STORAGE_KEY_BASE+'-'+authUid:STORAGE_KEY_BASE;}
 function readLocalCache(authUid){
@@ -488,6 +500,94 @@ document.body.classList.remove('auth-lock');
 if(gate){gate.classList.add('hidden');gate.setAttribute('aria-hidden','true');}
 if(err)err.classList.add('hidden');
 }
+function createTrialSubscription(){
+const trialEndsAt=Date.now()+SAAS_TRIAL_DAYS*86400000;
+return{status:'trial',plan:'trial',startedAt:Date.now(),trialEndsAt,expiresAt:trialEndsAt};
+}
+function isSubscriptionActive(sub){
+if(!sub)return false;
+const now=Date.now();
+if(sub.status==='active'&&(sub.expiresAt||0)>now)return true;
+if(sub.status==='trial'&&((sub.trialEndsAt||sub.expiresAt||0)>now))return true;
+return false;
+}
+function getTrialDaysLeft(sub){
+if(!sub)return 0;
+const end=sub.trialEndsAt||sub.expiresAt||0;
+return Math.max(0,Math.ceil((end-Date.now())/86400000));
+}
+function formatSubscriptionDetail(sub){
+if(!sub)return'';
+if(sub.status==='trial'&&isSubscriptionActive(sub))return'체험 '+getTrialDaysLeft(sub)+'일 남음';
+if(sub.status==='active'&&isSubscriptionActive(sub))return'구독 이용 중';
+return'';
+}
+async function loadSubscription(uid){
+const ref=cloudProfileRef(uid);
+const snap=await ref.get();
+const data=snap.exists?snap.data():{};
+let sub=data.subscription;
+if(!sub){
+sub=createTrialSubscription();
+await ref.set({subscription:sub,updatedAt:Date.now()},{merge:true});
+}
+currentSubscription=sub;
+return sub;
+}
+function showSubscribeGate(sub){
+const gate=document.getElementById('subscribeGate');
+const msg=document.getElementById('subscribeMsg');
+document.body.classList.add('auth-lock');
+hideAuthGate();
+if(msg){
+if(sub&&sub.status==='trial')msg.textContent='체험 '+SAAS_TRIAL_DAYS+'일이 종료되었습니다. 이용을 계속하려면 구독해 주세요.';
+else msg.textContent='구독이 필요합니다. 이용 문의 후 계정을 활성화해 주세요.';
+}
+if(gate){gate.classList.remove('hidden');gate.setAttribute('aria-hidden','false');}
+}
+function hideSubscribeGate(){
+const gate=document.getElementById('subscribeGate');
+document.body.classList.remove('auth-lock');
+if(gate){gate.classList.add('hidden');gate.setAttribute('aria-hidden','true');}
+}
+function stopProfileListener(){
+if(profileUnsub){profileUnsub();profileUnsub=null;}
+}
+function startProfileListener(uid,sessionId){
+stopProfileListener();
+profileUnsub=cloudProfileRef(uid).onSnapshot(async snap=>{
+if(sessionId!==currentSyncSession||currentAuthUid!==uid)return;
+const sub=snap.exists?snap.data()?.subscription:null;
+currentSubscription=sub;
+if(!firebase.auth().currentUser)return;
+if(isSubscriptionActive(sub)){
+const gate=document.getElementById('subscribeGate');
+if(gate&&!gate.classList.contains('hidden')){
+hideSubscribeGate();
+await enterAppAsUser(firebase.auth().currentUser,sessionId);
+}else{
+const detail=[firebase.auth().currentUser.email||'',formatSubscriptionDetail(sub)].filter(Boolean).join(' · ');
+updateSyncStatus('synced',detail);
+}
+return;
+}
+showSubscribeGate(sub);
+updateSyncStatus('error','구독이 필요합니다');
+if(bootFinished)render();
+});
+}
+async function enterAppAsUser(user,sessionId){
+hideAuthGate();
+hideSubscribeGate();
+resetAppState();
+updateSyncStatus('pending');
+await syncFromCloud(user.uid,sessionId);
+if(sessionId!==currentSyncSession)return;
+startCloudListener(user.uid,sessionId);
+const detail=[user.email||'',formatSubscriptionDetail(currentSubscription)].filter(Boolean).join(' · ');
+updateSyncStatus('synced',detail);
+if(bootFinished)render();
+}
 async function saveProfileToCloud(uid,user){
 if(!firebaseReady||!uid||!user)return;
 const ref=cloudProfileRef(uid);
@@ -562,27 +662,30 @@ updateSyncStatus('synced',firebase.auth().currentUser?.email||'');
 }
 async function handleAuthUser(user){
 if(cloudUnsub){cloudUnsub();cloudUnsub=null;}
+stopProfileListener();
 lastCloudPush=0;
 currentSyncSession++;
 const sessionId=currentSyncSession;
 if(!user){
 currentAuthUid=null;
+currentSubscription=null;
 resetAppState();
+hideSubscribeGate();
 showAuthGate();
 updateSyncStatus('offline','로그인이 필요합니다');
 if(bootFinished)render();
 return;
 }
 currentAuthUid=user.uid;
-resetAppState();
-hideAuthGate();
-updateSyncStatus('pending');
 try{
-await syncFromCloud(user.uid,sessionId);
-if(sessionId!==currentSyncSession)return;
-startCloudListener(user.uid,sessionId);
-updateSyncStatus('synced',user.email||'');
-if(bootFinished)render();
+const sub=await loadSubscription(user.uid);
+startProfileListener(user.uid,sessionId);
+if(!isSubscriptionActive(sub)){
+showSubscribeGate(sub);
+updateSyncStatus('error','구독이 필요합니다');
+return;
+}
+await enterAppAsUser(user,sessionId);
 }catch(e){
 console.error(e);
 if(sessionId===currentSyncSession)updateSyncStatus('error','데이터 불러오기 실패');
@@ -630,9 +733,12 @@ if(!firebaseReady)return;
 const ok=await showConfirm('로그아웃할까요?\n다른 계정으로 로그인하면 해당 계정 데이터만 불러옵니다.');
 if(!ok)return;
 if(cloudUnsub){cloudUnsub();cloudUnsub=null;}
+stopProfileListener();
 currentSyncSession++;
 currentAuthUid=null;
+currentSubscription=null;
 resetAppState();
+hideSubscribeGate();
 await firebase.auth().signOut();
 }
 
@@ -1476,6 +1582,7 @@ window.firebaseLogout=firebaseLogout;
 document.getElementById('authLogin')?.addEventListener('click',firebaseLogin);
 document.getElementById('authRegister')?.addEventListener('click',firebaseRegister);
 document.getElementById('syncLogout')?.addEventListener('click',firebaseLogout);
+document.getElementById('subscribeLogout')?.addEventListener('click',firebaseLogout);
 document.getElementById('authPassword')?.addEventListener('keydown',e=>{if(e.key==='Enter')firebaseLogin();});
 
 document.getElementById('confirmCancel').onclick=()=>closeConfirm(false);
