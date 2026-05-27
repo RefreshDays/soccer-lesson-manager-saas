@@ -290,7 +290,10 @@ body.auth-lock #app,body.auth-lock .bottom-nav,body.auth-lock #fab{visibility:hi
 <h2>클라우드 로그인</h2>
 <p>회원·스케줄·결제 데이터를 클라우드에 저장합니다. 기기를 바꿔도 같은 계정으로 불러올 수 있어요.</p>
 <label class="block mb-2"><span class="sr-only">이메일</span><input type="email" id="authEmail" class="toss-input" placeholder="이메일" autocomplete="username"/></label>
+<label class="block mb-2"><span class="text-sm text-toss-sub mb-2 block">지도자명</span><input type="text" id="authCoachName" class="toss-input" placeholder="홍길동" autocomplete="name"/></label>
+<label class="block mb-2"><span class="text-sm text-toss-sub mb-2 block">연락처</span><input type="tel" id="authPhone" class="toss-input" placeholder="010-0000-0000" autocomplete="tel"/></label>
 <label class="block mb-4"><span class="sr-only">비밀번호</span><input type="password" id="authPassword" class="toss-input" placeholder="비밀번호 (6자 이상)" autocomplete="new-password"/></label>
+<p class="text-xs text-toss-muted mb-3 leading-relaxed">가입 시 지도자명·연락처를 입력해 주세요.</p>
 <button type="button" id="authLogin" class="btn-toss mb-2">로그인</button>
 <button type="button" id="authRegister" class="btn-toss-secondary mb-1">처음 사용 (가입)</button>
 <p id="authError" class="auth-error hidden" role="alert"></p>
@@ -342,7 +345,7 @@ const WEEKDAYS=['일','월','화','수','목','금','토'];
 let state={players:[],schedules:[]};
 let currentView='home',calendarMode='month',calendarDate=new Date(),selectedDate=null,detailTab='payment',historyViewMonth=null;
 let cloudSaveTimer=null,cloudUnsub=null,profileUnsub=null,lastCloudPush=0,applyingRemote=false,firebaseReady=false,bootFinished=false,currentAuthUid=null,currentSyncSession=0,currentSubscription=null;
-const APP_BUILD='20260522-saas-admin3';
+const APP_BUILD='20260522-saas-admin4';
 const SAAS_TRIAL_DAYS=14;
 const SAAS_SUBSCRIBE_AMOUNT=9900;
 const SAAS_SUBSCRIBE_ORDER_NAME='축구 레슨 매니저 월 구독';
@@ -757,9 +760,13 @@ if(!depositor){alert('입금자명을 입력해 주세요.');return;}
 const ok=await showConfirm('입금 '+formatWon(SAAS_SUBSCRIBE_AMOUNT)+'을 완료하셨나요?\n신청 후 관리자 확인까지 이용이 제한됩니다.');
 if(!ok)return;
 try{
+const profileSnap=await firebase.firestore().doc('users/'+user.uid).get();
+const profile=profileSnap.exists?profileSnap.data():{};
 await firebase.firestore().collection('activationRequests').add({
 uid:user.uid,
 email:user.email||'',
+coachName:profile.coachName||'',
+phone:profile.phone||'',
 status:'pending',
 type:'bank_transfer',
 amount:SAAS_SUBSCRIBE_AMOUNT,
@@ -767,6 +774,10 @@ depositorName:depositor,
 createdAt:Date.now(),
 updatedAt:Date.now()
 });
+await firebase.firestore().doc('users/'+user.uid).set({
+lastDepositorName:depositor,
+updatedAt:Date.now()
+},{merge:true});
 await refreshSubscribePendingUI();
 alert('입금 신청이 접수되었습니다.\n확인 후 이용 가능합니다.');
 }catch(e){
@@ -846,6 +857,9 @@ async function saveProfileToCloud(uid,user){
 if(!firebaseReady||!uid||!user)return;
 const ref=cloudProfileRef(uid);
 const snap=await ref.get();
+const existing=snap.exists?snap.data():{};
+const coachName=(document.getElementById('authCoachName')?.value||'').trim();
+const phone=(document.getElementById('authPhone')?.value||'').trim();
 const profile={
 email:user.email||'',
 ownerUid:uid,
@@ -854,8 +868,30 @@ memberCount:state.players.length,
 scheduleCount:state.schedules.length,
 app:'축구 레슨 매니저'
 };
+if(coachName)profile.coachName=coachName;
+else if(existing.coachName)profile.coachName=existing.coachName;
+if(phone)profile.phone=phone;
+else if(existing.phone)profile.phone=existing.phone;
 if(!snap.exists)profile.createdAt=Date.now();
 await ref.set(profile,{merge:true});
+}
+function readAuthProfileFields(){
+return{
+coachName:(document.getElementById('authCoachName')?.value||'').trim(),
+phone:(document.getElementById('authPhone')?.value||'').trim()
+};
+}
+async function saveCoachProfile(uid,email,coachName,phone){
+if(!firebaseReady||!uid)return;
+await cloudProfileRef(uid).set({
+email:email||'',
+ownerUid:uid,
+coachName,
+phone,
+app:'축구 레슨 매니저',
+createdAt:Date.now(),
+updatedAt:Date.now()
+},{merge:true});
 }
 async function saveStateToCloud(uid){
 if(!firebaseReady||!uid)return;
@@ -946,7 +982,7 @@ if(sessionId===currentSyncSession)updateSyncStatus('error','데이터 불러오�
 }
 }
 function setAuthBusy(busy){
-['authLogin','authRegister','authEmail','authPassword'].forEach(id=>{
+['authLogin','authRegister','authEmail','authPassword','authCoachName','authPhone'].forEach(id=>{
 const el=document.getElementById(id);
 if(el)el.disabled=busy;
 });
@@ -986,11 +1022,16 @@ async function firebaseRegister(){
 if(!firebaseReady)return;
 const email=(document.getElementById('authEmail')?.value||'').trim();
 const pw=document.getElementById('authPassword')?.value||'';
+const {coachName,phone}=readAuthProfileFields();
+clearAuthError();
 if(!email||!pw){showAuthError('이메일과 비밀번호를 입력해 주세요.');return;}
+if(!coachName){showAuthError('지도자명을 입력해 주세요.');return;}
+if(!phone){showAuthError('연락처를 입력해 주세요.');return;}
 if(pw.length<6){showAuthError('비밀번호는 6자 이상이어야 합니다.');return;}
 setAuthBusy(true);
 try{
-await firebase.auth().createUserWithEmailAndPassword(email,pw);
+const cred=await firebase.auth().createUserWithEmailAndPassword(email,pw);
+await saveCoachProfile(cred.user.uid,email,coachName,phone);
 }catch(e){
 showAuthError(e.code==='auth/email-already-in-use'?'이미 가입된 이메일입니다. 로그인해 주세요.':(e.message||'가입에 실패했습니다.'));
 }finally{setAuthBusy(false);}

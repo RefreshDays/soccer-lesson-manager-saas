@@ -6,11 +6,15 @@ service cloud.firestore {
         && request.auth.token.email == 'sonkh@rubycell.co.kr';
     }
 
+    function userUpdateAllowed() {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(['adminNote']);
+    }
+
     match /users/{userId} {
       allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
       allow create: if request.auth != null && request.auth.uid == userId;
       allow update: if isAdmin()
-        || (request.auth != null && request.auth.uid == userId);
+        || (request.auth != null && request.auth.uid == userId && userUpdateAllowed());
       allow delete: if isAdmin();
 
       match /{document=**} {

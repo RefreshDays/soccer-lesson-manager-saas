@@ -30,6 +30,19 @@ body{margin:0;background:#F2F4F6;color:#191F28;font-family:Paperlogy,system-ui,s
 .hidden{display:none!important}
 .auth-error{margin-top:14px;font-size:13px;color:#F04452;line-height:1.5;white-space:pre-line}
 .empty{padding:32px 12px;text-align:center;color:#8B95A1;font-size:14px}
+.user-card{padding:14px 0;border-bottom:1px solid #F2F4F6}
+.user-card:last-child{border-bottom:none}
+.user-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.user-title{font-size:14px;font-weight:700;line-height:1.35}
+.user-sub{font-size:12px;color:#4E5968;margin-top:4px;line-height:1.45}
+.user-meta{font-size:11px;color:#8B95A1;margin-top:8px;line-height:1.5}
+.user-actions{display:flex;flex-direction:column;gap:6px;flex-shrink:0}
+.memo-box{margin-top:10px}
+.memo-input{width:100%;min-height:56px;background:#F2F4F6;border:none;border-radius:12px;padding:10px 12px;font-size:13px;line-height:1.45;resize:vertical;box-sizing:border-box;font-family:inherit}
+.memo-input:focus{outline:2px solid #3182F6;background:#fff}
+.memo-actions{display:flex;justify-content:flex-end;margin-top:6px}
+.dday{font-weight:700;color:#3182F6}
+.dday.is-expired{color:#F04452}
 </style>
 </head>
 <body>
@@ -62,7 +75,7 @@ body{margin:0;background:#F2F4F6;color:#191F28;font-family:Paperlogy,system-ui,s
 <div id="pendingList"></div>
 </div>
 <div id="panelUsers" class="hidden">
-<label class="block mb-3"><input type="search" id="userSearch" class="toss-input" placeholder="이메일 검색"/></label>
+<label class="block mb-3"><input type="search" id="userSearch" class="toss-input" placeholder="이메일 · 지도자명 · 연락처 검색"/></label>
 <div id="userList"></div>
 </div>
 </div>
@@ -86,6 +99,33 @@ let usersUnsub=null;
 function esc(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');}
 function formatWon(n){return Number(n).toLocaleString('ko-KR')+'원';}
 function formatDate(ms){if(!ms)return '-';return new Date(ms).toLocaleString('ko-KR');}
+function formatSignupDate(ms){
+if(!ms)return '-';
+const d=new Date(ms);
+return d.getFullYear()+'.'+(d.getMonth()+1)+'.'+d.getDate();
+}
+function formatDDay(sub){
+const now=Date.now();
+if(!sub)return {text:'-',cls:''};
+let end=0;
+if(sub.status==='active')end=sub.expiresAt||0;
+else end=sub.trialEndsAt||sub.expiresAt||0;
+if(!end)return {text:'-',cls:''};
+const days=Math.ceil((end-now)/86400000);
+if(days<0)return {text:'만료',cls:'dday is-expired'};
+if(days===0)return {text:'D-day',cls:'dday'};
+return {text:'D-'+days,cls:'dday'};
+}
+function userPrimaryLabel(u){
+if(u.coachName)return esc(u.coachName);
+return esc(u.email||u.id);
+}
+function userSecondaryLine(u){
+const parts=[];
+if(u.coachName&&u.email)parts.push(esc(u.email));
+if(u.phone)parts.push(esc(u.phone));
+return parts.join(' · ')||esc(u.email||u.id);
+}
 function formatSubBadge(sub){
 if(!sub)return '<span class="badge badge-expired">없음</span>';
 const now=Date.now();
@@ -154,7 +194,8 @@ document.getElementById('pendingCount').textContent=snap.size?'('+snap.size+')':
 if(snap.empty){list.innerHTML='<div class="empty">대기 중인 입금 신청이 없습니다.</div>';return;}
 const rows=snap.docs.map(d=>{const r=d.data();return `<div class="row items-start">
 <div class="min-w-0 flex-1">
-<p class="font-semibold text-sm">${esc(r.email||'-')}</p>
+<p class="font-semibold text-sm">${esc(r.coachName||r.email||'-')}</p>
+<p class="text-xs text-toss-sub mt-1">${esc(r.email||'-')}${r.phone?' · '+esc(r.phone):''}</p>
 <p class="text-xs text-toss-sub mt-1">입금자명 ${esc(r.depositorName||'-')} · ${formatWon(r.amount||SUBSCRIBE_AMOUNT)}</p>
 <p class="text-xs text-toss-muted mt-1">${formatDate(r.createdAt)}</p>
 </div>
@@ -176,22 +217,37 @@ const q=(document.getElementById('userSearch').value||'').trim().toLowerCase();
 list.innerHTML='<div class="empty">불러오는 중...</div>';
 usersUnsub=firebase.firestore().collection('users').onSnapshot(snap=>{
 let docs=snap.docs.map(d=>({id:d.id,...d.data()}));
-if(q)docs=docs.filter(u=>(u.email||'').toLowerCase().includes(q));
+if(q)docs=docs.filter(u=>{
+const hay=[u.email,u.coachName,u.phone,u.lastDepositorName].filter(Boolean).join(' ').toLowerCase();
+return hay.includes(q);
+});
 docs.sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
 if(!docs.length){list.innerHTML='<div class="empty">회원이 없습니다.</div>';return;}
 list.innerHTML=docs.map(u=>{
 const sub=u.subscription||{};
 const exp=sub.expiresAt||sub.trialEndsAt;
-return `<div class="row items-start">
+const dday=formatDDay(sub);
+const depositor=u.lastDepositorName||'-';
+const note=esc(u.adminNote||'');
+return `<div class="user-card">
+<div class="user-head">
 <div class="min-w-0 flex-1">
-<p class="font-semibold text-sm">${esc(u.email||u.id)}</p>
-<p class="text-xs text-toss-sub mt-1">${formatSubBadge(sub)} · 회원 ${u.memberCount||0} · 일정 ${u.scheduleCount||0}</p>
-<p class="text-xs text-toss-muted mt-1">만료 ${formatDate(exp)}</p>
+<p class="user-title">${userPrimaryLabel(u)}</p>
+<p class="user-sub">${userSecondaryLine(u)}</p>
+<p class="user-sub">${formatSubBadge(sub)} · 회원 ${u.memberCount||0} · 일정 ${u.scheduleCount||0}</p>
+<p class="user-meta">가입 ${formatSignupDate(u.createdAt)} · <span class="${dday.cls}">${dday.text}</span> · 입금자 ${esc(depositor)}</p>
+<p class="user-meta">만료 ${formatDate(exp)}</p>
 </div>
-<div class="flex flex-col gap-2 shrink-0">
+<div class="user-actions">
 <button type="button" class="btn btn-primary btn-sm" onclick="activateUser('${u.id}')">30일 활성</button>
 <button type="button" class="btn btn-ghost btn-sm" onclick="extendTrial('${u.id}',14)">체험 +14일</button>
-</div></div>`;
+</div>
+</div>
+<div class="memo-box">
+<textarea class="memo-input" id="memo-${u.id}" placeholder="관리자 메모">${note}</textarea>
+<div class="memo-actions"><button type="button" class="btn btn-ghost btn-sm" onclick="saveAdminNote('${u.id}')">메모 저장</button></div>
+</div>
+</div>`;
 }).join('');
 },err=>{
 list.innerHTML='<div class="empty">회원 목록 오류<br>'+esc(err.message)+'</div>';
@@ -282,6 +338,19 @@ updatedAt:now
 alert('체험이 연장되었습니다.');
 }catch(e){alert(e.message||'실패');}
 }
+async function saveAdminNote(uid){
+const el=document.getElementById('memo-'+uid);
+if(!el)return;
+const adminNote=(el.value||'').trim();
+try{
+await firebase.firestore().doc('users/'+uid).set({
+adminNote,
+adminNoteUpdatedAt:Date.now(),
+adminNoteBy:firebase.auth().currentUser?.email||''
+},{merge:true});
+alert('메모가 저장되었습니다.');
+}catch(e){alert(e.message||'메모 저장 실패');}
+}
 
 document.querySelectorAll('.tab').forEach(btn=>{
 btn.addEventListener('click',()=>{
@@ -301,6 +370,7 @@ window.approveRequest=approveRequest;
 window.rejectRequest=rejectRequest;
 window.activateUser=activateUser;
 window.extendTrial=extendTrial;
+window.saveAdminNote=saveAdminNote;
 
 if(initFirebase()){
 firebase.auth().onAuthStateChanged(user=>{
