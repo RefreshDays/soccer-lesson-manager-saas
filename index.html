@@ -207,9 +207,9 @@ body.auth-lock #app,body.auth-lock .bottom-nav,body.auth-lock #fab{visibility:hi
 .bank-info strong{display:block;color:#191F28;font-size:15px;margin-bottom:8px}
 .bank-row{display:flex;justify-content:space-between;gap:12px;padding:4px 0}
 .bank-row span:last-child{font-weight:600;color:#191F28;text-align:right}
-.subscribe-pending{background:#FFF8EB;border:1px solid #FFE8C2;border-radius:14px;padding:14px;margin-bottom:12px}
-.subscribe-pending strong{display:block;color:#E65100;font-size:14px;margin-bottom:6px}
-.subscribe-pending p{margin:0;font-size:13px;color:#4E5968;line-height:1.5}
+.subscribe-pending{background:#FFF8EB;border:1px solid #FFE8C2;border-radius:14px;padding:20px 18px;margin-bottom:16px;text-align:center}
+.subscribe-pending-title{margin:0 0 8px;font-size:16px;font-weight:700;color:#E65100;line-height:1.4}
+.subscribe-pending-desc{margin:0;font-size:14px;color:#4E5968;line-height:1.5}
 .subscribe-note{font-size:12px;color:#8B95A1;line-height:1.45;margin:0 0 12px}
 .auth-error{margin-top:20px;font-size:13px;color:#F04452;line-height:1.5;padding-top:4px;white-space:pre-line}
 .sync-bar{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:12px 14px;background:#fff;border-radius:14px;box-shadow:0 2px 12px rgba(0,0,0,.05);margin-bottom:12px}
@@ -298,12 +298,14 @@ body.auth-lock #app,body.auth-lock .bottom-nav,body.auth-lock #fab{visibility:hi
 </div>
 <div id="subscribeGate" class="subscribe-gate hidden" aria-hidden="true">
 <div class="auth-card toss-card p-6">
+<div id="subscribeGateHeader">
 <h2>구독이 필요합니다</h2>
 <p id="subscribeTrialHeadline" class="subscribe-trial-headline hidden">체험 14일이 종료되었습니다.</p>
 <p id="subscribeMsg">이용을 계속하려면 아래에서 구독해 주세요.</p>
+</div>
 <div id="subscribePendingBox" class="subscribe-pending hidden">
-<strong>입금 확인 중입니다</strong>
-<p id="subscribePendingMsg">입금 확인 후 이용 가능합니다. 보통 24시간 이내 처리됩니다.</p>
+<p class="subscribe-pending-title">입금 확인 중입니다.</p>
+<p class="subscribe-pending-desc">관리자 승인 후 이용 가능합니다.</p>
 </div>
 <div id="subscribePayArea">
 <p id="subscribePrice" class="subscribe-price hidden"></p>
@@ -340,7 +342,7 @@ const WEEKDAYS=['일','월','화','수','목','금','토'];
 let state={players:[],schedules:[]};
 let currentView='home',calendarMode='month',calendarDate=new Date(),selectedDate=null,detailTab='payment',historyViewMonth=null;
 let cloudSaveTimer=null,cloudUnsub=null,profileUnsub=null,lastCloudPush=0,applyingRemote=false,firebaseReady=false,bootFinished=false,currentAuthUid=null,currentSyncSession=0,currentSubscription=null;
-const APP_BUILD='20260522-saas-admin2';
+const APP_BUILD='20260522-saas-admin3';
 const SAAS_TRIAL_DAYS=14;
 const SAAS_SUBSCRIBE_AMOUNT=9900;
 const SAAS_SUBSCRIBE_ORDER_NAME='축구 레슨 매니저 월 구독';
@@ -734,15 +736,13 @@ const user=firebase.auth().currentUser;
 const pending=await getPendingActivationRequest(user?.uid);
 const pendingBox=document.getElementById('subscribePendingBox');
 const payArea=document.getElementById('subscribePayArea');
-const msg=document.getElementById('subscribePendingMsg');
+const header=document.getElementById('subscribeGateHeader');
 if(pending){
+header?.classList.add('hidden');
 pendingBox?.classList.remove('hidden');
 payArea?.classList.add('hidden');
-if(msg){
-const when=pending.createdAt?new Date(pending.createdAt).toLocaleString('ko-KR'):'';
-msg.textContent='입금 신청이 접수되었습니다.'+(when?` (${when})`:'')+' 확인 후 이용 가능합니다.';
-}
 }else{
+header?.classList.remove('hidden');
 pendingBox?.classList.add('hidden');
 payArea?.classList.remove('hidden');
 }
