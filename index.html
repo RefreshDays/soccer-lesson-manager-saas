@@ -340,7 +340,7 @@ const WEEKDAYS=['일','월','화','수','목','금','토'];
 let state={players:[],schedules:[]};
 let currentView='home',calendarMode='month',calendarDate=new Date(),selectedDate=null,detailTab='payment',historyViewMonth=null;
 let cloudSaveTimer=null,cloudUnsub=null,profileUnsub=null,lastCloudPush=0,applyingRemote=false,firebaseReady=false,bootFinished=false,currentAuthUid=null,currentSyncSession=0,currentSubscription=null;
-const APP_BUILD='20260522-saas-admin1';
+const APP_BUILD='20260522-saas-admin2';
 const SAAS_TRIAL_DAYS=14;
 const SAAS_SUBSCRIBE_AMOUNT=9900;
 const SAAS_SUBSCRIBE_ORDER_NAME='축구 레슨 매니저 월 구독';
@@ -684,23 +684,9 @@ alert(e.message||'결제창을 열 수 없습니다.');
 function initSubscribeGate(){
 const btn=document.getElementById('subscribeBtn');
 const priceEl=document.getElementById('subscribePrice');
-const bankInfo=document.getElementById('subscribeBankInfo');
-const bank=getBankInfo();
 if(priceEl){
 priceEl.textContent='월 '+formatWon(SAAS_SUBSCRIBE_AMOUNT)+' · '+SAAS_SUBSCRIBE_ORDER_NAME;
 priceEl.classList.remove('hidden');
-}
-if(bankInfo){
-bankInfo.innerHTML=`<strong>입금 계좌</strong>
-<div class="bank-row"><span>은행</span><span>${esc(bank.bankName||'-')}</span></div>
-<div class="bank-row"><span>계좌번호</span><span>${esc(bank.accountNumber||'-')}</span></div>
-<div class="bank-row"><span>예금주</span><span>${esc(bank.accountHolder||'-')}</span></div>
-<div class="bank-row"><span>입금액</span><span>${formatWon(SAAS_SUBSCRIBE_AMOUNT)}</span></div>`;
-}
-const depositor=document.getElementById('subscribeDepositor');
-if(depositor&&!depositor.value){
-const email=firebase.auth().currentUser?.email||'';
-depositor.value=email.split('@')[0]||'';
 }
 if(btn){
 btn.textContent='구독하기 · 월 '+formatWon(SAAS_SUBSCRIBE_AMOUNT);
@@ -714,6 +700,22 @@ document.getElementById('subscribeTabCard')?.addEventListener('click',()=>setSub
 document.getElementById('subscribeTabBank')?.addEventListener('click',()=>setSubscribePayMode('bank'));
 document.getElementById('subscribeBankBtn')?.addEventListener('click',submitBankTransferRequest);
 setSubscribePayMode('card');
+}
+function updateSubscribeBankPanel(user){
+const bankInfo=document.getElementById('subscribeBankInfo');
+const bank=getBankInfo();
+if(bankInfo){
+bankInfo.innerHTML=`<strong>입금 계좌</strong>
+<div class="bank-row"><span>은행</span><span>${esc(bank.bankName||'-')}</span></div>
+<div class="bank-row"><span>계좌번호</span><span>${esc(bank.accountNumber||'-')}</span></div>
+<div class="bank-row"><span>예금주</span><span>${esc(bank.accountHolder||'-')}</span></div>
+<div class="bank-row"><span>입금액</span><span>${formatWon(SAAS_SUBSCRIBE_AMOUNT)}</span></div>`;
+}
+const depositor=document.getElementById('subscribeDepositor');
+if(depositor&&!depositor.value.trim()){
+const email=user?.email||'';
+depositor.value=email.split('@')[0]||'';
+}
 }
 function setSubscribePayMode(mode){
 subscribePayMode=mode;
@@ -794,6 +796,7 @@ if(trialExpired)msg.textContent='이용을 계속하려면 아래에서 구독�
 else msg.textContent='구독 후 다시 로그인해 주세요.';
 }
 if(gate){gate.classList.remove('hidden');gate.setAttribute('aria-hidden','false');}
+updateSubscribeBankPanel(firebase.auth().currentUser);
 refreshSubscribePendingUI();
 }
 function hideSubscribeGate(){
@@ -1862,7 +1865,6 @@ document.getElementById('authLogin')?.addEventListener('click',firebaseLogin);
 document.getElementById('authRegister')?.addEventListener('click',firebaseRegister);
 document.getElementById('syncLogout')?.addEventListener('click',firebaseLogout);
 document.getElementById('subscribeLogout')?.addEventListener('click',firebaseLogout);
-initSubscribeGate();
 document.getElementById('authPassword')?.addEventListener('keydown',e=>{if(e.key==='Enter')firebaseLogin();});
 
 document.getElementById('confirmCancel').onclick=()=>closeConfirm(false);
@@ -1885,6 +1887,7 @@ bootFinished=true;
 }
 
 function bootApp(){
+initSubscribeGate();
 handleSubscribeCallback();
 if(initFirebase()){
 resetAppState();
