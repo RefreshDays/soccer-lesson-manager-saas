@@ -441,7 +441,7 @@ const WEEKDAYS=['일','월','화','수','목','금','토'];
 let state={players:[],schedules:[]};
 let currentView='home',calendarMode='month',calendarDate=new Date(),selectedDate=null,detailTab='payment',historyViewMonth=null;
 let cloudSaveTimer=null,cloudUnsub=null,profileUnsub=null,lastCloudPush=0,applyingRemote=false,firebaseReady=false,bootFinished=false,currentAuthUid=null,currentSyncSession=0,currentSubscription=null;
-const APP_BUILD='20260527-saas-month-stat';
+const APP_BUILD='20260527-saas-admin-delete';
 const SAAS_TRIAL_DAYS=14;
 const SAAS_SUBSCRIBE_AMOUNT=9900;
 const SAAS_SUBSCRIBE_ORDER_NAME='축구 레슨 매니저 월 구독';
@@ -1768,6 +1768,7 @@ return `<div class="admin-user-card">
 <div class="admin-user-actions">
 <button type="button" class="btn-toss btn-toss-inline" data-admin-action="activate" data-uid="${esc(u.id)}">30일 활성</button>
 <button type="button" class="btn-toss-ghost btn-toss-inline" data-admin-action="extend-trial" data-uid="${esc(u.id)}">체험 +14일</button>
+${u.id===firebase.auth().currentUser?.uid?'':`<button type="button" class="btn-toss-danger" data-admin-action="delete-user" data-uid="${esc(u.id)}" data-label="${esc(u.coachName||u.email||u.id)}" data-phone="${esc(u.phone||'')}">삭제</button>`}
 </div>
 </div>
 <div class="admin-memo-box">
@@ -1884,6 +1885,37 @@ adminNoteBy:firebase.auth().currentUser?.email||''
 await showAlert('메모가 저장되었습니다.');
 }catch(e){await showAlert(e.message||'메모 저장 실패');}
 }
+async function deleteAdminUser(uid,label,phone){
+if(!uid||!firebaseReady||!isAdminUser(firebase.auth().currentUser))return;
+const me=firebase.auth().currentUser;
+if(me&&uid===me.uid){await showAlert('관리자 본인 계정은 삭제할 수 없습니다.');return;}
+const name=label||uid;
+const ok=await showConfirm(name+' 계정을 삭제할까요?\n\n레슨·회원·구독 데이터가 모두 삭제됩니다.\n되돌릴 수 없습니다.');
+if(!ok)return;
+try{
+const db=firebase.firestore();
+const batch=db.batch();
+batch.delete(db.doc('users/'+uid+'/app/state'));
+batch.delete(db.doc('users/'+uid));
+await batch.commit();
+const phoneKey=normalizePhone(phone||'');
+if(phoneKey&&isValidPhone(phoneKey)){
+const regRef=coachRegistryRef(phoneKey);
+const regSnap=await regRef.get();
+if(regSnap.exists&&regSnap.data().uid===uid)await regRef.delete();
+}
+const reqSnap=await db.collection('activationRequests').where('uid','==',uid).get();
+if(!reqSnap.empty){
+const reqBatch=db.batch();
+reqSnap.docs.forEach(d=>reqBatch.delete(d.ref));
+await reqBatch.commit();
+}
+await showAlert('데이터가 삭제되었습니다.\n\n같은 이메일로 다시 가입하려면\nFirebase 콘솔 → Authentication에서\n해당 이메일 계정을 삭제해 주세요.');
+}catch(e){
+console.error(e);
+await showAlert(e.message||'삭제에 실패했습니다.');
+}
+}
 function handleAdminPanelClick(e){
 const btn=e.target.closest('[data-admin-action]');
 if(!btn)return;
@@ -1895,6 +1927,7 @@ else if(action==='reject')rejectAdminRequest(requestId);
 else if(action==='activate')activateAdminUser(uid);
 else if(action==='extend-trial')extendAdminTrial(uid,14);
 else if(action==='save-note')saveAdminUserNote(uid);
+else if(action==='delete-user')deleteAdminUser(uid,btn.dataset.label,btn.dataset.phone);
 }
 function initAdminPanel(){
 document.querySelectorAll('.admin-tab').forEach(btn=>{
