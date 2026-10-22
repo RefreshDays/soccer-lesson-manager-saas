@@ -17,6 +17,16 @@ export function publicMessage(error, fallback) {
 // 서비스 계정 키 (Firebase 콘솔 → 프로젝트 설정 → 서비스 계정 → 새 비공개 키 생성)
 // 방법 1) FIREBASE_SERVICE_ACCOUNT: JSON 원문 또는 base64 한 줄
 // 방법 2) JSON 안의 세 값을 각각 등록: FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY
+// 붙여넣은 개인 키를 정리합니다. '\n' 글자, 실제 줄바꿈, 빈 줄, 공백, 앞뒤 따옴표가 섞여 있어도
+// BEGIN/END 사이의 본문만 꺼내 표준 PEM 형식(64자 줄바꿈)으로 다시 만듭니다.
+function normalizePrivateKey(value) {
+  const text = String(value).replace(/\\n/g, '\n');
+  const match = text.match(/-----BEGIN PRIVATE KEY-----([\s\S]*?)-----END PRIVATE KEY-----/);
+  if (!match) return '';
+  const body = match[1].replace(/[^A-Za-z0-9+/=]/g, '');
+  return `-----BEGIN PRIVATE KEY-----\n${body.match(/.{1,64}/g).join('\n')}\n-----END PRIVATE KEY-----\n`;
+}
+
 function readServiceAccount() {
   const raw = (process.env.FIREBASE_SERVICE_ACCOUNT || '').trim();
   if (raw) {
@@ -35,8 +45,10 @@ function readServiceAccount() {
   if (clientEmail && !/^[^\s@{}"]+@[^\s@{}"]+\.iam\.gserviceaccount\.com$/.test(clientEmail)) {
     throw userError('FIREBASE_CLIENT_EMAIL 값이 올바르지 않습니다. 서비스 계정 이메일만 넣어 주세요.');
   }
-  // 붙여넣을 때 줄바꿈이 '\n' 글자로 들어오므로 실제 줄바꿈으로 되돌립니다. 앞뒤 따옴표도 제거합니다.
-  const privateKey = (process.env.FIREBASE_PRIVATE_KEY || '').trim().replace(/^"|"$/g, '').replace(/\\n/g, '\n');
+  const privateKey = normalizePrivateKey(process.env.FIREBASE_PRIVATE_KEY || '');
+  if (process.env.FIREBASE_PRIVATE_KEY && !privateKey) {
+    throw userError('FIREBASE_PRIVATE_KEY 값이 올바르지 않습니다. -----BEGIN PRIVATE KEY----- 부터 -----END PRIVATE KEY----- 까지 넣어 주세요.');
+  }
   if (projectId && clientEmail && privateKey) {
     return { project_id: projectId, client_email: clientEmail, private_key: privateKey };
   }
