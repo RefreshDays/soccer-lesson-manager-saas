@@ -1,9 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-<defs><linearGradient id="bg" x1="0" y1="0" x2="0.4" y2="1"><stop offset="0" stop-color="#4B93FF"/><stop offset="1" stop-color="#1B64DA"/></linearGradient></defs>
-<rect width="512" height="512" rx="112" fill="url(#bg)"/>
-<rect x="120" y="138" width="272" height="250" rx="44" fill="#fff"/>
-<path d="M120 182a44 44 0 0 1 44-44h184a44 44 0 0 1 44 44v24H120z" fill="#DCEBFF"/>
-<rect x="176" y="108" width="28" height="70" rx="14" fill="#fff"/>
-<rect x="308" y="108" width="28" height="70" rx="14" fill="#fff"/>
-<path d="M190 292l46 46 88-96" fill="none" stroke="#3182F6" stroke-width="38" stroke-linecap="round" stroke-linejoin="round"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512"><defs><linearGradient id="bg" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#0B1E3F"/><stop offset=".55" stop-color="#0046C0"/><stop offset="1" stop-color="#0076E5"/></linearGradient></defs><rect width="512" height="512" rx="116" fill="url(#bg)"/><g transform="translate(72 72) scale(0.71875)"><g transform="translate(21 -19)"><path d="M397.49 229.69A168 168 0 1 1 265.17 110.55" fill="none" stroke="#fff" stroke-width="62" stroke-linecap="round"/><path d="M150 268L222 346L404 104" fill="none" stroke="#fff" stroke-width="58" stroke-linecap="round" stroke-linejoin="round"/></g></g></svg>

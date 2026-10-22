@@ -11,10 +11,10 @@
 <meta name="theme-color" content="#3182F6"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-title" content="레슨매니저"/>
-<link rel="manifest" href="/manifest.webmanifest?v=20261022-lesson"/>
-<link rel="icon" href="/icon.svg?v=20261022-lesson" type="image/svg+xml"/>
-<link rel="icon" href="/icons/icon-192.png?v=20261022-lesson" type="image/png" sizes="192x192"/>
-<link rel="apple-touch-icon" href="/apple-touch-icon.png?v=20261022-lesson"/>
+<link rel="manifest" href="/manifest.webmanifest?v=20261022-logo"/>
+<link rel="icon" href="/icon.svg?v=20261022-logo" type="image/svg+xml"/>
+<link rel="icon" href="/icons/icon-192.png?v=20261022-logo" type="image/png" sizes="192x192"/>
+<link rel="apple-touch-icon" href="/apple-touch-icon.png?v=20261022-logo"/>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>tailwind.config={theme:{extend:{colors:{toss:{bg:'#F2F4F6',text:'#191F28',sub:'#4E5968',muted:'#8B95A1',blue:'#3182F6',green:'#0D7A5F',pink:'#F04452',emerald:'#00D084'}},fontFamily:{sans:['Paperlogy','system-ui','sans-serif']},boxShadow:{toss:'0 2px 16px rgba(0,0,0,.06)','toss-lg':'0 8px 24px rgba(0,0,0,.08)'}}}}</script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fonts-archive/Paperlogy/Paperlogy.css"/>
@@ -184,15 +184,12 @@ body.sheet-open,body.confirm-open{overflow:hidden}
 .member-detail-contact{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:10px;font-size:14px;line-height:1.4}
 .app-splash{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#F2F4F6;padding:max(24px,env(safe-area-inset-top)) 28px 24px;text-align:center;transition:opacity .4s ease,visibility .4s}
 .app-splash.is-hidden{opacity:0;visibility:hidden;pointer-events:none}
-.app-splash-brand{margin:0;font-size:1.625rem;font-weight:800;color:#3182F6;letter-spacing:-.03em;line-height:1.2}
 .app-splash-title{margin:10px 0 0;font-size:1.0625rem;font-weight:600;color:#191F28;line-height:1.45;letter-spacing:-.02em}
 .app-splash-tag{margin:6px 0 0;font-size:13px;color:#8B95A1;line-height:1.45;letter-spacing:-.01em}
-.lesson-tile{flex-shrink:0;width:56px;height:56px;border-radius:16px;background:linear-gradient(160deg,#4B93FF,#1B64DA);display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px rgba(49,130,246,.28);overflow:hidden}
-.lesson-tile--splash{width:88px;height:88px;border-radius:24px;margin:0 auto 20px}
-.lesson-tile-icon{display:block;width:64%;height:64%}
-.lesson-tile-icon svg{display:block;width:100%;height:100%}
-.lesson-tile-icon.is-enter{animation:lessonIconIn .28s cubic-bezier(.2,.9,.3,1.2)}
-@keyframes lessonIconIn{from{transform:translateY(60%) scale(.6);opacity:0}to{transform:none;opacity:1}}
+.app-splash-logo{display:block;width:150px;height:auto;margin:0 auto 18px}
+.brand-symbol{flex-shrink:0;display:block;width:56px;height:56px}
+.app-header-symbol{display:inline-block;width:22px;height:22px;margin-right:7px;vertical-align:-5px}
+.dash-brand-logo{display:block;height:44px;width:auto}
 .auth-brand{display:flex;align-items:center;gap:14px;margin:0 0 20px}
 .auth-brand-text{display:flex;flex-direction:column;min-width:0}
 .auth-brand-name{font-size:19px;font-weight:800;color:#191F28;letter-spacing:-.03em;line-height:1.3}
@@ -323,14 +320,13 @@ body.auth-lock #app,body.auth-lock .bottom-nav,body.auth-lock #fab{visibility:hi
 </head>
 <body class="min-h-screen font-sans antialiased pb-24 app-boot">
 <div id="appSplash" class="app-splash" aria-hidden="false">
-<div class="lesson-tile lesson-tile--splash" id="splashLessonTile"></div>
-<p class="app-splash-brand">LESSON MANAGER</p>
+<img class="app-splash-logo" src="/brand/logo-vertical.svg" alt="LESSON MANAGER"/>
 <p class="app-splash-title">레슨 매니저</p>
 <p class="app-splash-tag">종목에 상관없이, 모든 레슨을 하나로</p>
 </div>
 <div id="app" class="max-w-lg mx-auto md:max-w-2xl lg:max-w-4xl">
 <header id="appHeader" class="sticky top-0 z-30 bg-[#F2F4F6]/95 backdrop-blur-sm px-5 pt-5 pb-3 hidden">
-<button type="button" id="appHeaderHome" class="app-header-home">레슨 매니저</button>
+<button type="button" id="appHeaderHome" class="app-header-home"><img class="app-header-symbol" src="/brand/symbol.svg" alt=""/>레슨 매니저</button>
 </header>
 <main class="px-5 pb-4 pt-5">
 <section id="syncStatusBar" class="sync-bar hidden mb-3" aria-live="polite">
@@ -404,7 +400,7 @@ body.auth-lock #app,body.auth-lock .bottom-nav,body.auth-lock #fab{visibility:hi
 <div id="authGate" class="auth-gate hidden" aria-hidden="true">
 <div class="auth-card toss-card p-6 pb-7">
 <div class="auth-brand">
-<div class="lesson-tile" id="authLessonTile"></div>
+<img class="brand-symbol" src="/brand/symbol.svg" alt=""/>
 <div class="auth-brand-text"><span class="auth-brand-name">레슨 매니저</span><span class="auth-brand-tag">축구·피아노·영어… 종목에 상관없이<br>회차·일정·입금을 한 곳에서</span></div>
 </div>
 <button type="button" id="authGoogle" class="btn-google"><svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg><span>Google로 계속하기</span></button>
@@ -439,7 +435,7 @@ body.auth-lock #app,body.auth-lock .bottom-nav,body.auth-lock #fab{visibility:hi
 <div id="profileGate" class="auth-gate hidden" aria-hidden="true">
 <div class="auth-card toss-card p-6 pb-7">
 <div class="auth-brand">
-<div class="lesson-tile" id="profileLessonTile"></div>
+<img class="brand-symbol" src="/brand/symbol.svg" alt=""/>
 <div class="auth-brand-text"><span class="auth-brand-name">처음 오셨네요!</span><span class="auth-brand-tag">강사명과 연락처를 입력하면<br>바로 시작할 수 있어요</span></div>
 </div>
 <p id="profileAccount" class="profile-account"></p>
@@ -501,7 +497,6 @@ body.auth-lock #app,body.auth-lock .bottom-nav,body.auth-lock #fab{visibility:hi
 <script src="/firebase-config.js"></script>
 <script src="/saas-config.js"></script>
 <script src="/toss-config.js"></script>
-<script src="/lesson-icons.js"></script>
 <script src="https://js.tosspayments.com/v2/standard"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-auth-compat.js"></script>
@@ -514,7 +509,7 @@ const WEEKDAYS=['일','월','화','수','목','금','토'];
 let state={players:[],schedules:[]};
 let currentView='home',calendarMode='month',calendarDate=new Date(),selectedDate=null,detailTab='payment',historyViewMonth=null;
 let cloudSaveTimer=null,cloudUnsub=null,profileUnsub=null,lastCloudPush=0,applyingRemote=false,firebaseReady=false,bootFinished=false,currentAuthUid=null,currentSyncSession=0,currentSubscription=null;
-const APP_BUILD='20261022-admin-end-trial';
+const APP_BUILD='20261022-new-logo';
 function getSaasConfig(){return window.SAAS_CONFIG||{};}
 function getBankInfo(){return getSaasConfig().BANK||{};}
 function getSubscribeDays(){return Number(getSaasConfig().SUBSCRIBE_DAYS||30);}
@@ -2557,7 +2552,7 @@ const{registered,lessonMembers,totalLessons,totalDeposits}=getDashboardStats();
 document.getElementById('statsSection').innerHTML=`
 <div class="dash-head">
 <div class="dash-head-left">
-<h2 class="dash-brand">LESSON<br>MANAGER</h2>
+<h2 class="dash-brand"><img class="dash-brand-logo" src="/brand/logo-horizontal.svg" alt="LESSON MANAGER"/></h2>
 <p class="dash-subtitle">레슨 매니저</p>
 </div>
 <span class="dash-greeting-pill">오늘도 힘내세요!</span>
@@ -2958,9 +2953,6 @@ bootFinished=true;
 }
 
 function bootApp(){
-window.LESSON_ICONS?.startCycle(document.getElementById('splashLessonTile'),110);
-window.LESSON_ICONS?.startCycle(document.getElementById('authLessonTile'),900);
-window.LESSON_ICONS?.startCycle(document.getElementById('profileLessonTile'),900);
 renderLegalFooters();
 initSubscribeGate();
 initAdminPanel();
