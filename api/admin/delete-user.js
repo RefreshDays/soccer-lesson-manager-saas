@@ -1,5 +1,5 @@
 import { deleteAccount } from '../_lib/account.js';
-import { adminAuth, isAdminToken, readJsonBody, sendJson, verifyIdToken } from '../_lib/firebase.js';
+import { adminAuth, isAdminToken, publicMessage, readJsonBody, sendJson, verifyIdToken } from '../_lib/firebase.js';
 import { getAdminEmails } from '../_lib/toss.js';
 
 // 관리자가 회원을 삭제합니다.
@@ -36,6 +36,6 @@ export default async function handler(req, res) {
     sendJson(res, 200, { ok: true });
   } catch (error) {
     console.error('[admin delete-user]', error);
-    sendJson(res, 400, { error: error.message || '삭제에 실패했습니다.' });
+    sendJson(res, 400, { error: publicMessage(error, '삭제에 실패했습니다.') });
   }
 }

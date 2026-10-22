@@ -1,4 +1,4 @@
-import { adminDb, sendJson } from '../_lib/firebase.js';
+import { adminDb, publicMessage, sendJson } from '../_lib/firebase.js';
 import { chargeAndExtend, stopAutoRenew } from '../_lib/subscription.js';
 import { DAY_MS } from '../_lib/toss.js';
 
@@ -36,11 +36,11 @@ export default async function handler(req, res) {
       const fails = failCount + 1;
       if (fails >= MAX_FAILS) {
         await stopAutoRenew(uid, 'payment_failed');
-        await doc.ref.set({ failCount: fails, lastError: error.message || String(error) }, { merge: true });
+        await doc.ref.set({ failCount: fails, lastError: publicMessage(error, '결제 처리 오류') }, { merge: true });
         result.stopped++;
       } else {
         await doc.ref.set(
-          { failCount: fails, lastError: error.message || String(error), lastFailedAt: now, updatedAt: now },
+          { failCount: fails, lastError: publicMessage(error, '결제 처리 오류'), lastFailedAt: now, updatedAt: now },
           { merge: true }
         );
         result.failed++;

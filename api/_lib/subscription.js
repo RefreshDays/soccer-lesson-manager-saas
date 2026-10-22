@@ -1,5 +1,5 @@
 import { FieldValue } from 'firebase-admin/firestore';
-import { adminDb } from './firebase.js';
+import { adminDb, userError } from './firebase.js';
 import { approveBillingPayment, DAY_MS, getSubscribeConfig } from './toss.js';
 
 // 남은 구독 기간이 있으면 그 끝에서, 없으면 지금부터 연장합니다.
@@ -19,7 +19,7 @@ export async function chargeAndExtend(uid, { orderId, idempotencyKey, expectNext
   const billingRef = db.doc(`billing/${uid}`);
   const billingSnap = await billingRef.get();
   const billing = billingSnap.exists ? billingSnap.data() : null;
-  if (!billing?.billingKey) throw new Error('등록된 카드가 없습니다.');
+  if (!billing?.billingKey) throw userError('등록된 카드가 없습니다.');
 
   const { amount, orderName, days } = getSubscribeConfig();
   const payment = await approveBillingPayment(
@@ -27,7 +27,7 @@ export async function chargeAndExtend(uid, { orderId, idempotencyKey, expectNext
     { customerKey: billing.customerKey || uid, amount, orderId, orderName },
     idempotencyKey
   );
-  if (payment.status !== 'DONE') throw new Error('결제가 완료되지 않았습니다.');
+  if (payment.status !== 'DONE') throw userError('결제가 완료되지 않았습니다.');
 
   const now = Date.now();
   let expiresAt = 0;

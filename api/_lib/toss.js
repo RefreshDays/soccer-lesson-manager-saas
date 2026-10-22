@@ -4,7 +4,11 @@ const DAY_MS = 86400000;
 
 function getSecretKey() {
   const secret = process.env.TOSS_SECRET_KEY;
-  if (!secret) throw new Error('TOSS_SECRET_KEY 환경변수가 필요합니다.');
+  if (!secret) {
+    const err = new Error('TOSS_SECRET_KEY 환경변수가 필요합니다.');
+    err.expose = true;
+    throw err;
+  }
   return secret;
 }
 
@@ -18,6 +22,8 @@ async function parseTossResponse(res) {
   if (!res.ok) {
     const err = new Error(data.message || data.code || '토스페이먼츠 요청 실패');
     err.code = data.code;
+    // 토스가 보낸 결제 안내 문구(예: 카드사 거절)는 사용자에게 보여줘도 됩니다.
+    err.expose = true;
     throw err;
   }
   return data;

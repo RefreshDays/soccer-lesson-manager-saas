@@ -1,4 +1,4 @@
-import { adminDb } from '../_lib/firebase.js';
+import { adminDb, publicMessage, userError } from '../_lib/firebase.js';
 import { chargeAndExtend } from '../_lib/subscription.js';
 import { cardLabelFrom, getSiteOrigin, issueBillingKey } from '../_lib/toss.js';
 
@@ -29,7 +29,7 @@ export default async function handler(req, res) {
   try {
     const db = adminDb();
     const userSnap = await db.doc(`users/${uid}`).get();
-    if (!userSnap.exists) throw new Error('회원 정보를 찾을 수 없습니다.');
+    if (!userSnap.exists) throw userError('회원 정보를 찾을 수 없습니다.');
 
     const billing = await issueBillingKey(String(authKey), uid);
     const now = Date.now();
@@ -51,6 +51,6 @@ export default async function handler(req, res) {
     redirect(res, `${origin}/?subscribe=success`);
   } catch (error) {
     console.error('[toss billing-success]', error);
-    fail(error.message || '구독 처리에 실패했습니다.');
+    fail(publicMessage(error, '구독 처리에 실패했습니다. 잠시 후 다시 시도해 주세요.'));
   }
 }

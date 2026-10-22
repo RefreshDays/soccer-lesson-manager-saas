@@ -1,5 +1,5 @@
 import { deleteAccount } from '../_lib/account.js';
-import { readJsonBody, sendJson, verifyIdToken } from '../_lib/firebase.js';
+import { publicMessage, readJsonBody, sendJson, verifyIdToken } from '../_lib/firebase.js';
 import { getAdminEmails } from '../_lib/toss.js';
 
 // 회원 본인이 탈퇴합니다.
@@ -19,6 +19,6 @@ export default async function handler(req, res) {
     sendJson(res, 200, { ok: true });
   } catch (error) {
     console.error('[account delete]', error);
-    sendJson(res, 400, { error: error.message || '탈퇴에 실패했습니다.' });
+    sendJson(res, 400, { error: publicMessage(error, '탈퇴에 실패했습니다.') });
   }
 }
