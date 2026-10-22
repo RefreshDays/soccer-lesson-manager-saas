@@ -19,6 +19,7 @@
 <script>tailwind.config={theme:{extend:{colors:{toss:{bg:'#F2F4F6',text:'#191F28',sub:'#4E5968',muted:'#8B95A1',blue:'#3182F6',green:'#0D7A5F',pink:'#F04452',emerald:'#00D084'}},fontFamily:{sans:['Paperlogy','system-ui','sans-serif']},boxShadow:{toss:'0 2px 16px rgba(0,0,0,.06)','toss-lg':'0 8px 24px rgba(0,0,0,.08)'}}}}</script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fonts-archive/Paperlogy/Paperlogy.css"/>
 <style>
+html{word-break:keep-all;overflow-wrap:break-word}
 html,body,button,input,select,textarea{font-family:'Paperlogy',system-ui,sans-serif}
 body{background:#F2F4F6;color:#191F28;-webkit-tap-highlight-color:transparent}
 .toss-card{background:#fff;border-radius:20px;box-shadow:0 2px 16px rgba(0,0,0,.06)}
@@ -569,7 +570,7 @@ let state={players:[],schedules:[]};
 let currentView='home',calendarMode='month',calendarDate=new Date(),selectedDate=null,detailTab='payment',historyViewMonth=null;
 let currentCoachName='',overdueExpanded=false;
 let cloudSaveTimer=null,cloudUnsub=null,profileUnsub=null,lastCloudPush=0,applyingRemote=false,firebaseReady=false,bootFinished=false,currentAuthUid=null,currentSyncSession=0,currentSubscription=null;
-const APP_BUILD='v2-showcase';
+const APP_BUILD='v2-keep-all';
 function getSaasConfig(){return window.SAAS_CONFIG||{};}
 function getBankInfo(){return getSaasConfig().BANK||{};}
 function getSubscribeDays(){return Number(getSaasConfig().SUBSCRIBE_DAYS||30);}
