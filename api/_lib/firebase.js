@@ -25,8 +25,10 @@ export function adminAuth() {
 
 export async function verifyIdToken(idToken) {
   if (!idToken) throw new Error('로그인이 필요합니다.');
+  // 서버 설정 오류(서비스 계정 누락 등)는 그대로 알리고, 토큰 검증 실패만 로그인 만료로 안내합니다.
+  const auth = adminAuth();
   try {
-    return await adminAuth().verifyIdToken(String(idToken));
+    return await auth.verifyIdToken(String(idToken));
   } catch (_) {
     throw new Error('로그인이 만료되었습니다. 다시 로그인해 주세요.');
   }
