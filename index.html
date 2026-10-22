@@ -22,6 +22,53 @@
 html,body,button,input,select,textarea{font-family:'Paperlogy',system-ui,sans-serif}
 body{background:#F2F4F6;color:#191F28;-webkit-tap-highlight-color:transparent}
 .toss-card{background:#fff;border-radius:20px;box-shadow:0 2px 16px rgba(0,0,0,.06)}
+.home-block{margin-bottom:20px}
+.home-block-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 2px 10px}
+.home-block-title{display:flex;align-items:center;gap:8px;margin:0;font-size:1.125rem;font-weight:700;color:#191F28;letter-spacing:-.02em}
+.home-progress{font-size:12px;font-weight:700;color:#0046C0;background:#EAF2FF;padding:4px 9px;border-radius:999px;letter-spacing:-.01em}
+.home-block-link{font-size:14px;font-weight:600;color:#3182F6;background:none;border:0;padding:4px 2px;cursor:pointer;font-family:inherit}
+.today-card{padding:6px 16px}
+.today-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #F2F4F6}
+.today-row:last-child{border-bottom:0}
+.today-time{flex-shrink:0;width:48px;font-size:15px;font-weight:700;color:#191F28;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.today-main{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:2px;background:none;border:0;padding:0;text-align:left;cursor:pointer;font-family:inherit}
+.today-name{font-size:15px;font-weight:600;color:#191F28;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.today-left{font-size:12px;color:#8B95A1}
+.today-left.is-low{color:#E65100;font-weight:600}
+.today-btn{flex-shrink:0;min-width:64px;height:38px;padding:0 14px;border-radius:12px;border:0;background:#3182F6;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+.today-btn:active{transform:scale(.97)}
+.today-btn--charge{background:#FFF0E0;color:#E65100}
+.today-done{flex-shrink:0;display:inline-flex;align-items:center;gap:4px;height:38px;padding:0 6px;font-size:13px;font-weight:600;color:#0D7A5F}
+.today-done svg{width:16px;height:16px}
+.today-row.is-done .today-time,.today-row.is-done .today-name{color:#B0B8C1}
+.today-row.is-done .today-name{text-decoration:line-through;text-decoration-color:#D1D6DB}
+.today-empty{padding:22px 0 18px;text-align:center}
+.today-empty p{margin:0 0 12px;font-size:14px;color:#8B95A1}
+.today-empty-btn{height:40px;padding:0 18px;border-radius:12px;border:0;background:#EAF2FF;color:#0046C0;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+.notice-card{padding:16px}
+.notice-card--warn{background:#FFFBF2}
+.notice-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:10px}
+.notice-icon{flex-shrink:0;width:36px;height:36px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:#FFF0D6;color:#D9822B}
+.notice-icon--orange{background:#FFF0E0;color:#E65100}
+.notice-icon svg{width:19px;height:19px}
+.notice-title{margin:0;font-size:15px;font-weight:700;color:#191F28;letter-spacing:-.02em}
+.notice-sub{margin:2px 0 0;font-size:12px;color:#8B95A1;line-height:1.4}
+.overdue-row,.renew-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-top:1px solid rgba(0,0,0,.05)}
+.overdue-info,.renew-info{min-width:0;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.renew-info{background:none;border:0;padding:0;text-align:left;cursor:pointer;font-family:inherit}
+.overdue-name,.renew-name{font-size:15px;font-weight:600;color:#191F28}
+.overdue-when{font-size:12px;color:#8B95A1;font-variant-numeric:tabular-nums}
+.renew-left{font-size:12px;font-weight:600;color:#E65100}
+.renew-left.is-zero{color:#F04452}
+.overdue-actions{display:flex;gap:6px;flex-shrink:0}
+.mini-btn{height:34px;padding:0 12px;border-radius:10px;border:0;background:#F2F4F6;color:#4E5968;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+.mini-btn--primary{background:#3182F6;color:#fff}
+.mini-btn--warn{background:#FFF0E0;color:#E65100}
+.overdue-more{display:block;width:100%;margin-top:4px;padding:10px 0 2px;border:0;background:none;font-size:13px;font-weight:600;color:#6B7684;cursor:pointer;font-family:inherit;border-top:1px solid rgba(0,0,0,.05)}
+.kakao-btn{flex-shrink:0;display:inline-flex;align-items:center;gap:5px;height:36px;padding:0 12px;border-radius:10px;border:0;background:#FEE500;color:#191919;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
+.kakao-btn svg{width:16px;height:16px}
+.kakao-btn:active{transform:scale(.97)}
+
 .toss-input{background:#F2F4F6;border:none;border-radius:14px;min-height:52px;font-size:16px;width:100%;padding:0 16px}
 .toss-input:focus{outline:2px solid #3182F6;background:#fff}
 .toss-select{
@@ -351,7 +398,6 @@ body.auth-lock #app,body.auth-lock .bottom-nav,body.auth-lock #fab{visibility:hi
 <div id="syncSubLine" class="sync-sub-line hidden" aria-live="polite"></div>
 </section>
 <section id="statsSection" class="mb-5"></section>
-<section id="alertSection" class="hidden mb-5"></section>
 <div id="view-home" class="view-panel space-y-5"></div>
 <div id="view-players" class="view-panel hidden space-y-4"></div>
 <div id="view-calendar" class="view-panel hidden space-y-4"></div>
@@ -515,8 +561,9 @@ const uid=p=>p+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 const WEEKDAYS=['일','월','화','수','목','금','토'];
 let state={players:[],schedules:[]};
 let currentView='home',calendarMode='month',calendarDate=new Date(),selectedDate=null,detailTab='payment',historyViewMonth=null;
+let currentCoachName='',overdueExpanded=false;
 let cloudSaveTimer=null,cloudUnsub=null,profileUnsub=null,lastCloudPush=0,applyingRemote=false,firebaseReady=false,bootFinished=false,currentAuthUid=null,currentSyncSession=0,currentSubscription=null;
-const APP_BUILD='20261022-greeting';
+const APP_BUILD='v2-today-lessons';
 function getSaasConfig(){return window.SAAS_CONFIG||{};}
 function getBankInfo(){return getSaasConfig().BANK||{};}
 function getSubscribeDays(){return Number(getSaasConfig().SUBSCRIBE_DAYS||30);}
@@ -1078,6 +1125,7 @@ try{
 const snap=await firebase.firestore().doc('users/'+user.uid).get();
 const sub=snap.exists?snap.data()?.subscription:null;
 currentSubscription=sub;
+currentCoachName=snap.exists?(snap.data()?.coachName||''):'';
 if(isSubscriptionActive(sub)){
 hideSubscribeGate();
 await enterAppAsUser(user,currentSyncSession);
@@ -1183,6 +1231,7 @@ profileUnsub=cloudProfileRef(uid).onSnapshot(async snap=>{
 if(sessionId!==currentSyncSession||currentAuthUid!==uid)return;
 const sub=snap.exists?snap.data()?.subscription:null;
 currentSubscription=sub;
+currentCoachName=snap.exists?(snap.data()?.coachName||''):'';
 if(!firebase.auth().currentUser)return;
 if(isSubscriptionActive(sub)){
 const gate=document.getElementById('subscribeGate');
@@ -2371,7 +2420,6 @@ try{fn();}catch(e){console.error(e);}
 }
 function render(){
 safeRender(renderStats);
-safeRender(renderAlerts);
 safeRender(renderHome);
 safeRender(renderPlayers);
 safeRender(renderCalendar);
@@ -2577,21 +2625,82 @@ if(currentView==='home')startDashClock();
 }
 
 
-function renderAlerts(){
-const low=state.players.filter(isLow),el=document.getElementById('alertSection');
-if(!low.length){el.classList.add('hidden');return;}
-el.classList.remove('hidden');
-el.innerHTML=`<div class="toss-card p-4 flex gap-3 bg-[#FFF8EB]"><span class="text-xl">⚠️</span><div><p class="font-semibold text-[#E65100] text-sm">재결제가 필요한 회원 ${low.length}명</p><p class="text-xs text-toss-sub mt-1">${low.map(p=>esc(p.name)).join(', ')}</p></div></div>`;
+
+function homeTimeLabel(t){const[h,m]=String(t||'').split(':').map(Number);if(isNaN(h))return t||'';return String(h).padStart(2,'0')+':'+String(m||0).padStart(2,'0');}
+function renderTodayLessons(){
+const today=todayISO();
+const list=state.schedules.filter(s=>s.date===today&&s.status!=='canceled').sort((a,b)=>homeTimeLabel(a.time).localeCompare(homeTimeLabel(b.time)));
+const done=list.filter(s=>s.status==='completed').length;
+const rows=list.map(s=>{
+const p=getPlayer(s.player_id),name=p?p.name:'알 수 없음',isDone=s.status==='completed',left=p?p.remaining_sessions:0;
+const meta=p?`<span class="${!isDone&&left<=2?'today-left is-low':'today-left'}">잔여 ${left}회</span>`:'';
+let action;
+if(isDone)action='<span class="today-done"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>완료</span>';
+else if(p&&left<=0)action=`<button type="button" class="today-btn today-btn--charge" onclick="openSheet('payment','${p.id}')">충전 필요</button>`;
+else action=`<button type="button" class="today-btn" onclick="completeLesson('${s.id}')">완료</button>`;
+return`<div class="today-row${isDone?' is-done':''}"><span class="today-time">${esc(homeTimeLabel(s.time))}</span>
+<button type="button" class="today-main" ${p?`onclick="openSheet('detail','${p.id}')"`:''}><span class="today-name">${esc(name)}</span>${meta}</button>${action}</div>`;
+}).join('');
+return`<section class="home-block">
+<div class="home-block-head"><h2 class="home-block-title">오늘의 레슨${list.length?`<span class="home-progress">${done}/${list.length} 완료</span>`:''}</h2>
+<button type="button" class="home-block-link" onclick="openSheet('schedule','${today}')">+ 예약</button></div>
+<div class="toss-card today-card">${list.length?rows:`<div class="today-empty"><p>오늘 예정된 레슨이 없어요</p><button type="button" class="today-empty-btn" onclick="openSheet('schedule','${today}')">레슨 예약하기</button></div>`}</div>
+</section>`;
+}
+function renderOverdueLessons(){
+const today=todayISO();
+const list=state.schedules.filter(s=>s.status==='scheduled'&&s.date<today).sort((a,b)=>(a.date+homeTimeLabel(a.time)).localeCompare(b.date+homeTimeLabel(b.time)));
+if(!list.length)return'';
+const shown=overdueExpanded?list:list.slice(0,3);
+const rows=shown.map(s=>{const p=getPlayer(s.player_id),name=p?p.name:'알 수 없음',[,m,d]=s.date.split('-').map(Number),dow='일월화수목금토'[new Date(s.date+'T00:00:00').getDay()];
+const canDone=p&&p.remaining_sessions>0;
+return`<div class="overdue-row"><div class="overdue-info"><span class="overdue-name">${esc(name)}</span><span class="overdue-when">${m}/${d}(${dow}) ${esc(homeTimeLabel(s.time))}</span></div>
+<div class="overdue-actions">${canDone?`<button type="button" class="mini-btn mini-btn--primary" onclick="completeLesson('${s.id}')">완료</button>`:(p?`<button type="button" class="mini-btn mini-btn--warn" onclick="openSheet('payment','${p.id}')">충전</button>`:'')}<button type="button" class="mini-btn" onclick="cancelSchedule('${s.id}')">취소</button></div></div>`;}).join('');
+const more=list.length>3?`<button type="button" class="overdue-more" onclick="overdueExpanded=!overdueExpanded;renderHome()">${overdueExpanded?'접기':`${list.length-3}건 더 보기`}</button>`:'';
+return`<section class="home-block"><div class="toss-card notice-card notice-card--warn">
+<div class="notice-head"><span class="notice-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 2"/></svg></span>
+<div><p class="notice-title">처리 안 된 지난 레슨 ${list.length}건</p><p class="notice-sub">레슨을 했다면 완료, 안 했다면 취소해 주세요</p></div></div>
+<div class="overdue-list">${rows}</div>${more}</div></section>`;
+}
+function renderRenewalBlock(){
+const low=state.players.filter(isLow).sort((a,b)=>a.remaining_sessions-b.remaining_sessions);
+if(!low.length)return'';
+const rows=low.map(p=>`<div class="renew-row"><button type="button" class="renew-info" onclick="openSheet('detail','${p.id}')"><span class="renew-name">${esc(p.name)}</span><span class="renew-left${p.remaining_sessions<=0?' is-zero':''}">${p.remaining_sessions<=0?'잔여 없음':`잔여 ${p.remaining_sessions}회`}</span></button>
+<button type="button" class="kakao-btn" onclick="shareRenewal('${p.id}')"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 4C7.03 4 3 7.13 3 11c0 2.5 1.68 4.69 4.2 5.93l-.86 3.16c-.08.28.24.5.48.34l3.77-2.5c.46.05.93.07 1.41.07 4.97 0 9-3.13 9-7s-4.03-7-9-7z"/></svg>카톡 안내</button></div>`).join('');
+return`<section class="home-block"><div class="toss-card notice-card">
+<div class="notice-head"><span class="notice-icon notice-icon--orange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10h18M7 15h2"/><rect x="3" y="5" width="18" height="14" rx="3"/></svg></span>
+<div><p class="notice-title">재결제 안내가 필요한 회원 ${low.length}명</p><p class="notice-sub">잔여 2회 이하 · 카톡으로 안내 문구를 보낼 수 있어요</p></div></div>
+<div class="renew-list">${rows}</div></div></section>`;
+}
+function buildRenewalMessage(p){
+const coach=(currentCoachName||'').trim();
+const who=coach?(/(강사|코치|선생|쌤|감독)/.test(coach)?coach:coach+' 강사'):'담당 강사';
+const left=p.remaining_sessions;
+const status=left<=0?'등록하신 레슨 회차를 모두 사용하셨어요.':`현재 남은 레슨이 ${left}회예요.`;
+return`안녕하세요, ${p.name}님 😊\n${who}입니다.\n\n${status}\n레슨을 계속 이어가시려면 재등록 부탁드려요.\n\n편하실 때 답장 주시면 일정 맞춰 드릴게요. 감사합니다!`;
+}
+async function shareRenewal(pid){
+const p=getPlayer(pid);if(!p)return;
+const text=buildRenewalMessage(p);
+if(navigator.share){
+try{await navigator.share({text});return;}
+catch(e){if(e&&e.name==='AbortError')return;}
+}
+try{await navigator.clipboard.writeText(text);await showAlert('안내 문구를 복사했어요.\n카카오톡 대화방에 붙여넣어 보내 주세요.');}
+catch(e){await showAlert(text);}
 }
 
 function getRecentPlayers(limit=3){
 return[...state.players].sort((a,b)=>(getRegisteredAt(b)||'').localeCompare(getRegisteredAt(a)||'')).slice(0,limit);
 }
 function renderHome(){
-const upcoming=[...state.schedules].filter(s=>s.status==='scheduled'&&s.date>=todayISO()).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time)).slice(0,5);
+const upcoming=[...state.schedules].filter(s=>s.status==='scheduled'&&s.date>todayISO()).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time)).slice(0,5);
 const total=state.players.length;
 const recent=getRecentPlayers(3);
 document.getElementById('view-home').innerHTML=`
+${renderTodayLessons()}
+${renderOverdueLessons()}
+${renderRenewalBlock()}
 ${renderCharts()}
 <div id="monthHistorySection"></div>
 <section class="mt-2"><div class="flex justify-between items-center mb-3"><h2 class="text-lg font-bold">회원 현황</h2><button type="button" onclick="setView('players')" class="text-sm text-toss-blue font-semibold">전체 보기${total?` (${total}명)`:''}</button></div>
