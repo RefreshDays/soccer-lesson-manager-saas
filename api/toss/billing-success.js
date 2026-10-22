@@ -1,4 +1,11 @@
-import { approveBillingPayment, getSiteOrigin, getSubscribeConfig, issueBillingKey } from '../lib/toss.js';
+import { adminDb } from '../_lib/firebase.js';
+import { chargeAndExtend } from '../_lib/subscription.js';
+import { cardLabelFrom, getSiteOrigin, issueBillingKey } from '../_lib/toss.js';
+
+function redirect(res, location) {
+  res.writeHead(302, { Location: location });
+  res.end();
+}
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -7,43 +14,39 @@ export default async function handler(req, res) {
     return;
   }
 
-  const origin = getSiteOrigin();
+  const origin = getSiteOrigin(req);
   const { authKey, customerKey } = req.query || {};
+  const fail = (message) =>
+    redirect(res, `${origin}/?subscribe=fail&message=${encodeURIComponent(message)}`);
 
   if (!authKey || !customerKey) {
-    res.writeHead(302, {
-      Location: `${origin}/?subscribe=fail&message=${encodeURIComponent('결제 정보가 없습니다.')}`,
-    });
-    res.end();
+    fail('결제 정보가 없습니다.');
     return;
   }
 
+  // customerKey 는 결제창을 연 회원의 Firebase uid 입니다.
+  const uid = String(customerKey);
   try {
-    const { amount, orderName } = getSubscribeConfig();
-    const billing = await issueBillingKey(String(authKey), String(customerKey));
-    const orderId = `sub_${customerKey}_${Date.now()}`;
-    const payment = await approveBillingPayment(billing.billingKey, {
-      customerKey: String(customerKey),
-      amount,
-      orderId,
-      orderName,
-    });
+    const db = adminDb();
+    const userSnap = await db.doc(`users/${uid}`).get();
+    if (!userSnap.exists) throw new Error('회원 정보를 찾을 수 없습니다.');
 
-    const params = new URLSearchParams({
-      subscribe: 'success',
-      paymentKey: payment.paymentKey,
-      orderId,
+    const billing = await issueBillingKey(String(authKey), uid);
+    const now = Date.now();
+    await db.doc(`billing/${uid}`).set({
       billingKey: billing.billingKey,
+      customerKey: uid,
+      cardLabel: cardLabelFrom(billing),
+      autoRenew: false,
+      failCount: 0,
+      createdAt: now,
+      updatedAt: now,
     });
 
-    res.writeHead(302, { Location: `${origin}/?${params.toString()}` });
-    res.end();
+    await chargeAndExtend(uid, { orderId: `sub_${uid}_${now}` });
+    redirect(res, `${origin}/?subscribe=success`);
   } catch (error) {
     console.error('[toss billing-success]', error);
-    const message = error.message || '구독 처리에 실패했습니다.';
-    res.writeHead(302, {
-      Location: `${origin}/?subscribe=fail&message=${encodeURIComponent(message)}`,
-    });
-    res.end();
+    fail(error.message || '구독 처리에 실패했습니다.');
   }
 }

@@ -1,7 +1,7 @@
-import { getSiteOrigin } from '../lib/toss.js';
+import { getSiteOrigin } from '../_lib/toss.js';
 
 export default async function handler(req, res) {
-  const origin = getSiteOrigin();
+  const origin = getSiteOrigin(req);
   const { code, message } = req.query || {};
   const text = message || code || '결제가 완료되지 않았습니다.';
   res.writeHead(302, {

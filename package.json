@@ -1,5 +1,8 @@
 {
   "name": "soccer-lesson-manager-saas",
   "private": true,
-  "type": "module"
+  "type": "module",
+  "dependencies": {
+    "firebase-admin": "^14.5.0"
+  }
 }

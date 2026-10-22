@@ -244,7 +244,7 @@ body.auth-lock #app,body.auth-lock .bottom-nav,body.auth-lock #fab{visibility:hi
 .sync-sub-line{margin-top:8px;padding-left:16px}
 .sync-build-line{margin-top:4px;padding-left:16px;font-size:11px;color:#8B95A1;line-height:1.3}
 .sync-trial-badge{display:inline-flex;align-items:center;font-size:13px;font-weight:700;color:#E65100;background:#FFF4E6;padding:7px 12px;border-radius:10px;line-height:1.2;letter-spacing:-.02em}
-.sync-trial-badge--active{color:#0D7A5F;background:#E6FAF3}
+.sync-trial-badge--active{color:#0D7A5F;background:#E6FAF3;border:0;cursor:pointer;font-family:inherit}
 .sync-build{font-size:11px;color:#8B95A1}
 .sync-bar-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
 .sync-admin{font-size:12px;font-weight:600;color:#3182F6;background:transparent;border:0;padding:0;cursor:pointer;font-family:inherit;flex-shrink:0;margin-top:2px;white-space:nowrap}
@@ -374,7 +374,7 @@ body.auth-lock #app,body.auth-lock .bottom-nav,body.auth-lock #fab{visibility:hi
 </div>
 <label class="block mb-4"><span class="sr-only">비밀번호</span><input type="password" id="authPassword" class="toss-input" placeholder="비밀번호" autocomplete="current-password"/></label>
 <p id="authTrialNote" class="auth-trial-banner hidden" role="status">
-<span class="auth-trial-banner-label">체험 14일 무료</span>
+<span id="authTrialLabel" class="auth-trial-banner-label">무료 체험</span>
 <span class="auth-trial-banner-text">지금 가입하면 바로 시작할 수 있어요</span>
 </p>
 <div id="authError" class="auth-error-box hidden" role="alert" aria-live="assertive">
@@ -390,7 +390,7 @@ body.auth-lock #app,body.auth-lock .bottom-nav,body.auth-lock #fab{visibility:hi
 <div id="subscribeGateCard" class="auth-card toss-card p-6">
 <div id="subscribeGateHeader">
 <h2>구독이 필요합니다</h2>
-<p id="subscribeTrialHeadline" class="subscribe-trial-headline hidden">체험 14일이 종료되었습니다.</p>
+<p id="subscribeTrialHeadline" class="subscribe-trial-headline hidden">체험 기간이 종료되었습니다.</p>
 <p id="subscribeMsg">이용을 계속하려면 아래에서 구독해 주세요.</p>
 </div>
 <div id="subscribePendingBox" class="subscribe-pending hidden">
@@ -441,14 +441,14 @@ const WEEKDAYS=['일','월','화','수','목','금','토'];
 let state={players:[],schedules:[]};
 let currentView='home',calendarMode='month',calendarDate=new Date(),selectedDate=null,detailTab='payment',historyViewMonth=null;
 let cloudSaveTimer=null,cloudUnsub=null,profileUnsub=null,lastCloudPush=0,applyingRemote=false,firebaseReady=false,bootFinished=false,currentAuthUid=null,currentSyncSession=0,currentSubscription=null;
-const APP_BUILD='20260527-saas-admin-delete';
-const SAAS_TRIAL_DAYS=14;
-const SAAS_SUBSCRIBE_AMOUNT=9900;
-const SAAS_SUBSCRIBE_ORDER_NAME='축구 레슨 매니저 월 구독';
+const APP_BUILD='20261022-saas-billing';
 const SAAS_CONTACT_EMAIL='wonzia80@gmail.com';
 function getSaasConfig(){return window.SAAS_CONFIG||{};}
 function getBankInfo(){return getSaasConfig().BANK||{};}
 function getSubscribeDays(){return Number(getSaasConfig().SUBSCRIBE_DAYS||30);}
+function getTrialDays(){return Number(getSaasConfig().TRIAL_DAYS||7);}
+function getSubscribeAmount(){return Number(getSaasConfig().SUBSCRIBE_AMOUNT||9900);}
+function getSubscribeOrderName(){return getSaasConfig().SUBSCRIBE_ORDER_NAME||'축구 레슨 매니저 월 구독';}
 function getAdminEmails(){return(getSaasConfig().ADMIN_EMAILS||['sonkh@rubycell.co.kr']).map(e=>(e||'').toLowerCase());}
 function isAdminUser(user){if(!user)return false;const email=(user.email||'').toLowerCase();return getAdminEmails().includes(email);}
 let tossPaymentInstance=null;
@@ -469,6 +469,8 @@ const submit=document.getElementById('authSubmit');
 if(submit)submit.textContent=authMode==='register'?'가입하기':'로그인';
 const trialNote=document.getElementById('authTrialNote');
 if(trialNote)trialNote.classList.toggle('hidden',authMode!=='register');
+const trialLabel=document.getElementById('authTrialLabel');
+if(trialLabel)trialLabel.textContent='체험 '+getTrialDays()+'일 무료';
 const toggle=document.getElementById('authModeToggle');
 if(toggle)toggle.textContent=authMode==='register'?'이미 계정이 있으신가요? 로그인':'처음 사용하시나요? 가입하기';
 const pw=document.getElementById('authPassword');
@@ -729,7 +731,7 @@ clearAuthError();
 if(gate){gate.classList.add('hidden');gate.setAttribute('aria-hidden','true');}
 }
 function createTrialSubscription(){
-const trialEndsAt=Date.now()+SAAS_TRIAL_DAYS*86400000;
+const trialEndsAt=Date.now()+getTrialDays()*86400000;
 return{status:'trial',plan:'trial',startedAt:Date.now(),trialEndsAt,expiresAt:trialEndsAt};
 }
 function isSubscriptionActive(sub){
@@ -747,7 +749,7 @@ return Math.max(0,Math.ceil((end-Date.now())/86400000));
 function formatSubscriptionBadge(sub){
 if(!sub||!isSubscriptionActive(sub))return'';
 if(sub.status==='trial')return'<span class="sync-trial-badge">체험 '+getTrialDaysLeft(sub)+'일 남음</span>';
-if(sub.status==='active')return'<span class="sync-trial-badge sync-trial-badge--active">구독 이용 중</span>';
+if(sub.status==='active')return'<button type="button" class="sync-trial-badge sync-trial-badge--active" onclick="openSubscriptionManage()">구독 이용 중 · '+(sub.provider==='toss'&&sub.autoRenew?'다음 결제 ':'')+adminFormatSignupDate(sub.expiresAt)+(sub.provider==='toss'&&sub.autoRenew?'':'까지')+'</button>';
 return'';
 }
 async function loadSubscription(uid){
@@ -769,40 +771,39 @@ const params=new URLSearchParams(window.location.search);
 const status=params.get('subscribe');
 if(!status)return;
 const message=params.get('message');
-const paymentKey=params.get('paymentKey');
-const orderId=params.get('orderId');
-const billingKey=params.get('billingKey');
 history.replaceState({},'',window.location.pathname);
-if(status==='success'&&paymentKey&&orderId&&billingKey){
-finalizeSubscription(paymentKey,orderId,billingKey);
-return;
+if(status==='success')showAlert('구독이 완료되었습니다.\n'+getSubscribeDays()+'일마다 등록한 카드로 자동 결제됩니다.');
+else showAlert(message||'구독이 완료되지 않았습니다.');
 }
-if(status==='success')alert('구독이 완료되었습니다.\n잠시 후 앱을 이용할 수 있습니다.');
-else alert(message?decodeURIComponent(message):'구독이 완료되지 않았습니다.');
-}
-async function finalizeSubscription(paymentKey,orderId,billingKey){
+async function postWithIdToken(url,body={}){
 const user=firebase.auth().currentUser;
-if(!user){
-alert('로그인이 필요합니다.\n다시 로그인한 뒤 구독을 진행해 주세요.');
-return;
-}
-try{
+if(!user)throw new Error('로그인이 필요합니다.');
 const idToken=await user.getIdToken();
-const res=await fetch('/api/toss/verify-subscription',{
+const res=await fetch(url,{
 method:'POST',
 headers:{'Content-Type':'application/json'},
-body:JSON.stringify({paymentKey,orderId,billingKey,idToken})
+body:JSON.stringify({...body,idToken})
 });
-const data=await res.json();
-if(!res.ok)throw new Error(data.error||'구독 확인 실패');
-await firebase.firestore().doc('users/'+user.uid).set({
-subscription:data.subscription,
-updatedAt:Date.now()
-},{merge:true});
-alert('구독이 완료되었습니다.\n이제 앱을 이용할 수 있습니다.');
+const data=await res.json().catch(()=>({}));
+if(!res.ok)throw new Error(data.error||'요청에 실패했습니다.');
+return data;
+}
+async function openSubscriptionManage(){
+const sub=currentSubscription;
+if(!sub||sub.status!=='active')return;
+const until=adminFormatSignupDate(sub.expiresAt);
+if(sub.provider!=='toss'||!sub.autoRenew){
+await showAlert('구독 이용 중\n이용 기간: '+until+'까지'+(sub.provider==='toss'?'\n자동결제가 해지되어 있습니다.':''));
+return;
+}
+const ok=await showConfirm('카드 자동결제 이용 중\n카드: '+(sub.cardLabel||'등록 카드')+'\n다음 결제일: '+until+'\n\n자동결제를 해지할까요?\n해지해도 '+until+'까지는 이용할 수 있어요.',{ok:'자동결제 해지',cancel:'닫기'});
+if(!ok)return;
+try{
+await postWithIdToken('/api/toss/cancel');
+await showAlert('자동결제가 해지되었습니다.\n'+until+'까지 이용할 수 있어요.');
 }catch(e){
 console.error(e);
-alert(e.message||'구독 활성화에 실패했습니다.');
+await showAlert(e.message||'해지에 실패했습니다.');
 }
 }
 async function ensureTossPayment(){
@@ -838,11 +839,11 @@ function initSubscribeGate(){
 const btn=document.getElementById('subscribeBtn');
 const priceEl=document.getElementById('subscribePrice');
 if(priceEl){
-priceEl.textContent='월 '+formatWon(SAAS_SUBSCRIBE_AMOUNT)+' · '+SAAS_SUBSCRIBE_ORDER_NAME;
+priceEl.textContent='월 '+formatWon(getSubscribeAmount())+' · '+getSubscribeOrderName();
 priceEl.classList.remove('hidden');
 }
 if(btn){
-btn.textContent='구독하기 · 월 '+formatWon(SAAS_SUBSCRIBE_AMOUNT);
+btn.textContent='구독하기 · 월 '+formatWon(getSubscribeAmount());
 btn.onclick=()=>startTossSubscribe();
 if(!getTossClientKey()){
 btn.classList.add('btn-toss--disabled');
@@ -862,7 +863,7 @@ bankInfo.innerHTML=`<strong>입금 계좌</strong>
 <div class="bank-row"><span>은행</span><span>${esc(bank.bankName||'-')}</span></div>
 <div class="bank-row"><span>계좌번호</span><span>${esc(bank.accountNumber||'-')}</span></div>
 <div class="bank-row"><span>예금주</span><span>${esc(bank.accountHolder||'-')}</span></div>
-<div class="bank-row"><span>입금액</span><span>${formatWon(SAAS_SUBSCRIBE_AMOUNT)}</span></div>`;
+<div class="bank-row"><span>입금액</span><span>${formatWon(getSubscribeAmount())}</span></div>`;
 }
 const depositor=document.getElementById('subscribeDepositor');
 if(depositor&&!depositor.value.trim()){
@@ -945,14 +946,12 @@ function updateSubscribeGateHeader(sub){
 const headline=document.getElementById('subscribeTrialHeadline');
 const msg=document.getElementById('subscribeMsg');
 const trialExpired=isExpiredTrial(sub);
+const paidExpired=sub?.status==='active'&&(sub.expiresAt||0)<=Date.now();
 if(headline){
-headline.classList.toggle('hidden',!trialExpired);
-if(trialExpired)headline.textContent='체험 '+SAAS_TRIAL_DAYS+'일이 종료되었습니다.';
+headline.classList.toggle('hidden',!trialExpired&&!paidExpired);
+headline.textContent=trialExpired?'체험 기간이 종료되었습니다.':'구독 기간이 종료되었습니다.';
 }
-if(msg){
-if(trialExpired)msg.textContent='이용을 계속하려면 아래에서 구독해 주세요.';
-else msg.textContent='구독 후 다시 로그인해 주세요.';
-}
+if(msg)msg.textContent='이용을 계속하려면 아래에서 구독해 주세요.';
 }
 async function refreshSubscribePendingUI(){
 const user=firebase.auth().currentUser;
@@ -967,7 +966,7 @@ const existing=await getPendingActivationRequest(user.uid);
 if(existing){applySubscribeGateLayout(true);return;}
 const depositor=(document.getElementById('subscribeDepositor')?.value||'').trim();
 if(!depositor){showAlert('입금자명을 입력해 주세요.');return;}
-const ok=await showConfirm('입금 '+formatWon(SAAS_SUBSCRIBE_AMOUNT)+'을 완료하셨나요?\n신청 후 관리자 확인까지 이용이 제한됩니다.');
+const ok=await showConfirm('입금 '+formatWon(getSubscribeAmount())+'을 완료하셨나요?\n신청 후 관리자 확인까지 이용이 제한됩니다.');
 if(!ok)return;
 try{
 const profileSnap=await firebase.firestore().doc('users/'+user.uid).get();
@@ -979,7 +978,7 @@ coachName:profile.coachName||'',
 phone:profile.phone||'',
 status:'pending',
 type:'bank_transfer',
-amount:SAAS_SUBSCRIBE_AMOUNT,
+amount:getSubscribeAmount(),
 depositorName:depositor,
 createdAt:Date.now(),
 updatedAt:Date.now()
@@ -996,7 +995,7 @@ showAlert(e.message||'신청에 실패했습니다.');
 }
 function isExpiredTrial(sub){
 if(!sub)return false;
-if(sub.status==='active'&&(sub.expiresAt||0)>Date.now())return false;
+if(sub.status==='active')return false;
 if(sub.trialEndsAt&&sub.trialEndsAt<=Date.now())return true;
 return sub.status==='trial'||sub.plan==='trial';
 }
@@ -1701,6 +1700,13 @@ if(sub.status==='active'&&(sub.expiresAt||0)>now)return '<span class="admin-badg
 if(sub.status==='trial'&&((sub.trialEndsAt||sub.expiresAt||0)>now))return '<span class="admin-badge admin-badge-trial">체험</span>';
 return '<span class="admin-badge admin-badge-expired">만료</span>';
 }
+function adminPayLabel(sub){
+if(sub?.status!=='active')return '';
+if(sub.provider==='toss')return ' · 카드'+(sub.autoRenew?' 자동결제':' (해지됨)');
+if(sub.provider==='bank_transfer')return ' · 계좌 입금';
+if(sub.provider==='admin')return ' · 관리자 활성';
+return '';
+}
 function renderAdminPending(){
 if(!firebaseReady||!isAdminUser(firebase.auth().currentUser))return;
 if(adminPendingUnsub){adminPendingUnsub();adminPendingUnsub=null;}
@@ -1719,7 +1725,7 @@ return `<div class="admin-row">
 <div class="min-w-0 flex-1">
 <p class="font-semibold text-sm text-toss-text">${esc(r.coachName||r.email||'-')}</p>
 <p class="text-xs text-toss-sub mt-1">${esc(r.email||'-')}${r.phone?' · '+esc(r.phone):''}</p>
-<p class="text-xs text-toss-sub mt-1">입금자명 ${esc(r.depositorName||'-')} · ${formatWon(r.amount||SAAS_SUBSCRIBE_AMOUNT)}</p>
+<p class="text-xs text-toss-sub mt-1">입금자명 ${esc(r.depositorName||'-')} · ${formatWon(r.amount||getSubscribeAmount())}</p>
 <p class="text-xs text-toss-muted mt-1">${adminFormatDate(r.createdAt)}</p>
 </div>
 <div class="admin-user-actions">
@@ -1763,12 +1769,12 @@ return `<div class="admin-user-card">
 <p class="admin-user-sub">${adminSecondaryLine(u)}</p>
 <p class="admin-user-sub">${adminSubBadge(sub)} · 회원 ${u.memberCount||0} · 일정 ${u.scheduleCount||0}</p>
 <p class="admin-user-meta">가입 ${adminFormatSignupDate(u.createdAt)} · <span class="${dday.cls}">${dday.text}</span> · 입금자 ${esc(depositor)}</p>
-<p class="admin-user-meta">만료 ${adminFormatDate(exp)}</p>
+<p class="admin-user-meta">만료 ${adminFormatDate(exp)}${adminPayLabel(sub)}</p>
 </div>
 <div class="admin-user-actions">
-<button type="button" class="btn-toss btn-toss-inline" data-admin-action="activate" data-uid="${esc(u.id)}">30일 활성</button>
-<button type="button" class="btn-toss-ghost btn-toss-inline" data-admin-action="extend-trial" data-uid="${esc(u.id)}">체험 +14일</button>
-${u.id===firebase.auth().currentUser?.uid?'':`<button type="button" class="btn-toss-danger" data-admin-action="delete-user" data-uid="${esc(u.id)}" data-label="${esc(u.coachName||u.email||u.id)}" data-phone="${esc(u.phone||'')}">삭제</button>`}
+<button type="button" class="btn-toss btn-toss-inline" data-admin-action="activate" data-uid="${esc(u.id)}">${getSubscribeDays()}일 활성</button>
+<button type="button" class="btn-toss-ghost btn-toss-inline" data-admin-action="extend-trial" data-uid="${esc(u.id)}">체험 +${getTrialDays()}일</button>
+${u.id===firebase.auth().currentUser?.uid?'':`<button type="button" class="btn-toss-danger" data-admin-action="delete-user" data-uid="${esc(u.id)}" data-label="${esc(u.coachName||u.email||u.id)}">삭제</button>`}
 </div>
 </div>
 <div class="admin-memo-box">
@@ -1787,7 +1793,7 @@ if(!requestId||!uid)return;
 const ok=await showConfirm('입금을 확인하고 '+getSubscribeDays()+'일 구독을 활성화할까요?');
 if(!ok)return;
 const now=Date.now();
-const expiresAt=now+getSubscribeDays()*86400000;
+const expiresAt=await getActiveExtendBase(uid,now)+getSubscribeDays()*86400000;
 const batch=firebase.firestore().batch();
 batch.update(firebase.firestore().doc('activationRequests/'+requestId),{
 status:'approved',
@@ -1801,7 +1807,7 @@ status:'active',
 plan:'monthly',
 startedAt:now,
 expiresAt,
-amount:SAAS_SUBSCRIBE_AMOUNT,
+amount:getSubscribeAmount(),
 provider:'bank_transfer',
 updatedAt:now
 },
@@ -1826,19 +1832,25 @@ rejectedBy:firebase.auth().currentUser?.email||''
 });
 }catch(e){await showAlert(e.message||'거절 실패');}
 }
+async function getActiveExtendBase(uid,now){
+const snap=await firebase.firestore().doc('users/'+uid).get();
+const sub=snap.exists?snap.data()?.subscription:null;
+return sub?.status==='active'&&(sub.expiresAt||0)>now?sub.expiresAt:now;
+}
 async function activateAdminUser(uid){
 if(!uid)return;
-const ok=await showConfirm(getSubscribeDays()+'일 구독을 활성화할까요?');
+const ok=await showConfirm(getSubscribeDays()+'일 구독을 활성화할까요?\n남은 구독 기간이 있으면 그 뒤로 연장됩니다.');
 if(!ok)return;
 const now=Date.now();
 try{
+const expiresAt=await getActiveExtendBase(uid,now)+getSubscribeDays()*86400000;
 await firebase.firestore().doc('users/'+uid).set({
 subscription:{
 status:'active',
 plan:'monthly',
 startedAt:now,
-expiresAt:now+getSubscribeDays()*86400000,
-amount:SAAS_SUBSCRIBE_AMOUNT,
+expiresAt,
+amount:getSubscribeAmount(),
 provider:'admin',
 updatedAt:now
 },
@@ -1885,32 +1897,16 @@ adminNoteBy:firebase.auth().currentUser?.email||''
 await showAlert('메모가 저장되었습니다.');
 }catch(e){await showAlert(e.message||'메모 저장 실패');}
 }
-async function deleteAdminUser(uid,label,phone){
+async function deleteAdminUser(uid,label){
 if(!uid||!firebaseReady||!isAdminUser(firebase.auth().currentUser))return;
 const me=firebase.auth().currentUser;
 if(me&&uid===me.uid){await showAlert('관리자 본인 계정은 삭제할 수 없습니다.');return;}
 const name=label||uid;
-const ok=await showConfirm(name+' 계정을 삭제할까요?\n\n레슨·회원·구독 데이터가 모두 삭제됩니다.\n되돌릴 수 없습니다.');
+const ok=await showConfirm(name+' 계정을 삭제할까요?\n\n로그인 계정과 레슨·회원·구독·카드 정보가 모두 삭제되고\n자동결제도 중지됩니다.\n되돌릴 수 없습니다.');
 if(!ok)return;
 try{
-const db=firebase.firestore();
-const batch=db.batch();
-batch.delete(db.doc('users/'+uid+'/app/state'));
-batch.delete(db.doc('users/'+uid));
-await batch.commit();
-const phoneKey=normalizePhone(phone||'');
-if(phoneKey&&isValidPhone(phoneKey)){
-const regRef=coachRegistryRef(phoneKey);
-const regSnap=await regRef.get();
-if(regSnap.exists&&regSnap.data().uid===uid)await regRef.delete();
-}
-const reqSnap=await db.collection('activationRequests').where('uid','==',uid).get();
-if(!reqSnap.empty){
-const reqBatch=db.batch();
-reqSnap.docs.forEach(d=>reqBatch.delete(d.ref));
-await reqBatch.commit();
-}
-await showAlert('데이터가 삭제되었습니다.\n\n같은 이메일로 다시 가입하려면\nFirebase 콘솔 → Authentication에서\n해당 이메일 계정을 삭제해 주세요.');
+await postWithIdToken('/api/admin/delete-user',{uid});
+await showAlert('삭제되었습니다.\n같은 이메일·연락처로 다시 가입할 수 있습니다.');
 }catch(e){
 console.error(e);
 await showAlert(e.message||'삭제에 실패했습니다.');
@@ -1925,9 +1921,9 @@ const uid=btn.dataset.uid;
 if(action==='approve')approveAdminRequest(requestId,uid);
 else if(action==='reject')rejectAdminRequest(requestId);
 else if(action==='activate')activateAdminUser(uid);
-else if(action==='extend-trial')extendAdminTrial(uid,14);
+else if(action==='extend-trial')extendAdminTrial(uid,getTrialDays());
 else if(action==='save-note')saveAdminUserNote(uid);
-else if(action==='delete-user')deleteAdminUser(uid,btn.dataset.label,btn.dataset.phone);
+else if(action==='delete-user')deleteAdminUser(uid,btn.dataset.label);
 }
 function initAdminPanel(){
 document.querySelectorAll('.admin-tab').forEach(btn=>{
@@ -2530,7 +2526,7 @@ window.setView=setView;window.openSheet=openSheet;window.closeSheet=closeSheet;
 window.completeLesson=completeLesson;window.cancelSchedule=cancelSchedule;window.deletePlayer=deletePlayer;
 window.submitPlayer=submitPlayer;window.submitPayment=submitPayment;window.submitSchedule=submitSchedule;
 window.setCalMode=setCalMode;window.calNav=calNav;window.selectCalDay=selectCalDay;window.setDetailTab=setDetailTab;window.setHistoryMonth=setHistoryMonth;window.navigateHistoryMonth=navigateHistoryMonth;window.openHistoryMonthPicker=openHistoryMonthPicker;window.pickHistoryMonth=pickHistoryMonth;
-window.firebaseLogout=firebaseLogout;
+window.firebaseLogout=firebaseLogout;window.openSubscriptionManage=openSubscriptionManage;
 
 document.getElementById('appHeaderHome')?.addEventListener('click',()=>setView('home'));
 document.getElementById('syncLogout')?.addEventListener('click',firebaseLogout);

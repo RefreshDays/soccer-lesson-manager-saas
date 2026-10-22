@@ -6,19 +6,61 @@ service cloud.firestore {
         && request.auth.token.email == 'sonkh@rubycell.co.kr';
     }
 
-    function userUpdateAllowed() {
-      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(['adminNote']);
+    // saas-config.js 의 TRIAL_DAYS 와 같은 값으로 맞춰 주세요.
+    function maxTrialDays() {
+      return 7;
+    }
+
+    function isNewTrial(sub) {
+      return sub.keys().hasOnly(['status', 'plan', 'startedAt', 'trialEndsAt', 'expiresAt'])
+        && sub.status == 'trial'
+        && sub.plan == 'trial'
+        && sub.trialEndsAt is number
+        && sub.expiresAt == sub.trialEndsAt
+        // 기기 시계 오차를 고려해 하루 여유를 둡니다.
+        && sub.trialEndsAt <= request.time.toMillis() + (maxTrialDays() + 1) * 86400000;
+    }
+
+    function adminOnlyKeys() {
+      return ['adminNote', 'adminNoteUpdatedAt', 'adminNoteBy'];
+    }
+
+    // 구독 정보는 관리자·결제 서버만 바꿀 수 있고, 회원은 처음 한 번 체험만 시작할 수 있습니다.
+    function ownerCreateAllowed() {
+      let data = request.resource.data;
+      return !data.keys().hasAny(adminOnlyKeys())
+        && (!('subscription' in data) || isNewTrial(data.subscription));
+    }
+
+    function ownerUpdateAllowed() {
+      let changed = request.resource.data.diff(resource.data).affectedKeys();
+      return !changed.hasAny(adminOnlyKeys())
+        && (!changed.hasAny(['subscription'])
+          || (!('subscription' in resource.data) && isNewTrial(request.resource.data.subscription)));
     }
 
     match /users/{userId} {
       allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
-      allow create: if request.auth != null && request.auth.uid == userId;
+      allow create: if isAdmin()
+        || (request.auth != null && request.auth.uid == userId && ownerCreateAllowed());
       allow update: if isAdmin()
-        || (request.auth != null && request.auth.uid == userId && userUpdateAllowed());
+        || (request.auth != null && request.auth.uid == userId && ownerUpdateAllowed());
       allow delete: if isAdmin();
 
-      match /{document=**} {
+      // 하위 컬렉션(app/state 레슨 데이터)만 매칭합니다.
+      // /{document=**} 로 쓰면 users/{userId} 문서 자체도 매칭되어 위 구독 보호가 무력화됩니다.
+      match /{collection}/{document=**} {
         allow read, write, delete: if request.auth != null && (request.auth.uid == userId || isAdmin());
+      }
+    }
+
+    // 카드 빌링키는 결제 서버(Admin SDK)만 다룹니다.
+    match /billing/{userId} {
+      allow read: if isAdmin();
+      allow write: if false;
+      match /{collection}/{document=**} {
+        allow read: if isAdmin();
+        allow write: if false;
       }
     }
 
