@@ -282,7 +282,8 @@ body.auth-lock #app,body.auth-lock .bottom-nav,body.auth-lock #fab{visibility:hi
 .sync-bar-row .sync-dot{flex-shrink:0}
 .sync-bar-text{font-size:14px;font-weight:500;color:#333D4B;line-height:1.4;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sync-bar-text strong{color:#191F28;font-weight:600}
-.sync-sub-line{flex-shrink:0}
+.sync-sub-line{padding-left:16px;margin-top:6px}
+.dash-greeting-pill{flex-shrink:0;font-size:12px;font-weight:600;color:#0046C0;background:#EAF2FF;padding:8px 13px;border-radius:999px;line-height:1.25;letter-spacing:-.02em;white-space:nowrap}
 .sync-sub-line.hidden{display:none}
 .sync-trial-badge{display:inline-flex;align-items:center;font-size:12px;font-weight:700;color:#E65100;background:#FFF0E0;padding:8px 13px;border-radius:999px;line-height:1.2;letter-spacing:-.02em;white-space:nowrap}
 .sync-trial-badge--active{color:#0D7A5F;background:#E6FAF3;border:0;cursor:pointer;font-family:inherit}
@@ -336,7 +337,7 @@ body.auth-lock #app,body.auth-lock .bottom-nav,body.auth-lock #fab{visibility:hi
 <main class="px-5 pb-4 pt-5">
 <div id="dashBrandRow" class="dash-head">
 <h2 class="dash-brand"><img class="dash-brand-logo" src="/brand/logo-horizontal.svg" alt="LESSON MANAGER"/></h2>
-<div id="syncSubLine" class="sync-sub-line hidden" aria-live="polite"></div>
+<span class="dash-greeting-pill">오늘도 힘내세요!</span>
 </div>
 <section id="syncStatusBar" class="sync-bar hidden mb-3" aria-live="polite">
 <div class="sync-bar-top">
@@ -347,6 +348,7 @@ body.auth-lock #app,body.auth-lock .bottom-nav,body.auth-lock #fab{visibility:hi
 </div>
 </div>
 <div id="syncDetail" class="sync-detail hidden"></div>
+<div id="syncSubLine" class="sync-sub-line hidden" aria-live="polite"></div>
 </section>
 <section id="statsSection" class="mb-5"></section>
 <section id="alertSection" class="hidden mb-5"></section>
@@ -514,7 +516,7 @@ const WEEKDAYS=['일','월','화','수','목','금','토'];
 let state={players:[],schedules:[]};
 let currentView='home',calendarMode='month',calendarDate=new Date(),selectedDate=null,detailTab='payment',historyViewMonth=null;
 let cloudSaveTimer=null,cloudUnsub=null,profileUnsub=null,lastCloudPush=0,applyingRemote=false,firebaseReady=false,bootFinished=false,currentAuthUid=null,currentSyncSession=0,currentSubscription=null;
-const APP_BUILD='20261022-admin-header';
+const APP_BUILD='20261022-greeting';
 function getSaasConfig(){return window.SAAS_CONFIG||{};}
 function getBankInfo(){return getSaasConfig().BANK||{};}
 function getSubscribeDays(){return Number(getSaasConfig().SUBSCRIBE_DAYS||30);}
