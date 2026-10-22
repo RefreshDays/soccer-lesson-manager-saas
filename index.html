@@ -414,6 +414,11 @@ body.auth-lock #app,body.auth-lock .bottom-nav,body.auth-lock #fab{visibility:hi
 <div id="adminUserList" class="admin-empty">불러오는 중...</div>
 </div>
 </div>
+<div id="adminShowcase" class="toss-card p-4 hidden">
+<p class="font-bold text-[15px]">시연·영상용 가상 데이터</p>
+<p class="text-xs text-toss-sub mt-1 leading-relaxed">지금 로그인한 계정의 회원·일정을 가상 수강생 12명과 6개월치 레슨으로 바꿉니다. 실제 데이터가 있는 계정에서는 사용하지 마세요.</p>
+<button type="button" onclick="loadShowcaseData()" class="mt-3 w-full h-11 rounded-xl bg-toss-bg text-sm font-semibold text-toss-blue">이 계정에 가상 데이터 넣기</button>
+</div>
 </div>
 <footer class="legal-footer legal-footer--app" data-legal-footer data-withdraw-enabled></footer>
 </main>
@@ -550,6 +555,7 @@ body.auth-lock #app,body.auth-lock .bottom-nav,body.auth-lock #fab{visibility:hi
 <script src="/firebase-config.js"></script>
 <script src="/saas-config.js"></script>
 <script src="/toss-config.js"></script>
+<script src="/showcase-data.js"></script>
 <script src="https://js.tosspayments.com/v2/standard"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-auth-compat.js"></script>
@@ -1731,6 +1737,15 @@ saveStateLocal();
 scheduleCloudSave();
 }
 function syncAll(){state.players.forEach(syncPlayer);}
+async function loadShowcaseData(){
+if(!isOwnerUser(firebase.auth().currentUser)||!window.buildShowcaseData)return;
+if(!await showConfirm('이 계정의 회원·일정이 모두 가상 데이터로 바뀝니다.\n계속할까요?'))return;
+state={_version:DATA_VERSION,...window.buildShowcaseData()};
+overdueExpanded=false;
+saveState();
+setView('home');
+await showAlert('가상 데이터를 넣었어요.');
+}
 function syncPlayer(p){const h=p.payment_history||[];p.total_paid=h.reduce((s,x)=>s+(x.amount||0),0);p.total_sessions=h.reduce((s,x)=>s+(x.sessions||0),0);p.used_sessions=Math.min(p.used_sessions||0,p.total_sessions);p.remaining_sessions=Math.max(0,p.total_sessions-p.used_sessions);}
 function getPlayer(id){if(id==null||id==='')return null;return state.players.find(p=>String(p.id)===String(id));}
 function purgeOrphanSchedules(){
@@ -2407,6 +2422,7 @@ const fab=document.getElementById('fab');
 fab.style.display=(v==='home'||v==='admin')?'none':'flex';
 fab.onclick=()=>{if(v==='players')openSheet('player');else openSheet('schedule',{date:selectedDate||todayISO()});};
 if(v==='admin'){
+document.getElementById('adminShowcase')?.classList.toggle('hidden',!isOwnerUser(firebase.auth().currentUser));
 setAdminTab(adminTab);
 startAdminListeners();
 history.replaceState({},'',location.pathname+location.search+'#admin');
