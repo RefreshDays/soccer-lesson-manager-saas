@@ -33,8 +33,12 @@ export default async function handler(req, res) {
 
     const billing = await issueBillingKey(String(authKey), uid);
     const now = Date.now();
+    // 결제 직전에 회원이 동의한 정기결제 고지 내용을 결제 기록에 남깁니다.
+    const consent = userSnap.data().paymentConsent || {};
     await db.doc(`billing/${uid}`).set({
       billingKey: billing.billingKey,
+      consentAt: consent.agreedAt || null,
+      consentVersion: consent.version || '',
       customerKey: uid,
       cardLabel: cardLabelFrom(billing),
       autoRenew: false,
@@ -43,7 +47,7 @@ export default async function handler(req, res) {
       updatedAt: now,
     });
 
-    await chargeAndExtend(uid, { orderId: `sub_${uid}_${now}` });
+    await chargeAndExtend(uid, { orderId: `sub_${uid}_${now}`, kind: 'first' });
     redirect(res, `${origin}/?subscribe=success`);
   } catch (error) {
     console.error('[toss billing-success]', error);

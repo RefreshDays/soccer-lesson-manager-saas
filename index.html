@@ -189,7 +189,28 @@ body.sheet-open,body.confirm-open{overflow:hidden}
 body.app-boot #app{opacity:0}
 body.app-boot .bottom-nav,body.app-boot #fab{opacity:0}
 body.auth-lock #app,body.auth-lock .bottom-nav,body.auth-lock #fab{visibility:hidden;pointer-events:none}
-.auth-gate,.subscribe-gate{position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;padding:24px;background:#F2F4F6}
+.auth-gate,.subscribe-gate{position:fixed;inset:0;z-index:90;display:flex;align-items:flex-start;justify-content:center;padding:24px;background:#F2F4F6;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.auth-gate>.auth-card,.subscribe-gate>.auth-card{margin:auto}
+.auth-consent{margin:0 0 14px;padding:12px 14px;border:1px solid #EEF2F7;border-radius:14px;background:#F8FAFC}
+.auth-consent.hidden{display:none!important}
+.consent-row{display:flex;align-items:flex-start;gap:10px;padding:5px 0;font-size:13px;color:#4E5968;line-height:1.45;cursor:pointer;letter-spacing:-.01em}
+.consent-row input{flex-shrink:0;width:18px;height:18px;margin:0;accent-color:#3182F6;cursor:pointer}
+.consent-row span{flex:1;min-width:0}
+.consent-row a{flex-shrink:0;color:#8B95A1;font-size:12px;text-decoration:underline}
+.consent-row span a{color:#3182F6;font-size:inherit}
+.consent-all{font-weight:700;color:#191F28;font-size:14px;padding-bottom:9px;margin-bottom:4px;border-bottom:1px solid #EEF2F7}
+.consent-detail{margin:2px 0 0 28px;font-size:11px;color:#8B95A1;line-height:1.55}
+.pay-notice{margin:0 0 10px;padding:12px 14px;border-radius:14px;background:#F8FAFC;border:1px solid #EEF2F7;font-size:12px;color:#4E5968;line-height:1.6}
+.pay-notice div{display:flex;gap:8px}
+.pay-notice b{flex-shrink:0;width:52px;color:#191F28;font-weight:600}
+.pay-consent{margin:0 0 12px}
+.legal-footer{margin-top:20px;padding-top:14px;border-top:1px solid #EEF2F7;text-align:center}
+.legal-footer--app{margin:28px 0 8px;border-top:0}
+.legal-links{font-size:12px;color:#8B95A1;line-height:1.6}
+.legal-links a{color:#4E5968;text-decoration:none}
+.legal-links a.is-privacy{font-weight:700;color:#191F28}
+.legal-biz{margin-top:6px;font-size:11px;color:#8B95A1;line-height:1.6;word-break:keep-all}
+.legal-withdraw{margin-top:8px;border:0;background:none;padding:4px;color:#8B95A1;font-size:11px;text-decoration:underline;cursor:pointer;font-family:inherit}
 .app-header-home{display:block;width:100%;text-align:left;font-size:17px;font-weight:700;line-height:1.375;letter-spacing:-.025em;color:#191F28;background:transparent;border:0;padding:0;cursor:pointer;font-family:inherit;-webkit-tap-highlight-color:transparent}
 .app-header-home:active{opacity:.72}
 .subscribe-badge{display:inline-flex;align-items:center;font-size:11px;font-weight:600;color:#E65100;background:#FFF4E6;padding:4px 8px;border-radius:9999px;margin-left:6px;vertical-align:middle}
@@ -326,6 +347,7 @@ body.auth-lock #app,body.auth-lock .bottom-nav,body.auth-lock #fab{visibility:hi
 </div>
 </div>
 </div>
+<footer class="legal-footer legal-footer--app" data-legal-footer data-withdraw-enabled></footer>
 </main>
 </div>
 <nav class="bottom-nav">
@@ -374,6 +396,13 @@ body.auth-lock #app,body.auth-lock .bottom-nav,body.auth-lock #fab{visibility:hi
 <label class="block mb-2"><span class="text-sm text-toss-sub mb-2 block">연락처</span><input type="tel" id="authPhone" class="toss-input" placeholder="010-0000-0000" autocomplete="tel"/></label>
 </div>
 <label class="block mb-4"><span class="sr-only">비밀번호</span><input type="password" id="authPassword" class="toss-input" placeholder="비밀번호" autocomplete="current-password"/></label>
+<div id="authConsent" class="auth-consent hidden">
+<label class="consent-row consent-all"><input type="checkbox" id="consentAll"/><span>전체 동의</span></label>
+<label class="consent-row"><input type="checkbox" class="consent-item" id="consentAge"/><span>[필수] 만 14세 이상입니다</span></label>
+<label class="consent-row"><input type="checkbox" class="consent-item" id="consentTerms"/><span>[필수] 이용약관 동의</span><a href="/policy.html#terms" target="_blank" rel="noopener">보기</a></label>
+<label class="consent-row"><input type="checkbox" class="consent-item" id="consentPrivacy"/><span>[필수] 개인정보 수집·이용 동의</span><a href="/policy.html#privacy" target="_blank" rel="noopener">보기</a></label>
+<p class="consent-detail">수집 항목: 이메일, 비밀번호, 지도자명, 연락처<br>이용 목적: 회원 식별·로그인, 중복 가입 방지, 고객 응대<br>보관 기간: 회원 탈퇴 시까지 (법령에 따른 결제 기록 제외)<br>동의를 거부할 수 있으나, 거부 시 가입할 수 없습니다.</p>
+</div>
 <p id="authTrialNote" class="auth-trial-banner hidden" role="status">
 <span id="authTrialLabel" class="auth-trial-banner-label">무료 체험</span>
 <span class="auth-trial-banner-text">지금 가입하면 바로 시작할 수 있어요</span>
@@ -385,6 +414,7 @@ body.auth-lock #app,body.auth-lock .bottom-nav,body.auth-lock #fab{visibility:hi
 <button type="button" id="authSubmit" class="btn-toss mb-2">로그인</button>
 <button type="button" id="authModeToggle" class="auth-mode-toggle">처음 사용하시나요? 가입하기</button>
 <p class="auth-build-tag" id="authBuildTag"></p>
+<div class="legal-footer" data-legal-footer></div>
 </div>
 </div>
 <div id="subscribeGate" class="subscribe-gate hidden" aria-hidden="true">
@@ -412,18 +442,23 @@ body.auth-lock #app,body.auth-lock .bottom-nav,body.auth-lock #fab{visibility:hi
 <button type="button" id="subscribeTabBank" class="subscribe-tab">계좌 입금</button>
 </div>
 <div id="subscribePanelCard" class="subscribe-panel">
+<div id="subscribeCardNotice" class="pay-notice"></div>
+<label class="consent-row pay-consent"><input type="checkbox" id="consentCardPay"/><span>[필수] 위 정기결제 내용과 <a href="/policy.html#refund" target="_blank" rel="noopener">환불정책</a>을 확인했으며 결제에 동의합니다.</span></label>
 <button type="button" id="subscribeBtn" class="btn-toss mb-2">구독하기</button>
 <p class="subscribe-note">토스페이먼츠 카드 자동결제 · 즉시 이용 가능</p>
 </div>
 <div id="subscribePanelBank" class="subscribe-panel hidden">
 <div id="subscribeBankInfo" class="bank-info"></div>
 <label class="block mb-3"><span class="text-sm text-toss-sub mb-2 block">입금자명</span><input type="text" id="subscribeDepositor" class="toss-input" placeholder="입금 시 사용할 이름"/></label>
+<div id="subscribeBankNotice" class="pay-notice"></div>
+<label class="consent-row pay-consent"><input type="checkbox" id="consentBankPay"/><span>[필수] 위 이용 조건과 <a href="/policy.html#refund" target="_blank" rel="noopener">환불정책</a>을 확인했으며 입금에 동의합니다.</span></label>
 <button type="button" id="subscribeBankBtn" class="btn-toss mb-2">입금 신청 완료</button>
 <p class="subscribe-note">입금 확인 후 관리자 승인 시 이용 가능합니다.</p>
 </div>
 </div>
 <div id="subscribeGateFooter">
 <button type="button" id="subscribeLogout" class="btn-toss-ghost">로그아웃</button>
+<div class="legal-footer" data-legal-footer data-withdraw-enabled></div>
 </div>
 </div>
 </div>
@@ -442,14 +477,35 @@ const WEEKDAYS=['일','월','화','수','목','금','토'];
 let state={players:[],schedules:[]};
 let currentView='home',calendarMode='month',calendarDate=new Date(),selectedDate=null,detailTab='payment',historyViewMonth=null;
 let cloudSaveTimer=null,cloudUnsub=null,profileUnsub=null,lastCloudPush=0,applyingRemote=false,firebaseReady=false,bootFinished=false,currentAuthUid=null,currentSyncSession=0,currentSubscription=null;
-const APP_BUILD='20261022-saas-admin-roles';
-const SAAS_CONTACT_EMAIL='wonzia80@gmail.com';
+const APP_BUILD='20261022-saas-legal';
 function getSaasConfig(){return window.SAAS_CONFIG||{};}
 function getBankInfo(){return getSaasConfig().BANK||{};}
 function getSubscribeDays(){return Number(getSaasConfig().SUBSCRIBE_DAYS||30);}
 function getTrialDays(){return Number(getSaasConfig().TRIAL_DAYS||7);}
 function getSubscribeAmount(){return Number(getSaasConfig().SUBSCRIBE_AMOUNT||9900);}
 function getSubscribeOrderName(){return getSaasConfig().SUBSCRIBE_ORDER_NAME||'축구 레슨 매니저 월 구독';}
+function getPolicyVersion(){return getSaasConfig().POLICY_VERSION||'';}
+function getBusinessInfo(){return getSaasConfig().BUSINESS||{};}
+function renderLegalFooters(){
+const b=getBusinessInfo();
+const v=x=>x?esc(x):'(등록 예정)';
+const trade=b.tradeName||(b.representative?b.representative+' (개인)':'');
+const html=`<div class="legal-links"><a href="/policy.html#terms" target="_blank" rel="noopener">이용약관</a> · <a class="is-privacy" href="/policy.html#privacy" target="_blank" rel="noopener">개인정보처리방침</a> · <a href="/policy.html#refund" target="_blank" rel="noopener">환불정책</a></div>
+<div class="legal-biz">상호 ${v(trade)} · 대표 ${v(b.representative)}<br>사업자등록번호 ${v(b.bizNumber)} · 통신판매업 ${v(b.ecommerceNumber)}<br>${b.address?esc(b.address)+'<br>':''}${b.phone?'전화 '+esc(b.phone)+' · ':''}이메일 ${v(b.email)} · <a href="/policy.html#business" target="_blank" rel="noopener" style="color:inherit">사업자 정보</a></div>`;
+document.querySelectorAll('[data-legal-footer]').forEach(el=>{
+el.innerHTML=html+(el.hasAttribute('data-withdraw-enabled')?'<button type="button" class="legal-withdraw" data-withdraw>회원 탈퇴</button>':'');
+});
+document.querySelectorAll('[data-withdraw]').forEach(btn=>btn.addEventListener('click',withdrawAccount));
+}
+function renderPayNotices(){
+const amount=formatWon(getSubscribeAmount()),days=getSubscribeDays(),trial=getTrialDays();
+const row=(k,val)=>`<div><b>${k}</b><span>${val}</span></div>`;
+const refund=`결제 후 환불 불가 (${trial}일 무료 체험 제공). 운영자 귀책 장애 등은 환불`;
+const card=document.getElementById('subscribeCardNotice');
+if(card)card.innerHTML=row('상품',esc(getSubscribeOrderName()))+row('금액',amount+' / '+days+'일')+row('결제','오늘 첫 결제 후 '+days+'일마다 같은 카드로 자동 결제')+row('해지','앱 상단 "구독 이용 중"에서 언제든 해지, 남은 기간까지 이용')+row('환불',refund)+row('결제대행','토스페이먼츠(주)');
+const bank=document.getElementById('subscribeBankNotice');
+if(bank)bank.innerHTML=row('상품',esc(days+'일 이용권'))+row('금액',amount+' (자동 갱신 없음)')+row('시작','입금 확인·승인 후 '+days+'일')+row('환불',refund);
+}
 function getAdminEmails(){return(getSaasConfig().ADMIN_EMAILS||['sonkh@rubycell.co.kr']).map(e=>(e||'').toLowerCase());}
 // 최고 관리자는 saas-config.js 의 ADMIN_EMAILS, 그 외 관리자는 Firestore config/admins 의 uids 로 지정합니다.
 let adminUids=[],adminConfigUnsub=null;
@@ -488,6 +544,7 @@ const submit=document.getElementById('authSubmit');
 if(submit)submit.textContent=authMode==='register'?'가입하기':'로그인';
 const trialNote=document.getElementById('authTrialNote');
 if(trialNote)trialNote.classList.toggle('hidden',authMode!=='register');
+document.getElementById('authConsent')?.classList.toggle('hidden',authMode!=='register');
 const trialLabel=document.getElementById('authTrialLabel');
 if(trialLabel)trialLabel.textContent='체험 '+getTrialDays()+'일 무료';
 const toggle=document.getElementById('authModeToggle');
@@ -512,6 +569,14 @@ setAuthMode(authMode==='register'?'login':'register');
 });
 document.getElementById('authSubmit')?.addEventListener('click',submitAuthForm);
 document.getElementById('authPassword')?.addEventListener('keydown',e=>{if(e.key==='Enter')submitAuthForm();});
+const all=document.getElementById('consentAll');
+const items=[...document.querySelectorAll('.consent-item')];
+all?.addEventListener('change',()=>items.forEach(i=>{i.checked=all.checked;}));
+items.forEach(i=>i.addEventListener('change',()=>{if(all)all.checked=items.every(x=>x.checked);}));
+}
+function readRegisterConsents(){
+const on=id=>!!document.getElementById(id)?.checked;
+return{age14:on('consentAge'),terms:on('consentTerms'),privacy:on('consentPrivacy')};
 }
 
 function getStorageKey(authUid){return authUid?STORAGE_KEY_BASE+'-'+authUid:STORAGE_KEY_BASE;}
@@ -727,6 +792,7 @@ const phone=document.getElementById('authPhone');
 const pw=document.getElementById('authPassword');
 if(email)email.value='';
 if(coach)coach.value='';
+document.querySelectorAll('#authConsent input[type=checkbox]').forEach(c=>{c.checked=false;});
 if(phone)phone.value='';
 if(!pw)return;
 pw.value='';
@@ -840,8 +906,13 @@ return tossPaymentInstance;
 async function startTossSubscribe(){
 const user=firebase.auth().currentUser;
 if(!user){alert('로그인이 필요합니다.');return;}
+if(!document.getElementById('consentCardPay')?.checked){showAlert('정기결제 내용과 환불정책에 동의해 주세요.');return;}
 try{
 const payment=await ensureTossPayment();
+await firebase.firestore().doc('users/'+user.uid).set({
+paymentConsent:{method:'card',version:getPolicyVersion(),agreedAt:Date.now(),amount:getSubscribeAmount(),days:getSubscribeDays()},
+updatedAt:Date.now()
+},{merge:true});
 await payment.requestBillingAuth({
 method:'CARD',
 successUrl:window.location.origin+'/api/toss/billing-success',
@@ -872,6 +943,19 @@ btn.setAttribute('aria-disabled','true');
 document.getElementById('subscribeTabCard')?.addEventListener('click',()=>setSubscribePayMode('card'));
 document.getElementById('subscribeTabBank')?.addEventListener('click',()=>setSubscribePayMode('bank'));
 document.getElementById('subscribeBankBtn')?.addEventListener('click',submitBankTransferRequest);
+const syncPayButtons=()=>{
+[['consentCardPay','subscribeBtn'],['consentBankPay','subscribeBankBtn']].forEach(([cid,bid])=>{
+const btn=document.getElementById(bid);
+if(!btn)return;
+const off=!document.getElementById(cid)?.checked||(bid==='subscribeBtn'&&!getTossClientKey());
+btn.classList.toggle('btn-toss--disabled',off);
+btn.setAttribute('aria-disabled',off?'true':'false');
+});
+};
+document.getElementById('consentCardPay')?.addEventListener('change',syncPayButtons);
+document.getElementById('consentBankPay')?.addEventListener('change',syncPayButtons);
+renderPayNotices();
+syncPayButtons();
 setSubscribePayMode('card');
 }
 function updateSubscribeBankPanel(user){
@@ -985,6 +1069,7 @@ const existing=await getPendingActivationRequest(user.uid);
 if(existing){applySubscribeGateLayout(true);return;}
 const depositor=(document.getElementById('subscribeDepositor')?.value||'').trim();
 if(!depositor){showAlert('입금자명을 입력해 주세요.');return;}
+if(!document.getElementById('consentBankPay')?.checked){showAlert('이용 조건과 환불정책에 동의해 주세요.');return;}
 const ok=await showConfirm('입금 '+formatWon(getSubscribeAmount())+'을 완료하셨나요?\n신청 후 관리자 확인까지 이용이 제한됩니다.');
 if(!ok)return;
 try{
@@ -999,6 +1084,8 @@ status:'pending',
 type:'bank_transfer',
 amount:getSubscribeAmount(),
 depositorName:depositor,
+consentAt:Date.now(),
+consentVersion:getPolicyVersion(),
 createdAt:Date.now(),
 updatedAt:Date.now()
 });
@@ -1020,8 +1107,8 @@ return sub.status==='trial'||sub.plan==='trial';
 }
 async function showSubscribeGate(sub){
 const gate=document.getElementById('subscribeGate');
-document.body.classList.add('auth-lock');
 hideAuthGate();
+document.body.classList.add('auth-lock');
 if(gate){gate.classList.remove('hidden');gate.setAttribute('aria-hidden','false');}
 const pending=await getPendingActivationRequest(firebase.auth().currentUser?.uid);
 applySubscribeGateLayout(!!pending);
@@ -1154,6 +1241,7 @@ ownerUid:user.uid,
 coachName,
 phone:phoneKey,
 app:'축구 레슨 매니저',
+consents:{age14:true,terms:true,privacy:true,version:getPolicyVersion(),agreedAt:now},
 createdAt:now,
 updatedAt:now
 },{merge:true});
@@ -1339,6 +1427,8 @@ if(!coachName){showAuthError('지도자명을 입력해 주세요.');return;}
 if(!phone){showAuthError('연락처를 입력해 주세요.');return;}
 if(!isValidPhone(phone)){showAuthError('연락처 형식을 확인해 주세요.\n예: 010-0000-0000');return;}
 if(pw.length<6){showAuthError('비밀번호는 6자 이상이어야 합니다.');return;}
+const consents=readRegisterConsents();
+if(!consents.age14||!consents.terms||!consents.privacy){showAuthError('필수 항목에 모두 동의해 주세요.');return;}
 setAuthBusy(true);
 let cred=null;
 try{
@@ -1358,6 +1448,38 @@ showAuthError('연락처 형식을 확인해 주세요.\n예: 010-0000-0000');
 showAuthError(e.message||'가입에 실패했습니다.');
 }
 }finally{setAuthBusy(false);}
+}
+async function withdrawAccount(){
+const user=firebase.auth().currentUser;
+if(!user)return;
+if(isOwnerUser(user)){await showAlert('최고 관리자 계정은 탈퇴할 수 없습니다.');return;}
+const sub=currentSubscription;
+const paid=sub?.status==='active'&&(sub.expiresAt||0)>Date.now();
+const ok=await showConfirm('회원 탈퇴\n\n계정과 수강생·일정·결제 기록 등 모든 데이터가 즉시 삭제되며 복구할 수 없습니다.'+(paid?'\n\n남은 구독 기간은 환불되지 않으며, 카드 자동결제도 함께 해지됩니다.':'')+'\n\n(전자상거래법에 따라 결제 내역은 5년간 별도 보관 후 파기됩니다.)',{ok:'탈퇴하기',cancel:'취소'});
+if(!ok)return;
+const sure=await showConfirm('정말 탈퇴할까요?\n이 작업은 되돌릴 수 없습니다.',{ok:'탈퇴',cancel:'취소'});
+if(!sure)return;
+clearTimeout(cloudSaveTimer);
+if(cloudUnsub){cloudUnsub();cloudUnsub=null;}
+stopProfileListener();
+stopAdminListeners();
+currentSyncSession++;
+try{
+await postWithIdToken('/api/account/delete');
+}catch(e){
+console.error(e);
+await showAlert(e.message||'탈퇴에 실패했습니다.');
+location.reload();
+return;
+}
+try{localStorage.removeItem(getStorageKey(user.uid));}catch(_){}
+currentAuthUid=null;
+currentSubscription=null;
+resetAppState();
+hideSubscribeGate();
+stopAdminConfigListener();
+await firebase.auth().signOut().catch(()=>{});
+await showAlert('탈퇴가 완료되었습니다.\n그동안 이용해 주셔서 감사합니다.');
 }
 async function firebaseLogout(){
 if(!firebaseReady)return;
@@ -1863,10 +1985,10 @@ el.addEventListener('input',()=>{el.dataset.dirty='1';});
 }
 async function showAdminPayments(uid,label){
 try{
-const snap=await firebase.firestore().collection('billing/'+uid+'/payments').orderBy('createdAt','desc').limit(12).get();
+const snap=await firebase.firestore().collection('paymentRecords').where('uid','==',uid).get();
 if(snap.empty){await showAlert((label||'회원')+'\n결제 내역이 없습니다.');return;}
-const lines=snap.docs.map(d=>{
-const p=d.data();
+const records=snap.docs.map(d=>d.data()).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).slice(0,12);
+const lines=records.map(p=>{
 return adminFormatSignupDate(p.createdAt)+'  '+formatWon(p.amount||0)+'  '+(p.status==='DONE'?'완료':(p.status||'-'));
 });
 await showAlert((label||'회원')+' 결제 내역 (최근 '+lines.length+'건)\n\n'+lines.join('\n'));
@@ -2667,6 +2789,7 @@ bootFinished=true;
 }
 
 function bootApp(){
+renderLegalFooters();
 initSubscribeGate();
 initAdminPanel();
 initAuthGate();

@@ -73,6 +73,12 @@ service cloud.firestore {
       }
     }
 
+    // 결제 기록: 결제 서버만 쓰고 관리자만 조회합니다 (전자상거래법상 5년 보관).
+    match /paymentRecords/{orderId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
     // 관리자 목록은 최고 관리자만 바꿀 수 있습니다.
     match /config/admins {
       allow read: if request.auth != null;

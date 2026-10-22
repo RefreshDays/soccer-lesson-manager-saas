@@ -1,8 +1,8 @@
-import { FieldValue } from 'firebase-admin/firestore';
-import { adminAuth, adminDb, isAdminToken, readJsonBody, sendJson, verifyIdToken } from '../_lib/firebase.js';
+import { deleteAccount } from '../_lib/account.js';
+import { adminAuth, isAdminToken, readJsonBody, sendJson, verifyIdToken } from '../_lib/firebase.js';
 import { getAdminEmails } from '../_lib/toss.js';
 
-// 관리자가 회원을 완전히 삭제합니다 (로그인 계정 · 레슨 데이터 · 구독 · 카드 정보).
+// 관리자가 회원을 삭제합니다.
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     sendJson(res, 405, { error: 'Method Not Allowed' });
@@ -24,7 +24,6 @@ export default async function handler(req, res) {
       sendJson(res, 400, { error: '관리자 본인 계정은 삭제할 수 없습니다.' });
       return;
     }
-
     const target = await adminAuth()
       .getUser(uid)
       .catch(() => null);
@@ -33,24 +32,7 @@ export default async function handler(req, res) {
       return;
     }
 
-    const db = adminDb();
-    await db.recursiveDelete(db.doc(`users/${uid}`));
-    await db.recursiveDelete(db.doc(`billing/${uid}`));
-    const [registry, requests] = await Promise.all([
-      db.collection('coachRegistry').where('uid', '==', uid).get(),
-      db.collection('activationRequests').where('uid', '==', uid).get(),
-    ]);
-    const batch = db.batch();
-    registry.docs.forEach((d) => batch.delete(d.ref));
-    requests.docs.forEach((d) => batch.delete(d.ref));
-    batch.set(db.doc('config/admins'), { uids: FieldValue.arrayRemove(uid) }, { merge: true });
-    await batch.commit();
-    await adminAuth()
-      .deleteUser(uid)
-      .catch((e) => {
-        if (e.code !== 'auth/user-not-found') throw e;
-      });
-
+    await deleteAccount(uid);
     sendJson(res, 200, { ok: true });
   } catch (error) {
     console.error('[admin delete-user]', error);

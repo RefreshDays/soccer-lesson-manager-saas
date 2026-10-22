@@ -10,7 +10,10 @@ export function extendBase(sub, now) {
 
 // 저장된 빌링키로 결제하고 구독 기간을 연장합니다.
 // expectNextChargeAt 을 넘기면 그 사이 다른 실행이 이미 처리한 경우 연장하지 않습니다(중복 실행 방지).
-export async function chargeAndExtend(uid, { orderId, idempotencyKey, expectNextChargeAt }) {
+// 결제 기록은 전자상거래법에 따라 5년간 보관합니다 (회원 탈퇴 후에도 유지).
+export const PAYMENT_RECORD_RETENTION_MS = 5 * 365 * DAY_MS;
+
+export async function chargeAndExtend(uid, { orderId, idempotencyKey, expectNextChargeAt, kind = 'renewal' }) {
   const db = adminDb();
   const userRef = db.doc(`users/${uid}`);
   const billingRef = db.doc(`billing/${uid}`);
@@ -34,7 +37,8 @@ export async function chargeAndExtend(uid, { orderId, idempotencyKey, expectNext
       expiresAt = userSnap.data()?.subscription?.expiresAt || 0;
       return;
     }
-    const sub = userSnap.exists ? userSnap.data().subscription || {} : {};
+    const user = userSnap.exists ? userSnap.data() : {};
+    const sub = user.subscription || {};
     const continuing = sub.status === 'active' && sub.provider === 'toss' && (sub.expiresAt || 0) > now;
     expiresAt = extendBase(sub, now) + days * DAY_MS;
     tx.set(
@@ -70,13 +74,23 @@ export async function chargeAndExtend(uid, { orderId, idempotencyKey, expectNext
       },
       { merge: true }
     );
-    tx.set(billingRef.collection('payments').doc(orderId), {
+    tx.set(db.doc(`paymentRecords/${orderId}`), {
+      uid,
+      email: user.email || '',
+      coachName: user.coachName || '',
       orderId,
+      orderName,
       paymentKey: payment.paymentKey,
       amount,
+      method: 'card',
+      kind,
+      cardLabel: billing.cardLabel || '',
       status: payment.status,
       approvedAt: payment.approvedAt || null,
+      consentAt: billing.consentAt || null,
+      consentVersion: billing.consentVersion || '',
       createdAt: now,
+      retainUntil: now + PAYMENT_RECORD_RETENTION_MS,
     });
   });
   return { expiresAt, payment };

@@ -1,4 +1,3 @@
-import { FieldValue } from 'firebase-admin/firestore';
 import { adminDb, sendJson } from '../_lib/firebase.js';
 import { chargeAndExtend, stopAutoRenew } from '../_lib/subscription.js';
 import { DAY_MS } from '../_lib/toss.js';
@@ -48,6 +47,16 @@ export default async function handler(req, res) {
       }
     }
   }
+
+  // 법정 보관 기간(5년)이 지난 결제 기록을 파기합니다.
+  const expired = await Promise.all([
+    db.collection('paymentRecords').where('retainUntil', '<=', now).limit(400).get(),
+    db.collection('activationRequests').where('retainUntil', '<=', now).limit(400).get(),
+  ]);
+  const cleanup = db.batch();
+  expired.forEach((snap) => snap.docs.forEach((d) => cleanup.delete(d.ref)));
+  await cleanup.commit();
+  result.purged = expired[0].size + expired[1].size;
 
   sendJson(res, 200, result);
 }
