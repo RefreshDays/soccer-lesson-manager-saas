@@ -1,6 +1,7 @@
 // 요금·기간·사업자 정보 (브라우저 화면, 약관 페이지, 서버 API가 함께 읽습니다)
 // TRIAL_DAYS 를 바꾸면 firestore.rules 의 maxTrialDays() 도 같은 값으로 바꿔 주세요.
-// ADMIN_EMAILS 를 바꾸면 firestore.rules 의 isOwner() 도 같은 이메일로 바꿔 주세요.
+// ADMIN_EMAILS(최고 관리자)를 바꾸면 firestore.rules 의 isOwner() 도 같은 이메일로 바꿔 주세요.
+// 최고 관리자는 Google 로그인(이메일 인증된 계정)으로 들어와야 권한이 인정됩니다.
 (typeof window !== 'undefined' ? window : globalThis).SAAS_CONFIG = {
   SERVICE_NAME: '레슨 매니저',
   BANK: {
@@ -12,7 +13,7 @@
   SUBSCRIBE_DAYS: 30,
   SUBSCRIBE_AMOUNT: 9900,
   SUBSCRIBE_ORDER_NAME: '레슨 매니저 월 구독',
-  ADMIN_EMAILS: ['sonkh@rubycell.co.kr'],
+  ADMIN_EMAILS: ['wonzia80@gmail.com'],
 
   // 화면 하단·약관·개인정보처리방침에 표시됩니다. 빈 값('')은 '(등록 예정)'으로 보입니다.
   BUSINESS: {

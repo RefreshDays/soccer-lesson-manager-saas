@@ -2,9 +2,11 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     // 최고 관리자: saas-config.js 의 ADMIN_EMAILS 와 같은 이메일로 맞춰 주세요.
+    // 이메일 인증된 계정(Google 로그인)만 인정해, 같은 이메일로 먼저 가입해 권한을 얻는 것을 막습니다.
     function isOwner() {
       return request.auth != null
-        && request.auth.token.email == 'sonkh@rubycell.co.kr';
+        && request.auth.token.email == 'wonzia80@gmail.com'
+        && request.auth.token.email_verified == true;
     }
 
     // 관리자: 최고 관리자 + 관리 화면에서 지정한 회원(config/admins.uids)

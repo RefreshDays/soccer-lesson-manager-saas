@@ -202,6 +202,12 @@ body.app-boot .bottom-nav,body.app-boot #fab{opacity:0}
 body.auth-lock #app,body.auth-lock .bottom-nav,body.auth-lock #fab{visibility:hidden;pointer-events:none}
 .auth-gate,.subscribe-gate{position:fixed;inset:0;z-index:90;display:flex;align-items:flex-start;justify-content:center;padding:24px;background:#F2F4F6;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .auth-gate>.auth-card,.subscribe-gate>.auth-card{margin:auto}
+.btn-google{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:52px;margin:0 0 14px;border:1px solid #DADCE0;border-radius:14px;background:#fff;font-size:15px;font-weight:600;color:#191F28;cursor:pointer;font-family:inherit;letter-spacing:-.01em}
+.btn-google:active{background:#F8FAFC}
+.btn-google:disabled{opacity:.5;cursor:not-allowed}
+.auth-divider{display:flex;align-items:center;gap:10px;margin:0 0 14px;font-size:12px;color:#8B95A1}
+.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:#EEF2F7}
+.profile-account{margin:-6px 0 14px;font-size:12px;color:#8B95A1}
 .auth-consent{margin:0 0 14px;padding:12px 14px;border:1px solid #EEF2F7;border-radius:14px;background:#F8FAFC}
 .auth-consent.hidden{display:none!important}
 .consent-row{display:flex;align-items:flex-start;gap:10px;padding:5px 0;font-size:13px;color:#4E5968;line-height:1.45;cursor:pointer;letter-spacing:-.01em}
@@ -401,11 +407,13 @@ body.auth-lock #app,body.auth-lock .bottom-nav,body.auth-lock #fab{visibility:hi
 <div class="lesson-tile" id="authLessonTile"></div>
 <div class="auth-brand-text"><span class="auth-brand-name">레슨 매니저</span><span class="auth-brand-tag">축구·피아노·영어… 종목에 상관없이<br>회차·일정·입금을 한 곳에서</span></div>
 </div>
+<button type="button" id="authGoogle" class="btn-google"><svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg><span>Google로 계속하기</span></button>
+<div class="auth-divider"><span>또는 이메일로</span></div>
 <div class="subscribe-tabs mb-4">
 <button type="button" class="subscribe-tab auth-tab active" data-auth-mode="login">로그인</button>
 <button type="button" class="subscribe-tab auth-tab" data-auth-mode="register">처음 사용</button>
 </div>
-<h2 id="authTitle">클라우드 로그인</h2>
+<h2 id="authTitle">이메일로 로그인</h2>
 <p id="authDesc" class="auth-card-desc">이메일과 비밀번호만 입력하세요.</p>
 <label class="block mb-2"><span class="sr-only">이메일</span><input type="email" id="authEmail" class="toss-input" placeholder="이메일" autocomplete="username"/></label>
 <div id="authRegisterFields" class="auth-register-fields hidden">
@@ -413,13 +421,7 @@ body.auth-lock #app,body.auth-lock .bottom-nav,body.auth-lock #fab{visibility:hi
 <label class="block mb-2"><span class="text-sm text-toss-sub mb-2 block">연락처</span><input type="tel" id="authPhone" class="toss-input" placeholder="010-0000-0000" autocomplete="tel"/></label>
 </div>
 <label class="block mb-4"><span class="sr-only">비밀번호</span><input type="password" id="authPassword" class="toss-input" placeholder="비밀번호" autocomplete="current-password"/></label>
-<div id="authConsent" class="auth-consent hidden">
-<label class="consent-row consent-all"><input type="checkbox" id="consentAll"/><span>전체 동의</span></label>
-<label class="consent-row"><input type="checkbox" class="consent-item" id="consentAge"/><span>[필수] 만 14세 이상입니다</span></label>
-<label class="consent-row"><input type="checkbox" class="consent-item" id="consentTerms"/><span>[필수] 이용약관 동의</span><a href="/policy.html#terms" target="_blank" rel="noopener">보기</a></label>
-<label class="consent-row"><input type="checkbox" class="consent-item" id="consentPrivacy"/><span>[필수] 개인정보 수집·이용 동의</span><a href="/policy.html#privacy" target="_blank" rel="noopener">보기</a></label>
-<p class="consent-detail">수집 항목: 이메일, 비밀번호, 강사명, 연락처<br>이용 목적: 회원 식별·로그인, 중복 가입 방지, 고객 응대<br>보관 기간: 회원 탈퇴 시까지 (법령에 따른 결제 기록 제외)<br>동의를 거부할 수 있으나, 거부 시 가입할 수 없습니다.</p>
-</div>
+<div id="authConsent" class="auth-consent hidden" data-consent="auth"></div>
 <p id="authTrialNote" class="auth-trial-banner hidden" role="status">
 <span id="authTrialLabel" class="auth-trial-banner-label">무료 체험</span>
 <span class="auth-trial-banner-text">지금 가입하면 바로 시작할 수 있어요</span>
@@ -431,6 +433,23 @@ body.auth-lock #app,body.auth-lock .bottom-nav,body.auth-lock #fab{visibility:hi
 <button type="button" id="authSubmit" class="btn-toss mb-2">로그인</button>
 <button type="button" id="authModeToggle" class="auth-mode-toggle">처음 사용하시나요? 가입하기</button>
 <p class="auth-build-tag" id="authBuildTag"></p>
+<div class="legal-footer" data-legal-footer></div>
+</div>
+</div>
+<div id="profileGate" class="auth-gate hidden" aria-hidden="true">
+<div class="auth-card toss-card p-6 pb-7">
+<div class="auth-brand">
+<div class="lesson-tile" id="profileLessonTile"></div>
+<div class="auth-brand-text"><span class="auth-brand-name">처음 오셨네요!</span><span class="auth-brand-tag">강사명과 연락처를 입력하면<br>바로 시작할 수 있어요</span></div>
+</div>
+<p id="profileAccount" class="profile-account"></p>
+<label class="block mb-2"><span class="text-sm text-toss-sub mb-2 block">강사명</span><input type="text" id="profileCoachName" class="toss-input" placeholder="홍길동" autocomplete="name"/></label>
+<label class="block mb-4"><span class="text-sm text-toss-sub mb-2 block">연락처</span><input type="tel" id="profilePhone" class="toss-input" placeholder="010-0000-0000" autocomplete="tel"/></label>
+<div class="auth-consent" data-consent="profile"></div>
+<p class="auth-trial-banner" role="status"><span id="profileTrialLabel" class="auth-trial-banner-label">무료 체험</span><span class="auth-trial-banner-text">지금 시작하면 바로 이용할 수 있어요</span></p>
+<div id="profileError" class="auth-error-box hidden" role="alert" aria-live="assertive"><span class="auth-error-icon" aria-hidden="true">!</span><span id="profileErrorText" class="auth-error-text"></span></div>
+<button type="button" id="profileSubmit" class="btn-toss mb-2">시작하기</button>
+<button type="button" id="profileCancel" class="auth-mode-toggle">다른 계정으로 로그인</button>
 <div class="legal-footer" data-legal-footer></div>
 </div>
 </div>
@@ -495,7 +514,7 @@ const WEEKDAYS=['일','월','화','수','목','금','토'];
 let state={players:[],schedules:[]};
 let currentView='home',calendarMode='month',calendarDate=new Date(),selectedDate=null,detailTab='payment',historyViewMonth=null;
 let cloudSaveTimer=null,cloudUnsub=null,profileUnsub=null,lastCloudPush=0,applyingRemote=false,firebaseReady=false,bootFinished=false,currentAuthUid=null,currentSyncSession=0,currentSubscription=null;
-const APP_BUILD='20261022-lesson-manager';
+const APP_BUILD='20261022-google-login';
 function getSaasConfig(){return window.SAAS_CONFIG||{};}
 function getBankInfo(){return getSaasConfig().BANK||{};}
 function getSubscribeDays(){return Number(getSaasConfig().SUBSCRIBE_DAYS||30);}
@@ -525,10 +544,11 @@ if(card)card.innerHTML=row('상품',esc(getSubscribeOrderName()))+row('금액',a
 const bank=document.getElementById('subscribeBankNotice');
 if(bank)bank.innerHTML=row('상품',esc(days+'일 이용권'))+row('금액',amount+' (자동 갱신 없음)')+row('시작','입금 확인·승인 후 '+days+'일')+row('환불',refund);
 }
-function getAdminEmails(){return(getSaasConfig().ADMIN_EMAILS||['sonkh@rubycell.co.kr']).map(e=>(e||'').toLowerCase());}
+function getAdminEmails(){return(getSaasConfig().ADMIN_EMAILS||[]).map(e=>(e||'').toLowerCase());}
 // 최고 관리자는 saas-config.js 의 ADMIN_EMAILS, 그 외 관리자는 Firestore config/admins 의 uids 로 지정합니다.
 let adminUids=[],adminConfigUnsub=null;
-function isOwnerUser(user){if(!user)return false;const email=(user.email||'').toLowerCase();return getAdminEmails().includes(email);}
+// 최고 관리자는 이메일 인증된 계정(Google 로그인)일 때만 인정합니다.
+function isOwnerUser(user){if(!user||!user.emailVerified)return false;const email=(user.email||'').toLowerCase();return getAdminEmails().includes(email);}
 function isAdminUser(user){if(!user)return false;return isOwnerUser(user)||adminUids.includes(user.uid);}
 function adminConfigRef(){return firebase.firestore().doc('config/admins');}
 function stopAdminConfigListener(){if(adminConfigUnsub){adminConfigUnsub();adminConfigUnsub=null;}adminUids=[];}
@@ -546,6 +566,7 @@ if(currentView==='admin')renderAdminUserList();
 },e=>console.warn('admin config',e));
 }
 let tossPaymentInstance=null;
+let registrationPromise=null,profileGateHasDoc=false;
 let subscribePayMode='card';
 let authMode='login';
 
@@ -556,7 +577,7 @@ btn.classList.toggle('active',btn.dataset.authMode===authMode);
 });
 document.getElementById('authRegisterFields')?.classList.toggle('hidden',authMode!=='register');
 const title=document.getElementById('authTitle');
-if(title)title.textContent=authMode==='register'?'처음 사용해요':'클라우드 로그인';
+if(title)title.textContent=authMode==='register'?'이메일로 가입':'이메일로 로그인';
 const desc=document.getElementById('authDesc');
 if(desc)desc.textContent=authMode==='register'?'강사명·연락처는 가입 시 한 번만 입력합니다.':'이메일과 비밀번호만 입력하세요.';
 const submit=document.getElementById('authSubmit');
@@ -566,6 +587,8 @@ if(trialNote)trialNote.classList.toggle('hidden',authMode!=='register');
 document.getElementById('authConsent')?.classList.toggle('hidden',authMode!=='register');
 const trialLabel=document.getElementById('authTrialLabel');
 if(trialLabel)trialLabel.textContent='체험 '+getTrialDays()+'일 무료';
+const profileTrial=document.getElementById('profileTrialLabel');
+if(profileTrial)profileTrial.textContent='체험 '+getTrialDays()+'일 무료';
 const toggle=document.getElementById('authModeToggle');
 if(toggle)toggle.textContent=authMode==='register'?'이미 계정이 있으신가요? 로그인':'처음 사용하시나요? 가입하기';
 const pw=document.getElementById('authPassword');
@@ -588,14 +611,25 @@ setAuthMode(authMode==='register'?'login':'register');
 });
 document.getElementById('authSubmit')?.addEventListener('click',submitAuthForm);
 document.getElementById('authPassword')?.addEventListener('keydown',e=>{if(e.key==='Enter')submitAuthForm();});
-const all=document.getElementById('consentAll');
-const items=[...document.querySelectorAll('.consent-item')];
-all?.addEventListener('change',()=>items.forEach(i=>{i.checked=all.checked;}));
-items.forEach(i=>i.addEventListener('change',()=>{if(all)all.checked=items.every(x=>x.checked);}));
+document.getElementById('authGoogle')?.addEventListener('click',googleLogin);
+document.querySelectorAll('[data-consent]').forEach(box=>{
+const p=box.dataset.consent;
+box.innerHTML=`<label class="consent-row consent-all"><input type="checkbox" id="${p}-consent-all"/><span>전체 동의</span></label>
+<label class="consent-row"><input type="checkbox" class="consent-item" id="${p}-consent-age"/><span>[필수] 만 14세 이상입니다</span></label>
+<label class="consent-row"><input type="checkbox" class="consent-item" id="${p}-consent-terms"/><span>[필수] 이용약관 동의</span><a href="/policy.html#terms" target="_blank" rel="noopener">보기</a></label>
+<label class="consent-row"><input type="checkbox" class="consent-item" id="${p}-consent-privacy"/><span>[필수] 개인정보 수집·이용 동의</span><a href="/policy.html#privacy" target="_blank" rel="noopener">보기</a></label>
+<p class="consent-detail">수집 항목: 이메일, 강사명, 연락처, 비밀번호(이메일 가입 시) 또는 Google 계정 이름(Google 로그인 시)<br>이용 목적: 회원 식별·로그인, 중복 가입 방지, 고객 응대<br>보관 기간: 회원 탈퇴 시까지 (법령에 따른 결제 기록 제외)<br>동의를 거부할 수 있으나, 거부 시 가입할 수 없습니다.</p>`;
+const all=box.querySelector('.consent-all input');
+const items=[...box.querySelectorAll('.consent-item')];
+all.addEventListener('change',()=>items.forEach(i=>{i.checked=all.checked;}));
+items.forEach(i=>i.addEventListener('change',()=>{all.checked=items.every(x=>x.checked);}));
+});
+document.getElementById('profileSubmit')?.addEventListener('click',submitProfile);
+document.getElementById('profileCancel')?.addEventListener('click',cancelProfile);
 }
-function readRegisterConsents(){
-const on=id=>!!document.getElementById(id)?.checked;
-return{age14:on('consentAge'),terms:on('consentTerms'),privacy:on('consentPrivacy')};
+function readRegisterConsents(prefix='auth'){
+const on=k=>!!document.getElementById(prefix+'-consent-'+k)?.checked;
+return{age14:on('age'),terms:on('terms'),privacy:on('privacy')};
 }
 
 function getStorageKey(authUid){return authUid?STORAGE_KEY_BASE+'-'+authUid:STORAGE_KEY_BASE;}
@@ -1241,13 +1275,13 @@ const registryRef=coachRegistryRef(phoneKey);
 const userRef=cloudProfileRef(user.uid);
 await firebase.firestore().runTransaction(async tx=>{
 const existing=await tx.get(registryRef);
-if(existing.exists){
+if(existing.exists&&existing.data().uid!==user.uid){
 const err=new Error('DUPLICATE_COACH');
 err.code='DUPLICATE_COACH';
 throw err;
 }
 const now=Date.now();
-tx.set(registryRef,{
+if(!existing.exists)tx.set(registryRef,{
 uid:user.uid,
 email:email||user.email||'',
 coachName,
@@ -1370,6 +1404,7 @@ resetAppState();
 hideSubscribeGate();
 stopAdminListeners();
 stopAdminConfigListener();
+hideProfileGate();
 updateAdminNavVisibility(null);
 showAuthGate();
 updateSyncStatus('offline','로그인이 필요합니다');
@@ -1378,7 +1413,17 @@ return;
 }
 currentAuthUid=user.uid;
 try{
+if(registrationPromise){await registrationPromise.catch(()=>{});if(sessionId!==currentSyncSession)return;}
 await loadAdminConfig();
+const profileSnap=await cloudProfileRef(user.uid).get();
+if(sessionId!==currentSyncSession)return;
+const profile=profileSnap.exists?profileSnap.data():null;
+if(!profile?.consents||!profile?.phone){
+showProfileGate(user,profile);
+updateSyncStatus('offline','가입 정보 입력이 필요합니다');
+return;
+}
+hideProfileGate();
 await ensureCoachRegistry(user);
 const sub=await loadSubscription(user.uid);
 startProfileListener(user.uid,sessionId);
@@ -1450,10 +1495,15 @@ const consents=readRegisterConsents();
 if(!consents.age14||!consents.terms||!consents.privacy){showAuthError('필수 항목에 모두 동의해 주세요.');return;}
 setAuthBusy(true);
 let cred=null;
+let finishRegistration;
+registrationPromise=new Promise((resolve,reject)=>{finishRegistration={resolve,reject};});
+registrationPromise.catch(()=>{});
 try{
 cred=await firebase.auth().createUserWithEmailAndPassword(email,pw);
 await registerCoachAccount(cred.user,email,coachName,phone);
+finishRegistration.resolve();
 }catch(e){
+finishRegistration.reject(e);
 if(cred?.user&&(e.code==='DUPLICATE_COACH'||e.message==='DUPLICATE_COACH')){
 try{await cred.user.delete();}catch(_){}
 setAuthMode('login',{keepError:true});
@@ -1466,7 +1516,90 @@ showAuthError('연락처 형식을 확인해 주세요.\n예: 010-0000-0000');
 }else{
 showAuthError(e.message||'가입에 실패했습니다.');
 }
-}finally{setAuthBusy(false);}
+}finally{setAuthBusy(false);registrationPromise=null;}
+}
+function googleAuthErrorMessage(e){
+const code=e?.code||'';
+if(code==='auth/unauthorized-domain')return '이 주소에서는 Google 로그인을 사용할 수 없습니다.\n관리자에게 문의해 주세요.';
+if(code==='auth/account-exists-with-different-credential')return '이미 이메일로 가입된 계정입니다.\n이메일·비밀번호로 로그인해 주세요.';
+if(code==='auth/network-request-failed')return '네트워크 연결을 확인해 주세요.';
+return e?.message||'Google 로그인에 실패했습니다.';
+}
+async function googleLogin(){
+if(!firebaseReady)return;
+clearAuthError();
+const provider=new firebase.auth.GoogleAuthProvider();
+provider.setCustomParameters({prompt:'select_account'});
+const btn=document.getElementById('authGoogle');
+if(btn)btn.disabled=true;
+try{
+await firebase.auth().signInWithPopup(provider);
+}catch(e){
+if(e.code==='auth/popup-closed-by-user'||e.code==='auth/cancelled-popup-request')return;
+if(e.code==='auth/popup-blocked'||e.code==='auth/operation-not-supported-in-this-environment'){
+await firebase.auth().signInWithRedirect(provider);
+return;
+}
+showAuthError(googleAuthErrorMessage(e));
+}finally{if(btn)btn.disabled=false;}
+}
+function showProfileGate(user,profile){
+hideAuthGate();
+hideSubscribeGate();
+document.body.classList.add('auth-lock');
+const gate=document.getElementById('profileGate');
+if(gate){gate.classList.remove('hidden');gate.setAttribute('aria-hidden','false');}
+profileGateHasDoc=!!profile;
+const name=document.getElementById('profileCoachName');
+if(name&&!name.value)name.value=profile?.coachName||user.displayName||'';
+const phoneEl=document.getElementById('profilePhone');
+if(phoneEl&&!phoneEl.value)phoneEl.value=profile?.phone||'';
+const account=document.getElementById('profileAccount');
+if(account)account.textContent=(user.email||'')+(user.providerData?.some(p=>p.providerId==='google.com')?' · Google 계정':'');
+setProfileError('');
+}
+function hideProfileGate(){
+const gate=document.getElementById('profileGate');
+if(!gate||gate.classList.contains('hidden'))return;
+gate.classList.add('hidden');
+gate.setAttribute('aria-hidden','true');
+document.body.classList.remove('auth-lock');
+}
+function setProfileError(msg){
+const box=document.getElementById('profileError');
+const text=document.getElementById('profileErrorText');
+if(text)text.textContent=msg||'';
+if(box)box.classList.toggle('hidden',!msg);
+}
+async function submitProfile(){
+const user=firebase.auth().currentUser;
+if(!user)return;
+const coachName=(document.getElementById('profileCoachName')?.value||'').trim();
+const phone=(document.getElementById('profilePhone')?.value||'').trim();
+if(!coachName){setProfileError('강사명을 입력해 주세요.');return;}
+if(!isValidPhone(phone)){setProfileError('연락처 형식을 확인해 주세요.\n예: 010-0000-0000');return;}
+const consents=readRegisterConsents('profile');
+if(!consents.age14||!consents.terms||!consents.privacy){setProfileError('필수 항목에 모두 동의해 주세요.');return;}
+const btn=document.getElementById('profileSubmit');
+if(btn)btn.disabled=true;
+setProfileError('');
+try{
+await registerCoachAccount(user,user.email,coachName,phone);
+hideProfileGate();
+await handleAuthUser(user);
+}catch(e){
+console.error(e);
+if(e.code==='DUPLICATE_COACH')setProfileError('이미 가입된 연락처입니다.\n기존에 사용한 계정으로 로그인해 주세요.');
+else if(e.code==='INVALID_PHONE')setProfileError('연락처 형식을 확인해 주세요.\n예: 010-0000-0000');
+else setProfileError(e.message||'저장에 실패했습니다.');
+}finally{if(btn)btn.disabled=false;}
+}
+async function cancelProfile(){
+const user=firebase.auth().currentUser;
+if(!user)return;
+// 가입을 마치지 않은 계정은 로그인 기록만 남지 않도록 지웁니다.
+if(!profileGateHasDoc){try{await user.delete();return;}catch(_){}}
+await firebase.auth().signOut();
 }
 async function withdrawAccount(){
 const user=firebase.auth().currentUser;
@@ -2810,6 +2943,7 @@ bootFinished=true;
 function bootApp(){
 window.LESSON_ICONS?.startCycle(document.getElementById('splashLessonTile'),110);
 window.LESSON_ICONS?.startCycle(document.getElementById('authLessonTile'),900);
+window.LESSON_ICONS?.startCycle(document.getElementById('profileLessonTile'),900);
 renderLegalFooters();
 initSubscribeGate();
 initAdminPanel();
@@ -2819,6 +2953,7 @@ if(initFirebase()){
 resetAppState();
 showAuthGate();
 firebase.auth().onAuthStateChanged(handleAuthUser);
+firebase.auth().getRedirectResult().catch(e=>{console.error(e);showAuthError(googleAuthErrorMessage(e));});
 }else{
 loadState();
 updateSyncStatus('local');
