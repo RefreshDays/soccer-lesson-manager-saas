@@ -2,7 +2,7 @@
 // TRIAL_DAYS 를 바꾸면 firestore.rules 의 maxTrialDays() 도 같은 값으로 바꿔 주세요.
 // ADMIN_EMAILS 를 바꾸면 firestore.rules 의 isOwner() 도 같은 이메일로 바꿔 주세요.
 (typeof window !== 'undefined' ? window : globalThis).SAAS_CONFIG = {
-  SERVICE_NAME: '축구 레슨 매니저',
+  SERVICE_NAME: '레슨 매니저',
   BANK: {
     bankName: '산업은행',
     accountNumber: '020-9506-0826-310',
@@ -11,7 +11,7 @@
   TRIAL_DAYS: 7,
   SUBSCRIBE_DAYS: 30,
   SUBSCRIBE_AMOUNT: 9900,
-  SUBSCRIBE_ORDER_NAME: '축구 레슨 매니저 월 구독',
+  SUBSCRIBE_ORDER_NAME: '레슨 매니저 월 구독',
   ADMIN_EMAILS: ['sonkh@rubycell.co.kr'],
 
   // 화면 하단·약관·개인정보처리방침에 표시됩니다. 빈 값('')은 '(등록 예정)'으로 보입니다.

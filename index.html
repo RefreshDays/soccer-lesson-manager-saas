@@ -6,15 +6,15 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
 <meta http-equiv="Pragma" content="no-cache"/>
 <meta http-equiv="Expires" content="0"/>
-<title>축구 레슨 매니저</title>
-<meta name="description" content="축구 선불 회차 · 일정 · 통계 관리"/>
+<title>레슨 매니저</title>
+<meta name="description" content="종목에 상관없이 모든 레슨의 선불 회차 · 일정 · 입금 관리"/>
 <meta name="theme-color" content="#3182F6"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
-<meta name="apple-mobile-web-app-title" content="축구레슨S"/>
-<link rel="manifest" href="/manifest.webmanifest?v=20260522-saas"/>
-<link rel="icon" href="/icon.svg?v=20260522-saas" type="image/svg+xml"/>
-<link rel="icon" href="/icons/icon-192.png?v=20260522-saas" type="image/png" sizes="192x192"/>
-<link rel="apple-touch-icon" href="/apple-touch-icon.png?v=20260522-saas"/>
+<meta name="apple-mobile-web-app-title" content="레슨매니저"/>
+<link rel="manifest" href="/manifest.webmanifest?v=20261022-lesson"/>
+<link rel="icon" href="/icon.svg?v=20261022-lesson" type="image/svg+xml"/>
+<link rel="icon" href="/icons/icon-192.png?v=20261022-lesson" type="image/png" sizes="192x192"/>
+<link rel="apple-touch-icon" href="/apple-touch-icon.png?v=20261022-lesson"/>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>tailwind.config={theme:{extend:{colors:{toss:{bg:'#F2F4F6',text:'#191F28',sub:'#4E5968',muted:'#8B95A1',blue:'#3182F6',green:'#0D7A5F',pink:'#F04452',emerald:'#00D084'}},fontFamily:{sans:['Paperlogy','system-ui','sans-serif']},boxShadow:{toss:'0 2px 16px rgba(0,0,0,.06)','toss-lg':'0 8px 24px rgba(0,0,0,.08)'}}}}</script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fonts-archive/Paperlogy/Paperlogy.css"/>
@@ -185,7 +185,18 @@ body.sheet-open,body.confirm-open{overflow:hidden}
 .app-splash{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#F2F4F6;padding:max(24px,env(safe-area-inset-top)) 28px 24px;text-align:center;transition:opacity .4s ease,visibility .4s}
 .app-splash.is-hidden{opacity:0;visibility:hidden;pointer-events:none}
 .app-splash-brand{margin:0;font-size:1.625rem;font-weight:800;color:#3182F6;letter-spacing:-.03em;line-height:1.2}
-.app-splash-title{margin:12px 0 0;font-size:1.0625rem;font-weight:400;color:#191F28;line-height:1.45;letter-spacing:-.02em}
+.app-splash-title{margin:10px 0 0;font-size:1.0625rem;font-weight:600;color:#191F28;line-height:1.45;letter-spacing:-.02em}
+.app-splash-tag{margin:6px 0 0;font-size:13px;color:#8B95A1;line-height:1.45;letter-spacing:-.01em}
+.lesson-tile{flex-shrink:0;width:56px;height:56px;border-radius:16px;background:linear-gradient(160deg,#4B93FF,#1B64DA);display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px rgba(49,130,246,.28);overflow:hidden}
+.lesson-tile--splash{width:88px;height:88px;border-radius:24px;margin:0 auto 20px}
+.lesson-tile-icon{display:block;width:64%;height:64%}
+.lesson-tile-icon svg{display:block;width:100%;height:100%}
+.lesson-tile-icon.is-enter{animation:lessonIconIn .28s cubic-bezier(.2,.9,.3,1.2)}
+@keyframes lessonIconIn{from{transform:translateY(60%) scale(.6);opacity:0}to{transform:none;opacity:1}}
+.auth-brand{display:flex;align-items:center;gap:14px;margin:0 0 20px}
+.auth-brand-text{display:flex;flex-direction:column;min-width:0}
+.auth-brand-name{font-size:19px;font-weight:800;color:#191F28;letter-spacing:-.03em;line-height:1.3}
+.auth-brand-tag{margin-top:3px;font-size:12px;color:#8B95A1;line-height:1.45;letter-spacing:-.01em}
 body.app-boot #app{opacity:0}
 body.app-boot .bottom-nav,body.app-boot #fab{opacity:0}
 body.auth-lock #app,body.auth-lock .bottom-nav,body.auth-lock #fab{visibility:hidden;pointer-events:none}
@@ -306,12 +317,14 @@ body.auth-lock #app,body.auth-lock .bottom-nav,body.auth-lock #fab{visibility:hi
 </head>
 <body class="min-h-screen font-sans antialiased pb-24 app-boot">
 <div id="appSplash" class="app-splash" aria-hidden="false">
-<p class="app-splash-brand">SOCCER LESSON<br>MANAGER</p>
-<p class="app-splash-title">축구 레슨 매니저</p>
+<div class="lesson-tile lesson-tile--splash" id="splashLessonTile"></div>
+<p class="app-splash-brand">LESSON MANAGER</p>
+<p class="app-splash-title">레슨 매니저</p>
+<p class="app-splash-tag">종목에 상관없이, 모든 레슨을 하나로</p>
 </div>
 <div id="app" class="max-w-lg mx-auto md:max-w-2xl lg:max-w-4xl">
 <header id="appHeader" class="sticky top-0 z-30 bg-[#F2F4F6]/95 backdrop-blur-sm px-5 pt-5 pb-3 hidden">
-<button type="button" id="appHeaderHome" class="app-header-home">축구 레슨 매니저</button>
+<button type="button" id="appHeaderHome" class="app-header-home">레슨 매니저</button>
 </header>
 <main class="px-5 pb-4 pt-5">
 <section id="syncStatusBar" class="sync-bar hidden mb-3" aria-live="polite">
@@ -342,7 +355,7 @@ body.auth-lock #app,body.auth-lock .bottom-nav,body.auth-lock #fab{visibility:hi
 </div>
 <div id="adminPanelPending"><div id="adminPendingList" class="admin-empty">불러오는 중...</div></div>
 <div id="adminPanelUsers" class="hidden">
-<label class="block mb-3"><input type="search" id="adminUserSearch" class="toss-input" placeholder="이메일 · 지도자명 · 연락처 검색"/></label>
+<label class="block mb-3"><input type="search" id="adminUserSearch" class="toss-input" placeholder="이메일 · 강사명 · 연락처 검색"/></label>
 <div id="adminUserList" class="admin-empty">불러오는 중...</div>
 </div>
 </div>
@@ -384,6 +397,10 @@ body.auth-lock #app,body.auth-lock .bottom-nav,body.auth-lock #fab{visibility:hi
 </div>
 <div id="authGate" class="auth-gate hidden" aria-hidden="true">
 <div class="auth-card toss-card p-6 pb-7">
+<div class="auth-brand">
+<div class="lesson-tile" id="authLessonTile"></div>
+<div class="auth-brand-text"><span class="auth-brand-name">레슨 매니저</span><span class="auth-brand-tag">축구·피아노·영어… 종목에 상관없이<br>회차·일정·입금을 한 곳에서</span></div>
+</div>
 <div class="subscribe-tabs mb-4">
 <button type="button" class="subscribe-tab auth-tab active" data-auth-mode="login">로그인</button>
 <button type="button" class="subscribe-tab auth-tab" data-auth-mode="register">처음 사용</button>
@@ -392,7 +409,7 @@ body.auth-lock #app,body.auth-lock .bottom-nav,body.auth-lock #fab{visibility:hi
 <p id="authDesc" class="auth-card-desc">이메일과 비밀번호만 입력하세요.</p>
 <label class="block mb-2"><span class="sr-only">이메일</span><input type="email" id="authEmail" class="toss-input" placeholder="이메일" autocomplete="username"/></label>
 <div id="authRegisterFields" class="auth-register-fields hidden">
-<label class="block mb-2"><span class="text-sm text-toss-sub mb-2 block">지도자명</span><input type="text" id="authCoachName" class="toss-input" placeholder="홍길동" autocomplete="name"/></label>
+<label class="block mb-2"><span class="text-sm text-toss-sub mb-2 block">강사명</span><input type="text" id="authCoachName" class="toss-input" placeholder="홍길동" autocomplete="name"/></label>
 <label class="block mb-2"><span class="text-sm text-toss-sub mb-2 block">연락처</span><input type="tel" id="authPhone" class="toss-input" placeholder="010-0000-0000" autocomplete="tel"/></label>
 </div>
 <label class="block mb-4"><span class="sr-only">비밀번호</span><input type="password" id="authPassword" class="toss-input" placeholder="비밀번호" autocomplete="current-password"/></label>
@@ -401,7 +418,7 @@ body.auth-lock #app,body.auth-lock .bottom-nav,body.auth-lock #fab{visibility:hi
 <label class="consent-row"><input type="checkbox" class="consent-item" id="consentAge"/><span>[필수] 만 14세 이상입니다</span></label>
 <label class="consent-row"><input type="checkbox" class="consent-item" id="consentTerms"/><span>[필수] 이용약관 동의</span><a href="/policy.html#terms" target="_blank" rel="noopener">보기</a></label>
 <label class="consent-row"><input type="checkbox" class="consent-item" id="consentPrivacy"/><span>[필수] 개인정보 수집·이용 동의</span><a href="/policy.html#privacy" target="_blank" rel="noopener">보기</a></label>
-<p class="consent-detail">수집 항목: 이메일, 비밀번호, 지도자명, 연락처<br>이용 목적: 회원 식별·로그인, 중복 가입 방지, 고객 응대<br>보관 기간: 회원 탈퇴 시까지 (법령에 따른 결제 기록 제외)<br>동의를 거부할 수 있으나, 거부 시 가입할 수 없습니다.</p>
+<p class="consent-detail">수집 항목: 이메일, 비밀번호, 강사명, 연락처<br>이용 목적: 회원 식별·로그인, 중복 가입 방지, 고객 응대<br>보관 기간: 회원 탈퇴 시까지 (법령에 따른 결제 기록 제외)<br>동의를 거부할 수 있으나, 거부 시 가입할 수 없습니다.</p>
 </div>
 <p id="authTrialNote" class="auth-trial-banner hidden" role="status">
 <span id="authTrialLabel" class="auth-trial-banner-label">무료 체험</span>
@@ -465,6 +482,7 @@ body.auth-lock #app,body.auth-lock .bottom-nav,body.auth-lock #fab{visibility:hi
 <script src="/firebase-config.js"></script>
 <script src="/saas-config.js"></script>
 <script src="/toss-config.js"></script>
+<script src="/lesson-icons.js"></script>
 <script src="https://js.tosspayments.com/v2/standard"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-auth-compat.js"></script>
@@ -477,13 +495,14 @@ const WEEKDAYS=['일','월','화','수','목','금','토'];
 let state={players:[],schedules:[]};
 let currentView='home',calendarMode='month',calendarDate=new Date(),selectedDate=null,detailTab='payment',historyViewMonth=null;
 let cloudSaveTimer=null,cloudUnsub=null,profileUnsub=null,lastCloudPush=0,applyingRemote=false,firebaseReady=false,bootFinished=false,currentAuthUid=null,currentSyncSession=0,currentSubscription=null;
-const APP_BUILD='20261022-saas-legal';
+const APP_BUILD='20261022-lesson-manager';
 function getSaasConfig(){return window.SAAS_CONFIG||{};}
 function getBankInfo(){return getSaasConfig().BANK||{};}
 function getSubscribeDays(){return Number(getSaasConfig().SUBSCRIBE_DAYS||30);}
 function getTrialDays(){return Number(getSaasConfig().TRIAL_DAYS||7);}
 function getSubscribeAmount(){return Number(getSaasConfig().SUBSCRIBE_AMOUNT||9900);}
-function getSubscribeOrderName(){return getSaasConfig().SUBSCRIBE_ORDER_NAME||'축구 레슨 매니저 월 구독';}
+function getServiceName(){return getSaasConfig().SERVICE_NAME||'레슨 매니저';}
+function getSubscribeOrderName(){return getSaasConfig().SUBSCRIBE_ORDER_NAME||'레슨 매니저 월 구독';}
 function getPolicyVersion(){return getSaasConfig().POLICY_VERSION||'';}
 function getBusinessInfo(){return getSaasConfig().BUSINESS||{};}
 function renderLegalFooters(){
@@ -539,7 +558,7 @@ document.getElementById('authRegisterFields')?.classList.toggle('hidden',authMod
 const title=document.getElementById('authTitle');
 if(title)title.textContent=authMode==='register'?'처음 사용해요':'클라우드 로그인';
 const desc=document.getElementById('authDesc');
-if(desc)desc.textContent=authMode==='register'?'지도자명·연락처는 가입 시 한 번만 입력합니다.':'이메일과 비밀번호만 입력하세요.';
+if(desc)desc.textContent=authMode==='register'?'강사명·연락처는 가입 시 한 번만 입력합니다.':'이메일과 비밀번호만 입력하세요.';
 const submit=document.getElementById('authSubmit');
 if(submit)submit.textContent=authMode==='register'?'가입하기':'로그인';
 const trialNote=document.getElementById('authTrialNote');
@@ -623,10 +642,10 @@ return[...done,
 const defaultData=()=>({
 _version:DATA_VERSION,
 players:[
-{id:'p1',name:'홍길동',birth_year:2012,gender:'남성',phone:'010-1234-5678',parent_phone:'',registered_at:'2026-03-01',affiliation:'○○중 FC',memo:'골키퍼 집중.\n발 구석 잡기 연습 중. 무릎 주의.',payment_history:[{date:'2026-03-01',amount:500000,sessions:10},{date:'2026-05-01',amount:250000,sessions:5}],used_sessions:8},
-{id:'p2',name:'김철수',birth_year:2009,gender:'남성',phone:'010-9876-5432',parent_phone:'',registered_at:'2026-04-10',affiliation:'△△고등학교',memo:'필드 플레이어. 스피드·패스 위주.',payment_history:[{date:'2026-04-10',amount:600000,sessions:12}],used_sessions:11},
-{id:'p3',name:'이영희',birth_year:2014,gender:'여성',phone:'010-5555-1234',parent_phone:'',registered_at:'2026-05-10',affiliation:'□□초등부',memo:'주 1회 그룹 레슨 참여.',payment_history:[{date:'2026-05-10',amount:400000,sessions:8}],used_sessions:2},
-{id:'p4',name:'박민수',birth_year:2002,gender:'남성',phone:'010-2222-8888',parent_phone:'',registered_at:'2026-02-15',affiliation:'개인 레슨',memo:'성인 취미반. 체력·기술 병행.',payment_history:[{date:'2026-02-15',amount:450000,sessions:10}],used_sessions:4}
+{id:'p1',name:'김하은',birth_year:2014,gender:'여성',phone:'010-1234-5678',parent_phone:'010-1234-0000',registered_at:'2026-03-01',affiliation:'피아노 · 체르니 30',memo:'주 2회 개인 레슨.\n12월 콩쿠르 준비 중.',payment_history:[{date:'2026-03-01',amount:500000,sessions:10},{date:'2026-05-01',amount:250000,sessions:5}],used_sessions:8},
+{id:'p2',name:'이준호',birth_year:2009,gender:'남성',phone:'010-9876-5432',parent_phone:'',registered_at:'2026-04-10',affiliation:'영어 회화 · △△고',memo:'수능 영어 + 회화 병행.',payment_history:[{date:'2026-04-10',amount:600000,sessions:12}],used_sessions:11},
+{id:'p3',name:'박서준',birth_year:2013,gender:'남성',phone:'010-5555-1234',parent_phone:'010-5555-0000',registered_at:'2026-05-10',affiliation:'○○초 축구부',memo:'골키퍼 개인 훈련 주 1회.',payment_history:[{date:'2026-05-10',amount:400000,sessions:8}],used_sessions:2},
+{id:'p4',name:'최민지',birth_year:1995,gender:'여성',phone:'010-2222-8888',parent_phone:'',registered_at:'2026-02-15',affiliation:'성인 필라테스',memo:'1:1 기구 필라테스. 허리 주의.',payment_history:[{date:'2026-02-15',amount:450000,sessions:10}],used_sessions:4}
 ],
 schedules:buildDemoSchedules()
 });
@@ -1184,7 +1203,7 @@ ownerUid:uid,
 updatedAt:Date.now(),
 memberCount:state.players.length,
 scheduleCount:state.schedules.length,
-app:'축구 레슨 매니저'
+app:getServiceName()
 };
 if(coachName)profile.coachName=coachName;
 else if(existing.coachName)profile.coachName=existing.coachName;
@@ -1240,7 +1259,7 @@ email:email||user.email||'',
 ownerUid:user.uid,
 coachName,
 phone:phoneKey,
-app:'축구 레슨 매니저',
+app:getServiceName(),
 consents:{age14:true,terms:true,privacy:true,version:getPolicyVersion(),agreedAt:now},
 createdAt:now,
 updatedAt:now
@@ -1276,7 +1295,7 @@ email:email||'',
 ownerUid:uid,
 coachName,
 phone:phoneKey||phone,
-app:'축구 레슨 매니저',
+app:getServiceName(),
 createdAt:Date.now(),
 updatedAt:Date.now()
 },{merge:true});
@@ -1423,7 +1442,7 @@ const pw=document.getElementById('authPassword')?.value||'';
 const {coachName,phone}=readAuthProfileFields();
 clearAuthError();
 if(!email||!pw){showAuthError('이메일과 비밀번호를 입력해 주세요.');return;}
-if(!coachName){showAuthError('지도자명을 입력해 주세요.');return;}
+if(!coachName){showAuthError('강사명을 입력해 주세요.');return;}
 if(!phone){showAuthError('연락처를 입력해 주세요.');return;}
 if(!isValidPhone(phone)){showAuthError('연락처 형식을 확인해 주세요.\n예: 010-0000-0000');return;}
 if(pw.length<6){showAuthError('비밀번호는 6자 이상이어야 합니다.');return;}
@@ -2388,8 +2407,8 @@ const{registered,lessonMembers,totalLessons,totalDeposits}=getDashboardStats();
 document.getElementById('statsSection').innerHTML=`
 <div class="dash-head">
 <div class="dash-head-left">
-<h2 class="dash-brand">SOCCER LESSON<br>MANAGER</h2>
-<p class="dash-subtitle">축구 레슨 매니저</p>
+<h2 class="dash-brand">LESSON<br>MANAGER</h2>
+<p class="dash-subtitle">레슨 매니저</p>
 </div>
 <span class="dash-greeting-pill">오늘도 힘내세요!</span>
 </div>
@@ -2588,7 +2607,7 @@ document.getElementById('sheet').innerHTML=`<div class="w-10 h-1 bg-gray-200 rou
 <label class="block"><span class="text-sm text-toss-sub mb-2 block">학부모 연락처</span><input name="parent_phone" class="toss-input" value="${esc(p?.parent_phone||'')}" placeholder="010-0000-0000"/></label>
 <label class="block"><span class="text-sm text-toss-sub mb-2 block">성별 *</span>${genderSegment(g)}</label>
 <label class="block"><span class="text-sm text-toss-sub mb-2 block">출생연도 *</span><select name="birth_year" required class="toss-input">${birthYearOptions(birthYear)}</select><p class="text-xs text-toss-muted mt-1.5">출생연도 기준 나이가 자동으로 계산됩니다</p></label>
-<label class="block"><span class="text-sm text-toss-sub mb-2 block">소속팀</span><input name="affiliation" class="toss-input" value="${esc(p?.affiliation||'')}" placeholder="학교 / 클럽"/></label>
+<label class="block"><span class="text-sm text-toss-sub mb-2 block">소속·학교</span><input name="affiliation" class="toss-input" value="${esc(p?.affiliation||'')}" placeholder="학교 / 클럽"/></label>
 <label class="block"><span class="text-sm text-toss-sub mb-2 block">메모</span><textarea name="memo" class="toss-input toss-textarea" placeholder="포지션, 특이사항, 부상 이력 등">${esc(p?.memo||'')}</textarea></label>
 <div class="flex gap-2"><button type="submit" class="btn-toss flex-1">저장</button><button type="button" onclick="closeSheet()" class="btn-toss-ghost flex-1">닫기</button></div>
 ${p?`<button type="button" onclick="deletePlayer('${p.id}')" class="w-full mt-3 py-3 text-red-500 text-sm">회원 삭제</button>`:''}</form>`;
@@ -2617,7 +2636,7 @@ document.getElementById('sheet').innerHTML=`<div class="w-10 h-1 bg-gray-200 rou
 <form onsubmit="submitSchedule(event,'${s?.id||''}')" class="space-y-4">
 <label class="block"><span class="text-sm text-toss-sub mb-2 block">날짜</span><input name="date" type="date" required class="toss-input" value="${date}"/></label>
 <label class="block"><span class="text-sm text-toss-sub mb-2 block">시간</span><input name="time" type="time" required class="toss-input" value="${s?.time||'15:00'}"/></label>
-<label class="block"><span class="text-sm text-toss-sub mb-2 block">선수</span><select name="player_id" required class="toss-input"><option value="">선택</option>${opts}</select></label>
+<label class="block"><span class="text-sm text-toss-sub mb-2 block">수강생</span><select name="player_id" required class="toss-input"><option value="">선택</option>${opts}</select></label>
 <div class="flex gap-2"><button type="submit" class="btn-toss flex-1">${s?'저장':'등록'}</button><button type="button" onclick="closeSheet()" class="btn-toss-ghost flex-1">닫기</button></div>
 </form>`;
 }
@@ -2789,6 +2808,8 @@ bootFinished=true;
 }
 
 function bootApp(){
+window.LESSON_ICONS?.startCycle(document.getElementById('splashLessonTile'),110);
+window.LESSON_ICONS?.startCycle(document.getElementById('authLessonTile'),900);
 renderLegalFooters();
 initSubscribeGate();
 initAdminPanel();

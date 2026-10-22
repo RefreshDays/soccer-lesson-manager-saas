@@ -54,7 +54,7 @@ export function getSubscribeConfig() {
   const config = globalThis.SAAS_CONFIG || {};
   return {
     amount: Number(config.SUBSCRIBE_AMOUNT || 9900),
-    orderName: config.SUBSCRIBE_ORDER_NAME || '축구 레슨 매니저 월 구독',
+    orderName: config.SUBSCRIBE_ORDER_NAME || '레슨 매니저 월 구독',
     days: Number(config.SUBSCRIBE_DAYS || 30),
   };
 }
