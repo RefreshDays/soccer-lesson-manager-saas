@@ -129,10 +129,9 @@ body.sheet-open,body.confirm-open{overflow:hidden}
 .confirm-actions button{flex:1;min-height:52px;font-size:16px;font-weight:600;border:0;background:transparent;cursor:pointer;font-family:inherit}
 .confirm-actions .confirm-cancel{color:#4E5968}
 .confirm-actions .confirm-ok{color:#3182F6;font-weight:700;border-left:1px solid #F2F4F6}
-.dash-head{display:flex;align-items:center;justify-content:space-between;gap:12px 16px;margin-bottom:16px}
-.dash-head-left{min-width:0}
+.dash-head{display:flex;align-items:center;justify-content:space-between;gap:12px 16px;margin:4px 0 16px}
+.dash-head.hidden{display:none}
 .dash-brand{margin:0;font-size:1.05rem;font-weight:800;color:#3182F6;letter-spacing:-.03em;line-height:1.12}
-.dash-subtitle{margin:4px 0 0;font-size:12px;font-weight:600;color:#8B95A1;letter-spacing:-.01em;line-height:1.3}
 .dash-greeting-pill{flex-shrink:0;font-size:11px;font-weight:600;color:#3182F6;background:#E8F3FF;padding:8px 12px;border-radius:999px;line-height:1.25;letter-spacing:-.02em;white-space:nowrap}
 .dash-hero{border-radius:22px;overflow:hidden;background:#fff;box-shadow:0 2px 20px rgba(0,0,0,.07)}
 .dash-hero-clock{background:#EEF2F7;min-height:72px;padding:16px 20px;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:8px 14px}
@@ -189,7 +188,7 @@ body.sheet-open,body.confirm-open{overflow:hidden}
 .app-splash-logo{display:block;width:150px;height:auto;margin:0 auto 18px}
 .brand-symbol{flex-shrink:0;display:block;width:56px;height:56px}
 .app-header-symbol{display:inline-block;width:22px;height:22px;margin-right:7px;vertical-align:-5px}
-.dash-brand-logo{display:block;height:44px;width:auto}
+.dash-brand-logo{display:block;height:38px;width:auto}
 .auth-brand{display:flex;align-items:center;gap:14px;margin:0 0 20px}
 .auth-brand-text{display:flex;flex-direction:column;min-width:0}
 .auth-brand-name{font-size:19px;font-weight:800;color:#191F28;letter-spacing:-.03em;line-height:1.3}
@@ -269,25 +268,29 @@ body.auth-lock #app,body.auth-lock .bottom-nav,body.auth-lock #fab{visibility:hi
 .auth-trial-banner.hidden{display:none!important}
 .auth-trial-banner-label{font-size:16px;font-weight:800;color:#E65100;letter-spacing:-.03em;line-height:1.3}
 .auth-trial-banner-text{font-size:13px;font-weight:600;color:#4E5968;line-height:1.35;letter-spacing:-.01em}
-.sync-bar{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:12px 14px;background:#fff;border-radius:14px;box-shadow:0 2px 12px rgba(0,0,0,.05);margin-bottom:12px}
+.sync-bar{display:flex;flex-direction:column;gap:6px;padding:14px 16px;background:#fff;border-radius:16px;box-shadow:0 2px 12px rgba(0,0,0,.05);margin-bottom:12px}
+.sync-bar-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.sync-detail{padding-left:16px;font-size:12px;color:#6B7684;line-height:1.4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sync-detail.hidden{display:none}
+.sync-bar-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-left:16px}
+.sync-bar-foot:not(:has(>:not(.hidden))){display:none}
 .sync-bar.hidden{display:none!important}
-.sync-bar-main{flex:1;min-width:0}
-.sync-bar-row{display:flex;align-items:flex-start;gap:8px}
-.sync-bar-row .sync-dot{margin-top:5px;flex-shrink:0}
-.sync-bar-text{font-size:12px;color:#4E5968;line-height:1.4;min-width:0}
+.sync-bar-row{display:flex;align-items:center;gap:8px;min-width:0}
+.sync-bar-row .sync-dot{flex-shrink:0}
+.sync-bar-text{font-size:13px;color:#4E5968;line-height:1.4;min-width:0}
 .sync-bar-text strong{color:#191F28;font-weight:600}
-.sync-sub-line{margin-top:8px;padding-left:16px}
-.sync-build-line{margin-top:4px;padding-left:16px;font-size:11px;color:#8B95A1;line-height:1.3}
+.sync-sub-line{margin-top:4px}
+.sync-build-line{margin-left:auto;font-size:10px;color:#B0B8C1;line-height:1.3;white-space:nowrap}
 .sync-trial-badge{display:inline-flex;align-items:center;font-size:13px;font-weight:700;color:#E65100;background:#FFF4E6;padding:7px 12px;border-radius:10px;line-height:1.2;letter-spacing:-.02em}
 .sync-trial-badge--active{color:#0D7A5F;background:#E6FAF3;border:0;cursor:pointer;font-family:inherit}
 .sync-build{font-size:11px;color:#8B95A1}
 .sync-bar-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
-.sync-admin{font-size:12px;font-weight:600;color:#3182F6;background:transparent;border:0;padding:0;cursor:pointer;font-family:inherit;flex-shrink:0;margin-top:2px;white-space:nowrap}
+.sync-admin{font-size:13px;font-weight:600;color:#3182F6;background:transparent;border:0;padding:0;cursor:pointer;font-family:inherit;flex-shrink:0;white-space:nowrap}
 .sync-dot{width:8px;height:8px;border-radius:9999px;background:#8B95A1}
 .sync-dot.is-synced{background:#00D084}
 .sync-dot.is-pending{background:#E65100}
 .sync-dot.is-error{background:#F04452}
-.sync-logout{font-size:12px;font-weight:600;color:#8B95A1;background:transparent;border:0;padding:0;cursor:pointer;font-family:inherit;flex-shrink:0;margin-top:2px;white-space:nowrap}
+.sync-logout{font-size:13px;font-weight:600;color:#8B95A1;background:transparent;border:0;padding:0;cursor:pointer;font-family:inherit;flex-shrink:0;white-space:nowrap}
 .admin-tabs{display:flex;gap:6px;background:#F2F4F6;padding:4px;border-radius:12px;margin-bottom:16px}
 .admin-tab{flex:1;border:none;background:transparent;border-radius:9px;padding:10px 8px;font-size:13px;font-weight:600;color:#4E5968;cursor:pointer;font-family:inherit}
 .admin-tab.active{background:#fff;color:#3182F6;box-shadow:0 1px 4px rgba(0,0,0,.08)}
@@ -329,15 +332,22 @@ body.auth-lock #app,body.auth-lock .bottom-nav,body.auth-lock #fab{visibility:hi
 <button type="button" id="appHeaderHome" class="app-header-home"><img class="app-header-symbol" src="/brand/symbol.svg" alt=""/>레슨 매니저</button>
 </header>
 <main class="px-5 pb-4 pt-5">
-<section id="syncStatusBar" class="sync-bar hidden mb-3" aria-live="polite">
-<div class="sync-bar-main">
-<div class="sync-bar-row"><span class="sync-dot" id="syncDot"></span><span class="sync-bar-text" id="syncText">동기화 준비 중</span></div>
-<div id="syncBuildLine" class="sync-build-line hidden"></div>
-<div id="syncSubLine" class="sync-sub-line hidden" aria-live="polite"></div>
+<div id="dashBrandRow" class="dash-head">
+<h2 class="dash-brand"><img class="dash-brand-logo" src="/brand/logo-horizontal.svg" alt="LESSON MANAGER"/></h2>
+<span class="dash-greeting-pill">오늘도 힘내세요!</span>
 </div>
+<section id="syncStatusBar" class="sync-bar hidden mb-3" aria-live="polite">
+<div class="sync-bar-top">
+<div class="sync-bar-row"><span class="sync-dot" id="syncDot"></span><span class="sync-bar-text" id="syncText">동기화 준비 중</span></div>
 <div class="sync-bar-actions">
 <button type="button" id="syncAdmin" class="sync-admin hidden">관리</button>
 <button type="button" id="syncLogout" class="sync-logout hidden">로그아웃</button>
+</div>
+</div>
+<div id="syncDetail" class="sync-detail hidden"></div>
+<div class="sync-bar-foot">
+<div id="syncSubLine" class="sync-sub-line hidden" aria-live="polite"></div>
+<div id="syncBuildLine" class="sync-build-line hidden"></div>
 </div>
 </section>
 <section id="statsSection" class="mb-5"></section>
@@ -509,7 +519,7 @@ const WEEKDAYS=['일','월','화','수','목','금','토'];
 let state={players:[],schedules:[]};
 let currentView='home',calendarMode='month',calendarDate=new Date(),selectedDate=null,detailTab='payment',historyViewMonth=null;
 let cloudSaveTimer=null,cloudUnsub=null,profileUnsub=null,lastCloudPush=0,applyingRemote=false,firebaseReady=false,bootFinished=false,currentAuthUid=null,currentSyncSession=0,currentSubscription=null;
-const APP_BUILD='20261022-new-logo';
+const APP_BUILD='20261022-dash-layout';
 function getSaasConfig(){return window.SAAS_CONFIG||{};}
 function getBankInfo(){return getSaasConfig().BANK||{};}
 function getSubscribeDays(){return Number(getSaasConfig().SUBSCRIBE_DAYS||30);}
@@ -818,9 +828,12 @@ if(subLine){
 if(subHtml){subLine.innerHTML=subHtml;subLine.classList.remove('hidden');}
 else{subLine.innerHTML='';subLine.classList.add('hidden');}
 }
-if(mode==='synced'){dot.classList.add('is-synced');text.innerHTML='<strong>클라우드 저장됨</strong>'+(detail?' · '+esc(detail):'');}
+const detailLine=document.getElementById('syncDetail');
+const setDetail=v=>{if(!detailLine)return;detailLine.textContent=v||'';detailLine.classList.toggle('hidden',!v);};
+setDetail(mode==='synced'||mode==='error'?detail:'');
+if(mode==='synced'){dot.classList.add('is-synced');text.innerHTML='<strong>클라우드 저장됨</strong>';}
 else if(mode==='pending'){dot.classList.add('is-pending');text.innerHTML='<strong>저장 중…</strong>';if(subLine){subLine.innerHTML='';subLine.classList.add('hidden');}}
-else if(mode==='error'){dot.classList.add('is-error');text.innerHTML='<strong>동기화 실패</strong>'+(detail?' · '+esc(detail):'');if(subLine){subLine.innerHTML='';subLine.classList.add('hidden');}}
+else if(mode==='error'){dot.classList.add('is-error');text.innerHTML='<strong>동기화 실패</strong>';if(subLine){subLine.innerHTML='';subLine.classList.add('hidden');}}
 else if(mode==='local'){bar.classList.add('hidden');return;}
 else{text.textContent=detail||'동기화 준비 중';if(subLine){subLine.innerHTML='';subLine.classList.add('hidden');}}
 if(logout)logout.classList.toggle('hidden',mode!=='synced'&&mode!=='pending'&&mode!=='error');
@@ -2342,6 +2355,7 @@ document.querySelectorAll('.nav-btn').forEach(b=>{const on=b.dataset.view===v;b.
 document.querySelectorAll('.view-panel').forEach(el=>el.classList.add('hidden'));
 document.getElementById('view-'+v).classList.remove('hidden');
 document.getElementById('statsSection').classList.toggle('hidden',v!=='home');
+document.getElementById('dashBrandRow')?.classList.toggle('hidden',v!=='home');
 document.getElementById('appHeader').classList.toggle('hidden',v==='home');
 if(v==='home')startDashClock();
 const fab=document.getElementById('fab');
@@ -2550,13 +2564,6 @@ const now=new Date();
 const curYm=monthYM(now);
 const{registered,lessonMembers,totalLessons,totalDeposits}=getDashboardStats();
 document.getElementById('statsSection').innerHTML=`
-<div class="dash-head">
-<div class="dash-head-left">
-<h2 class="dash-brand"><img class="dash-brand-logo" src="/brand/logo-horizontal.svg" alt="LESSON MANAGER"/></h2>
-<p class="dash-subtitle">레슨 매니저</p>
-</div>
-<span class="dash-greeting-pill">오늘도 힘내세요!</span>
-</div>
 <article class="dash-hero">
 <div id="dashClock" class="dash-hero-clock">
 <span class="dash-clock-date">${formatDisplayDate(now)}</span>
