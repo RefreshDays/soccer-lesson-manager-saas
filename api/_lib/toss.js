@@ -68,7 +68,7 @@ export function getSiteOrigin(req) {
   const host = req?.headers?.['x-forwarded-host'] || req?.headers?.host;
   if (host) return `https://${host}`;
   if (process.env.SITE_URL) return process.env.SITE_URL.replace(/\/$/, '');
-  return 'https://soccer-lesson-manager-saas.vercel.app';
+  return 'https://lesson-manager-saas.vercel.app';
 }
 
 export function cardLabelFrom(billing) {
