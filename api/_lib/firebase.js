@@ -2,13 +2,23 @@ import { cert, getApps, initializeApp } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 
-// FIREBASE_SERVICE_ACCOUNT: Firebase 콘솔 → 프로젝트 설정 → 서비스 계정 → 새 비공개 키 생성 JSON
-// (JSON 원문 또는 base64 인코딩 모두 허용)
+// 서비스 계정 키 (Firebase 콘솔 → 프로젝트 설정 → 서비스 계정 → 새 비공개 키 생성)
+// 방법 1) FIREBASE_SERVICE_ACCOUNT: JSON 원문 또는 base64 한 줄
+// 방법 2) JSON 안의 세 값을 각각 등록: FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY
 function readServiceAccount() {
   const raw = (process.env.FIREBASE_SERVICE_ACCOUNT || '').trim();
-  if (!raw) throw new Error('FIREBASE_SERVICE_ACCOUNT 환경변수가 필요합니다.');
-  const json = raw.startsWith('{') ? raw : Buffer.from(raw, 'base64').toString('utf8');
-  return JSON.parse(json);
+  if (raw) {
+    const json = raw.startsWith('{') ? raw : Buffer.from(raw, 'base64').toString('utf8');
+    return JSON.parse(json);
+  }
+  const projectId = (process.env.FIREBASE_PROJECT_ID || '').trim();
+  const clientEmail = (process.env.FIREBASE_CLIENT_EMAIL || '').trim();
+  // 붙여넣을 때 줄바꿈이 '\n' 글자로 들어오므로 실제 줄바꿈으로 되돌립니다. 앞뒤 따옴표도 제거합니다.
+  const privateKey = (process.env.FIREBASE_PRIVATE_KEY || '').trim().replace(/^"|"$/g, '').replace(/\\n/g, '\n');
+  if (projectId && clientEmail && privateKey) {
+    return { project_id: projectId, client_email: clientEmail, private_key: privateKey };
+  }
+  throw new Error('FIREBASE_SERVICE_ACCOUNT 환경변수가 필요합니다.');
 }
 
 function adminApp() {
