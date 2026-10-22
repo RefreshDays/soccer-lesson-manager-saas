@@ -1,4 +1,5 @@
-import { adminAuth, adminDb, readJsonBody, sendJson, verifyIdToken } from '../_lib/firebase.js';
+import { FieldValue } from 'firebase-admin/firestore';
+import { adminAuth, adminDb, isAdminToken, readJsonBody, sendJson, verifyIdToken } from '../_lib/firebase.js';
 import { getAdminEmails } from '../_lib/toss.js';
 
 // 관리자가 회원을 완전히 삭제합니다 (로그인 계정 · 레슨 데이터 · 구독 · 카드 정보).
@@ -10,7 +11,8 @@ export default async function handler(req, res) {
   try {
     const { idToken, uid } = readJsonBody(req);
     const admin = await verifyIdToken(idToken);
-    if (!getAdminEmails().includes(String(admin.email || '').toLowerCase())) {
+    const ownerEmails = getAdminEmails();
+    if (!(await isAdminToken(admin, ownerEmails))) {
       sendJson(res, 403, { error: '관리자만 삭제할 수 있습니다.' });
       return;
     }
@@ -20,6 +22,14 @@ export default async function handler(req, res) {
     }
     if (uid === admin.uid) {
       sendJson(res, 400, { error: '관리자 본인 계정은 삭제할 수 없습니다.' });
+      return;
+    }
+
+    const target = await adminAuth()
+      .getUser(uid)
+      .catch(() => null);
+    if (target && ownerEmails.includes(String(target.email || '').toLowerCase())) {
+      sendJson(res, 400, { error: '최고 관리자 계정은 삭제할 수 없습니다.' });
       return;
     }
 
@@ -33,6 +43,7 @@ export default async function handler(req, res) {
     const batch = db.batch();
     registry.docs.forEach((d) => batch.delete(d.ref));
     requests.docs.forEach((d) => batch.delete(d.ref));
+    batch.set(db.doc('config/admins'), { uids: FieldValue.arrayRemove(uid) }, { merge: true });
     await batch.commit();
     await adminAuth()
       .deleteUser(uid)

@@ -261,6 +261,7 @@ body.auth-lock #app,body.auth-lock .bottom-nav,body.auth-lock #fab{visibility:hi
 .admin-badge-active{background:#E6FAF3;color:#0D7A5F}
 .admin-badge-trial{background:#E8F3FF;color:#3182F6}
 .admin-badge-expired{background:#F2F4F6;color:#8B95A1}
+.admin-badge-owner{background:#F3EEFF;color:#6B4EFF;vertical-align:middle;margin-left:4px}
 .admin-row{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:14px 0;border-bottom:1px solid #F2F4F6}
 .admin-row:last-child{border-bottom:none}
 .admin-empty{padding:32px 12px;text-align:center;color:#8B95A1;font-size:14px;line-height:1.5}
@@ -441,7 +442,7 @@ const WEEKDAYS=['일','월','화','수','목','금','토'];
 let state={players:[],schedules:[]};
 let currentView='home',calendarMode='month',calendarDate=new Date(),selectedDate=null,detailTab='payment',historyViewMonth=null;
 let cloudSaveTimer=null,cloudUnsub=null,profileUnsub=null,lastCloudPush=0,applyingRemote=false,firebaseReady=false,bootFinished=false,currentAuthUid=null,currentSyncSession=0,currentSubscription=null;
-const APP_BUILD='20261022-saas-billing';
+const APP_BUILD='20261022-saas-admin-roles';
 const SAAS_CONTACT_EMAIL='wonzia80@gmail.com';
 function getSaasConfig(){return window.SAAS_CONFIG||{};}
 function getBankInfo(){return getSaasConfig().BANK||{};}
@@ -450,7 +451,25 @@ function getTrialDays(){return Number(getSaasConfig().TRIAL_DAYS||7);}
 function getSubscribeAmount(){return Number(getSaasConfig().SUBSCRIBE_AMOUNT||9900);}
 function getSubscribeOrderName(){return getSaasConfig().SUBSCRIBE_ORDER_NAME||'축구 레슨 매니저 월 구독';}
 function getAdminEmails(){return(getSaasConfig().ADMIN_EMAILS||['sonkh@rubycell.co.kr']).map(e=>(e||'').toLowerCase());}
-function isAdminUser(user){if(!user)return false;const email=(user.email||'').toLowerCase();return getAdminEmails().includes(email);}
+// 최고 관리자는 saas-config.js 의 ADMIN_EMAILS, 그 외 관리자는 Firestore config/admins 의 uids 로 지정합니다.
+let adminUids=[],adminConfigUnsub=null;
+function isOwnerUser(user){if(!user)return false;const email=(user.email||'').toLowerCase();return getAdminEmails().includes(email);}
+function isAdminUser(user){if(!user)return false;return isOwnerUser(user)||adminUids.includes(user.uid);}
+function adminConfigRef(){return firebase.firestore().doc('config/admins');}
+function stopAdminConfigListener(){if(adminConfigUnsub){adminConfigUnsub();adminConfigUnsub=null;}adminUids=[];}
+async function loadAdminConfig(){
+stopAdminConfigListener();
+try{
+const snap=await adminConfigRef().get();
+adminUids=snap.exists&&Array.isArray(snap.data().uids)?snap.data().uids:[];
+}catch(e){console.warn('admin config',e);adminUids=[];}
+adminConfigUnsub=adminConfigRef().onSnapshot(snap=>{
+adminUids=snap.exists&&Array.isArray(snap.data().uids)?snap.data().uids:[];
+const user=firebase.auth().currentUser;
+updateAdminNavVisibility(user);
+if(currentView==='admin')renderAdminUserList();
+},e=>console.warn('admin config',e));
+}
 let tossPaymentInstance=null;
 let subscribePayMode='card';
 let authMode='login';
@@ -1243,6 +1262,7 @@ currentSubscription=null;
 resetAppState();
 hideSubscribeGate();
 stopAdminListeners();
+stopAdminConfigListener();
 updateAdminNavVisibility(null);
 showAuthGate();
 updateSyncStatus('offline','로그인이 필요합니다');
@@ -1251,6 +1271,7 @@ return;
 }
 currentAuthUid=user.uid;
 try{
+await loadAdminConfig();
 await ensureCoachRegistry(user);
 const sub=await loadSubscription(user.uid);
 startProfileListener(user.uid,sessionId);
@@ -1350,6 +1371,7 @@ currentSubscription=null;
 resetAppState();
 hideSubscribeGate();
 stopAdminListeners();
+stopAdminConfigListener();
 await firebase.auth().signOut();
 }
 
@@ -1632,7 +1654,8 @@ return`<div class="flex-1 flex flex-col items-center gap-1 min-w-0">
 
 document.querySelectorAll('.nav-btn').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view)));
 
-let adminTab='pending',adminPendingUnsub=null,adminUsersUnsub=null;
+let adminTab='pending',adminPendingUnsub=null,adminUsersUnsub=null,adminBillingUnsub=null;
+let adminUsersCache=null,adminUsersError='',adminBillingMap={};
 
 function updateAdminNavVisibility(user){
 const btn=document.getElementById('navAdminBtn');
@@ -1649,6 +1672,7 @@ if(!show&&currentView==='admin')setView('home');
 function stopAdminListeners(){
 if(adminPendingUnsub){adminPendingUnsub();adminPendingUnsub=null;}
 if(adminUsersUnsub){adminUsersUnsub();adminUsersUnsub=null;}
+if(adminBillingUnsub){adminBillingUnsub();adminBillingUnsub=null;}
 }
 function startAdminListeners(){
 renderAdminPending();
@@ -1742,51 +1766,133 @@ list.innerHTML='목록을 불러오지 못했습니다.<br>'+esc(err.message);
 function renderAdminUsers(){
 if(!firebaseReady||!isAdminUser(firebase.auth().currentUser))return;
 if(adminUsersUnsub){adminUsersUnsub();adminUsersUnsub=null;}
+if(adminBillingUnsub){adminBillingUnsub();adminBillingUnsub=null;}
+adminUsersCache=null;adminUsersError='';adminBillingMap={};
+renderAdminUserList();
+const db=firebase.firestore();
+adminUsersUnsub=db.collection('users').onSnapshot(snap=>{
+adminUsersCache=snap.docs.map(d=>({id:d.id,...d.data()}));
+adminUsersError='';
+renderAdminUserList();
+},err=>{
+adminUsersError=err.message||'불러오기 실패';
+renderAdminUserList();
+});
+adminBillingUnsub=db.collection('billing').onSnapshot(snap=>{
+adminBillingMap={};
+snap.docs.forEach(d=>{adminBillingMap[d.id]=d.data();});
+renderAdminUserList();
+},err=>console.warn('billing list',err));
+}
+function adminBillingLines(billing){
+if(!billing)return '';
+const parts=['카드 '+esc(billing.cardLabel||'등록 카드')];
+if(billing.lastPaymentAt)parts.push('최근 결제 '+adminFormatSignupDate(billing.lastPaymentAt));
+if(billing.autoRenew&&billing.nextChargeAt)parts.push('다음 결제 '+adminFormatSignupDate(billing.nextChargeAt));
+else if(billing.stoppedReason==='payment_failed')parts.push('<span class="admin-dday is-expired">결제 실패로 자동결제 중지</span>');
+else if(billing.stoppedReason==='user_cancel')parts.push('회원이 자동결제 해지');
+let html='<p class="admin-user-meta">'+parts.join(' · ')+'</p>';
+if(billing.failCount>0&&billing.lastError)html+='<p class="admin-user-meta"><span class="admin-dday is-expired">결제 실패 '+billing.failCount+'회</span> · '+esc(billing.lastError)+'</p>';
+return html;
+}
+function adminRoleBadge(u){
+if(getAdminEmails().includes(String(u.email||'').toLowerCase()))return ' <span class="admin-badge admin-badge-owner">최고 관리자</span>';
+if(adminUids.includes(u.id))return ' <span class="admin-badge admin-badge-owner">관리자</span>';
+return '';
+}
+function renderAdminUserList(){
 const list=document.getElementById('adminUserList');
 if(!list)return;
+if(adminUsersError){list.className='admin-empty';list.innerHTML='회원 목록 오류<br>'+esc(adminUsersError);return;}
+if(!adminUsersCache){list.className='admin-empty';list.innerHTML='불러오는 중...';return;}
+const me=firebase.auth().currentUser;
+const iAmOwner=isOwnerUser(me);
 const q=(document.getElementById('adminUserSearch')?.value||'').trim().toLowerCase();
-list.innerHTML='불러오는 중...';
-list.className='admin-empty';
-adminUsersUnsub=firebase.firestore().collection('users').onSnapshot(snap=>{
-let docs=snap.docs.map(d=>({id:d.id,...d.data()}));
+let docs=adminUsersCache;
 if(q)docs=docs.filter(u=>{
 const hay=[u.email,u.coachName,u.phone,u.lastDepositorName].filter(Boolean).join(' ').toLowerCase();
 return hay.includes(q);
 });
-docs.sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
-if(!docs.length){list.innerHTML='회원이 없습니다.';return;}
+docs=[...docs].sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
+if(!docs.length){list.className='admin-empty';list.innerHTML='회원이 없습니다.';return;}
+const notes={};
+list.querySelectorAll('.admin-memo-input').forEach(el=>{if(el===document.activeElement||el.dataset.dirty)notes[el.dataset.uid]=el.value;});
 list.className='';
 list.innerHTML=docs.map(u=>{
 const sub=u.subscription||{};
 const exp=sub.expiresAt||sub.trialEndsAt;
 const dday=adminFormatDDay(sub);
 const depositor=u.lastDepositorName||'-';
-const note=esc(u.adminNote||'');
+const billing=adminBillingMap[u.id];
+const isSelf=u.id===me?.uid;
+const isOwnerRow=getAdminEmails().includes(String(u.email||'').toLowerCase());
+const note=esc(notes[u.id]!==undefined?notes[u.id]:(u.adminNote||''));
+const roleBtn=iAmOwner&&!isSelf&&!isOwnerRow
+?(adminUids.includes(u.id)
+?`<button type="button" class="btn-toss-ghost btn-toss-inline" data-admin-action="revoke-admin" data-uid="${esc(u.id)}" data-label="${esc(u.coachName||u.email||u.id)}">관리자 해제</button>`
+:`<button type="button" class="btn-toss-ghost btn-toss-inline" data-admin-action="grant-admin" data-uid="${esc(u.id)}" data-label="${esc(u.coachName||u.email||u.id)}">관리자 지정</button>`)
+:'';
 return `<div class="admin-user-card">
 <div class="admin-user-head">
 <div class="min-w-0 flex-1">
-<p class="admin-user-title">${adminPrimaryLabel(u)}</p>
+<p class="admin-user-title">${adminPrimaryLabel(u)}${adminRoleBadge(u)}</p>
 <p class="admin-user-sub">${adminSecondaryLine(u)}</p>
 <p class="admin-user-sub">${adminSubBadge(sub)} · 회원 ${u.memberCount||0} · 일정 ${u.scheduleCount||0}</p>
 <p class="admin-user-meta">가입 ${adminFormatSignupDate(u.createdAt)} · <span class="${dday.cls}">${dday.text}</span> · 입금자 ${esc(depositor)}</p>
 <p class="admin-user-meta">만료 ${adminFormatDate(exp)}${adminPayLabel(sub)}</p>
+${adminBillingLines(billing)}
 </div>
 <div class="admin-user-actions">
 <button type="button" class="btn-toss btn-toss-inline" data-admin-action="activate" data-uid="${esc(u.id)}">${getSubscribeDays()}일 활성</button>
 <button type="button" class="btn-toss-ghost btn-toss-inline" data-admin-action="extend-trial" data-uid="${esc(u.id)}">체험 +${getTrialDays()}일</button>
-${u.id===firebase.auth().currentUser?.uid?'':`<button type="button" class="btn-toss-danger" data-admin-action="delete-user" data-uid="${esc(u.id)}" data-label="${esc(u.coachName||u.email||u.id)}">삭제</button>`}
+${billing?`<button type="button" class="btn-toss-ghost btn-toss-inline" data-admin-action="payments" data-uid="${esc(u.id)}" data-label="${esc(u.coachName||u.email||u.id)}">결제 내역</button>`:''}
+${roleBtn}
+${isSelf||isOwnerRow?'':`<button type="button" class="btn-toss-danger" data-admin-action="delete-user" data-uid="${esc(u.id)}" data-label="${esc(u.coachName||u.email||u.id)}">삭제</button>`}
 </div>
 </div>
 <div class="admin-memo-box">
-<textarea class="admin-memo-input" id="admin-memo-${esc(u.id)}" placeholder="관리자 메모">${note}</textarea>
+<textarea class="admin-memo-input" id="admin-memo-${esc(u.id)}" data-uid="${esc(u.id)}" placeholder="관리자 메모">${note}</textarea>
 <div class="admin-memo-actions"><button type="button" class="btn-toss-ghost btn-toss-inline" data-admin-action="save-note" data-uid="${esc(u.id)}">메모 저장</button></div>
 </div>
 </div>`;
 }).join('');
-},err=>{
-list.className='admin-empty';
-list.innerHTML='회원 목록 오류<br>'+esc(err.message);
+list.querySelectorAll('.admin-memo-input').forEach(el=>{
+if(notes[el.dataset.uid]!==undefined)el.dataset.dirty='1';
+el.addEventListener('input',()=>{el.dataset.dirty='1';});
 });
+}
+async function showAdminPayments(uid,label){
+try{
+const snap=await firebase.firestore().collection('billing/'+uid+'/payments').orderBy('createdAt','desc').limit(12).get();
+if(snap.empty){await showAlert((label||'회원')+'\n결제 내역이 없습니다.');return;}
+const lines=snap.docs.map(d=>{
+const p=d.data();
+return adminFormatSignupDate(p.createdAt)+'  '+formatWon(p.amount||0)+'  '+(p.status==='DONE'?'완료':(p.status||'-'));
+});
+await showAlert((label||'회원')+' 결제 내역 (최근 '+lines.length+'건)\n\n'+lines.join('\n'));
+}catch(e){
+console.error(e);
+await showAlert(e.message||'결제 내역을 불러오지 못했습니다.');
+}
+}
+async function setAdminRole(uid,label,grant){
+if(!uid||!isOwnerUser(firebase.auth().currentUser))return;
+const ok=await showConfirm(grant
+?(label||'이 회원')+'님을 관리자로 지정할까요?\n입금 승인·구독 연장·회원 삭제를 할 수 있게 됩니다.'
+:(label||'이 회원')+'님의 관리자 권한을 해제할까요?');
+if(!ok)return;
+try{
+const FieldValue=firebase.firestore.FieldValue;
+await adminConfigRef().set({
+uids:grant?FieldValue.arrayUnion(uid):FieldValue.arrayRemove(uid),
+updatedAt:Date.now(),
+updatedBy:firebase.auth().currentUser?.email||''
+},{merge:true});
+await showAlert(grant?'관리자로 지정했습니다.\n해당 회원이 다시 로그인하면 관리 메뉴가 보입니다.':'관리자 권한을 해제했습니다.');
+}catch(e){
+console.error(e);
+await showAlert(e.message||'변경에 실패했습니다.');
+}
 }
 async function approveAdminRequest(requestId,uid){
 if(!requestId||!uid)return;
@@ -1888,6 +1994,7 @@ async function saveAdminUserNote(uid){
 const el=document.getElementById('admin-memo-'+uid);
 if(!el)return;
 const adminNote=(el.value||'').trim();
+delete el.dataset.dirty;
 try{
 await firebase.firestore().doc('users/'+uid).set({
 adminNote,
@@ -1924,6 +2031,9 @@ else if(action==='activate')activateAdminUser(uid);
 else if(action==='extend-trial')extendAdminTrial(uid,getTrialDays());
 else if(action==='save-note')saveAdminUserNote(uid);
 else if(action==='delete-user')deleteAdminUser(uid,btn.dataset.label);
+else if(action==='payments')showAdminPayments(uid,btn.dataset.label);
+else if(action==='grant-admin')setAdminRole(uid,btn.dataset.label,true);
+else if(action==='revoke-admin')setAdminRole(uid,btn.dataset.label,false);
 }
 function initAdminPanel(){
 document.querySelectorAll('.admin-tab').forEach(btn=>{
@@ -1931,7 +2041,7 @@ btn.addEventListener('click',()=>setAdminTab(btn.dataset.adminTab||'pending'));
 });
 document.getElementById('adminPendingList')?.addEventListener('click',handleAdminPanelClick);
 document.getElementById('adminUserList')?.addEventListener('click',handleAdminPanelClick);
-document.getElementById('adminUserSearch')?.addEventListener('input',()=>renderAdminUsers());
+document.getElementById('adminUserSearch')?.addEventListener('input',()=>renderAdminUserList());
 window.addEventListener('hashchange',()=>{
 if(location.hash==='#admin'&&isAdminUser(firebase.auth().currentUser)&&bootFinished)setView('admin');
 });

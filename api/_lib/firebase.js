@@ -32,6 +32,14 @@ export async function verifyIdToken(idToken) {
   }
 }
 
+// 최고 관리자(saas-config.js ADMIN_EMAILS) 또는 config/admins 에 지정된 관리자인지 확인합니다.
+export async function isAdminToken(decoded, ownerEmails) {
+  if (ownerEmails.includes(String(decoded.email || '').toLowerCase())) return true;
+  const snap = await adminDb().doc('config/admins').get();
+  const uids = snap.exists && Array.isArray(snap.data().uids) ? snap.data().uids : [];
+  return uids.includes(decoded.uid);
+}
+
 export function readJsonBody(req) {
   if (typeof req.body === 'string') return JSON.parse(req.body || '{}');
   return req.body || {};
