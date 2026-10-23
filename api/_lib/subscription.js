@@ -5,6 +5,9 @@ import { approveBillingPayment, DAY_MS, getSubscribeConfig } from './toss.js';
 // 남은 구독 기간이 있으면 그 끝에서, 없으면 지금부터 연장합니다.
 export function extendBase(sub, now) {
   if (sub?.status === 'active' && (sub.expiresAt || 0) > now) return sub.expiresAt;
+  // 체험 중에 미리 구독하면 남은 체험 기간 뒤로 이어집니다.
+  const trialEnd = sub?.status === 'trial' ? sub.trialEndsAt || sub.expiresAt || 0 : 0;
+  if (trialEnd > now) return trialEnd;
   return now;
 }
 

@@ -23,6 +23,43 @@ html{word-break:keep-all;overflow-wrap:break-word}
 html,body,button,input,select,textarea{font-family:'Paperlogy',system-ui,sans-serif}
 body{background:#F2F4F6;color:#191F28;-webkit-tap-highlight-color:transparent}
 .toss-card{background:#fff;border-radius:20px;box-shadow:0 2px 16px rgba(0,0,0,.06)}
+.auth-forgot{display:block;width:100%;margin:2px 0 6px;padding:8px 0;border:0;background:none;font-size:13px;color:#6B7684;cursor:pointer;font-family:inherit;text-decoration:underline;text-underline-offset:3px}
+.auth-forgot.hidden{display:none}
+#subscribeGateCard{position:relative}
+body[data-view=my] #syncStatusBar{display:none!important}
+.my-wrap{display:flex;flex-direction:column;gap:14px}
+.my-title{margin:0 2px;font-size:1.125rem;font-weight:700;color:#191F28}
+.my-card{background:#fff;border-radius:20px;box-shadow:0 2px 16px rgba(0,0,0,.06);padding:18px}
+.my-profile{display:flex;align-items:center;gap:14px}
+.my-avatar{flex-shrink:0;width:54px;height:54px;border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;color:#fff;background:linear-gradient(140deg,#0B1E3F,#0046C0 60%,#0076E5)}
+.my-name{font-size:18px;font-weight:800;color:#191F28;letter-spacing:-.02em}
+.my-email{margin-top:2px;font-size:13px;color:#6B7684;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.my-chip{display:inline-block;margin-top:6px;font-size:11px;font-weight:700;color:#4E5968;background:#F2F4F6;padding:4px 8px;border-radius:999px}
+.my-edit{flex-shrink:0;margin-left:auto;align-self:flex-start;height:34px;padding:0 12px;border-radius:10px;border:0;background:#F2F4F6;color:#4E5968;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+.my-sec-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.my-sec-title{font-size:13px;font-weight:700;color:#8B95A1;letter-spacing:-.01em}
+.my-plan{border-radius:16px;padding:16px;background:linear-gradient(125deg,#0B1E3F 0%,#0046C0 62%,#0076E5 100%);color:#fff}
+.my-plan.is-trial{background:linear-gradient(125deg,#FF8A3D,#FFB547)}
+.my-plan.is-off{background:#F2F4F6;color:#191F28}
+.my-plan-status{font-size:13px;font-weight:700;opacity:.85}
+.my-plan-main{margin-top:4px;font-size:22px;font-weight:800;letter-spacing:-.03em}
+.my-plan-sub{margin-top:4px;font-size:13px;opacity:.85}
+.my-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 0;border-top:1px solid #F2F4F6;font-size:14px;color:#333D4B}
+.my-row:first-child{border-top:0}
+.my-row span:last-child{color:#191F28;font-weight:600;text-align:right}
+.my-btn{display:block;width:100%;height:46px;margin-top:12px;border-radius:14px;border:0;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;background:#3182F6;color:#fff}
+.my-btn--ghost{background:#F2F4F6;color:#4E5968}
+.my-link{display:flex;align-items:center;justify-content:space-between;width:100%;padding:14px 0;border:0;border-top:1px solid #F2F4F6;background:none;font-size:15px;color:#191F28;cursor:pointer;font-family:inherit;text-align:left;text-decoration:none}
+.my-link:first-of-type{border-top:0}
+.my-link::after{content:"›";font-size:20px;color:#B0B8C1;line-height:1}
+.my-link small{margin-left:auto;margin-right:8px;font-size:13px;color:#8B95A1}
+.my-link--danger{color:#F04452}
+.my-pay{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-top:1px solid #F2F4F6;font-size:14px}
+.my-pay:first-child{border-top:0}
+.my-pay small{display:block;font-size:12px;color:#8B95A1;margin-top:2px}
+.my-pay b{font-weight:700;color:#191F28}
+.my-empty{padding:12px 0;font-size:13px;color:#8B95A1;text-align:center}
+.my-version{text-align:center;font-size:12px;color:#B0B8C1;padding:4px 0 8px}
 .home-block{margin-bottom:20px}
 .home-block-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 2px 10px}
 .home-block-title{display:flex;align-items:center;gap:8px;margin:0;font-size:1.125rem;font-weight:700;color:#191F28;letter-spacing:-.02em}
@@ -443,6 +480,7 @@ body.auth-lock #app,body.auth-lock .bottom-nav,body.auth-lock #fab{visibility:hi
 <div id="view-home" class="view-panel space-y-5"></div>
 <div id="view-players" class="view-panel hidden space-y-4"></div>
 <div id="view-calendar" class="view-panel hidden space-y-4"></div>
+<div id="view-my" class="view-panel hidden"></div>
 <div id="view-admin" class="view-panel hidden space-y-4">
 <h2 class="text-lg font-bold mb-1">구독·입금 관리</h2>
 <div class="toss-card p-4">
@@ -462,7 +500,7 @@ body.auth-lock #app,body.auth-lock .bottom-nav,body.auth-lock #fab{visibility:hi
 <button type="button" onclick="loadShowcaseData()" class="mt-3 w-full h-11 rounded-xl bg-toss-bg text-sm font-semibold text-toss-blue">이 계정에 가상 데이터 넣기</button>
 </div>
 </div>
-<footer class="legal-footer legal-footer--app" data-legal-footer data-withdraw-enabled></footer>
+<footer class="legal-footer legal-footer--app" data-legal-footer></footer>
 </main>
 </div>
 <nav class="bottom-nav">
@@ -479,9 +517,9 @@ body.auth-lock #app,body.auth-lock .bottom-nav,body.auth-lock #fab{visibility:hi
 <span class="nav-icon-wrap"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="9" cy="7" r="3.5"/><path d="M3 20v-1.5a5.5 5.5 0 0 1 5.5-5.5H10"/><circle cx="17" cy="8" r="2.5"/><path d="M15 20v-1.2a4 4 0 0 1 4-4h.5"/></svg></span>
 <span class="nav-label">회원</span>
 </button>
-<button type="button" data-view="admin" id="navAdminBtn" class="nav-btn hidden">
-<span class="nav-icon-wrap"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 3 4 7v6c0 5 3.5 9.5 8 10 4.5-.5 8-5 8-10V7l-8-4z"/><path d="m9 12 2 2 4-4"/></svg></span>
-<span class="nav-label">관리</span>
+<button type="button" data-view="my" class="nav-btn">
+<span class="nav-icon-wrap"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="8" r="4"/><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0"/></svg></span>
+<span class="nav-label">MY</span>
 </button>
 </div>
 </nav>
@@ -528,6 +566,7 @@ body.auth-lock #app,body.auth-lock .bottom-nav,body.auth-lock #fab{visibility:hi
 <span id="authErrorText" class="auth-error-text"></span>
 </div>
 <button type="button" id="authSubmit" class="btn-toss mb-2">로그인</button>
+<button type="button" id="authForgot" class="auth-forgot" onclick="resetPassword()">비밀번호를 잊으셨나요?</button>
 <button type="button" id="authModeToggle" class="auth-mode-toggle">처음 사용하시나요? 가입하기</button>
 <p class="auth-build-tag" id="authBuildTag"></p>
 <div class="legal-footer" data-legal-footer></div>
@@ -552,8 +591,9 @@ body.auth-lock #app,body.auth-lock .bottom-nav,body.auth-lock #fab{visibility:hi
 </div>
 <div id="subscribeGate" class="subscribe-gate hidden" aria-hidden="true">
 <div id="subscribeGateCard" class="auth-card toss-card p-6">
+<button type="button" id="subscribeClose" class="auth-close hidden" onclick="closeEarlySubscribe()" aria-label="닫기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
 <div id="subscribeGateHeader">
-<h2>구독이 필요합니다</h2>
+<h2 id="subscribeTitle">구독이 필요합니다</h2>
 <p id="subscribeTrialHeadline" class="subscribe-trial-headline hidden">체험 기간이 종료되었습니다.</p>
 <p id="subscribeMsg">이용을 계속하려면 아래에서 구독해 주세요.</p>
 </div>
@@ -612,7 +652,7 @@ let state={players:[],schedules:[]};
 let currentView='home',calendarMode='month',calendarDate=new Date(),selectedDate=null,detailTab='payment',historyViewMonth=null;
 let currentCoachName='',overdueExpanded=false;
 let cloudSaveTimer=null,cloudUnsub=null,profileUnsub=null,lastCloudPush=0,applyingRemote=false,firebaseReady=false,bootFinished=false,currentAuthUid=null,currentSyncSession=0,currentSubscription=null;
-const APP_BUILD='v2-glass-cta';
+const APP_BUILD='v2-my-tab';
 function getSaasConfig(){return window.SAAS_CONFIG||{};}
 function getBankInfo(){return getSaasConfig().BANK||{};}
 function getSubscribeDays(){return Number(getSaasConfig().SUBSCRIBE_DAYS||30);}
@@ -674,6 +714,7 @@ document.querySelectorAll('.auth-tab').forEach(btn=>{
 btn.classList.toggle('active',btn.dataset.authMode===authMode);
 });
 document.getElementById('authRegisterFields')?.classList.toggle('hidden',authMode!=='register');
+document.getElementById('authForgot')?.classList.toggle('hidden',authMode==='register');
 const title=document.getElementById('authTitle');
 if(title)title.textContent=authMode==='register'?'이메일로 가입':'이메일로 로그인';
 const desc=document.getElementById('authDesc');
@@ -1310,6 +1351,8 @@ if(!pending)updateSubscribeGateHeader(sub);
 updateSubscribeBankPanel(firebase.auth().currentUser);
 }
 function hideSubscribeGate(){
+document.getElementById('subscribeClose')?.classList.add('hidden');
+const t=document.getElementById('subscribeTitle');if(t)t.textContent='구독이 필요합니다';
 const gate=document.getElementById('subscribeGate');
 document.body.classList.remove('auth-lock');
 if(gate){gate.classList.add('hidden');gate.setAttribute('aria-hidden','true');}
@@ -1324,10 +1367,12 @@ if(sessionId!==currentSyncSession||currentAuthUid!==uid)return;
 const sub=snap.exists?snap.data()?.subscription:null;
 currentSubscription=sub;
 currentCoachName=snap.exists?(snap.data()?.coachName||''):'';
+if(currentView==='my')renderMy();
 if(!firebase.auth().currentUser)return;
 if(isSubscriptionActive(sub)){
 const gate=document.getElementById('subscribeGate');
-if(gate&&!gate.classList.contains('hidden')){
+const earlySubscribe=!document.getElementById('subscribeClose')?.classList.contains('hidden');
+if(gate&&!gate.classList.contains('hidden')&&!earlySubscribe){
 hideSubscribeGate();
 await enterAppAsUser(firebase.auth().currentUser,sessionId);
 }else{
@@ -1822,6 +1867,115 @@ saveStateLocal();
 scheduleCloudSave();
 }
 function syncAll(){state.players.forEach(syncPlayer);}
+function myDate(ms){if(!ms)return'-';const d=new Date(ms);return d.getFullYear()+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+String(d.getDate()).padStart(2,'0');}
+function myPlanHtml(user){
+const sub=currentSubscription;
+if(isAdminUser(user))return`<div class="my-plan"><div class="my-plan-status">관리자 계정</div><div class="my-plan-main">구독 없이 이용</div><div class="my-plan-sub">모든 기능을 제한 없이 쓸 수 있어요</div></div>`;
+if(sub&&sub.status==='trial'&&isSubscriptionActive(sub)){const end=sub.trialEndsAt||sub.expiresAt;
+return`<div class="my-plan is-trial"><div class="my-plan-status">무료 체험 중</div><div class="my-plan-main">${getTrialDaysLeft(sub)}일 남음</div><div class="my-plan-sub">${myDate(end)}까지 · 미리 구독하면 체험 뒤에 이어져요</div></div>
+<button type="button" class="my-btn" onclick="openEarlySubscribe()">지금 구독하기 · 월 ${formatWon(getSubscribeAmount())}</button>`;}
+if(sub&&sub.status==='active'&&isSubscriptionActive(sub)){const auto=sub.provider==='toss'&&sub.autoRenew;
+return`<div class="my-plan"><div class="my-plan-status">구독 중 · ${auto?'카드 자동결제':(sub.provider==='toss'?'자동결제 해지됨':'계좌 입금')}</div><div class="my-plan-main">${auto?'다음 결제 '+myDate(sub.expiresAt):myDate(sub.expiresAt)+'까지'}</div><div class="my-plan-sub">월 ${formatWon(getSubscribeAmount())}${sub.cardLabel?' · 카드 '+esc(sub.cardLabel):''}</div></div>
+${auto?`<button type="button" class="my-btn my-btn--ghost" onclick="openSubscriptionManage()">자동결제 해지</button>`:''}`;}
+return`<div class="my-plan is-off"><div class="my-plan-status">구독 없음</div><div class="my-plan-main">이용 기간이 끝났어요</div></div><button type="button" class="my-btn" onclick="showSubscribeGate(currentSubscription)">구독하기</button>`;
+}
+function renderMy(){
+const el=document.getElementById('view-my');if(!el)return;
+const user=firebaseReady?firebase.auth().currentUser:null;
+if(!user){el.innerHTML='';return;}
+const name=currentCoachName||'강사님';
+const google=(user.providerData||[]).some(p=>p.providerId==='google.com');
+const admin=isAdminUser(user);
+const biz=getBusinessInfo?getBusinessInfo():{};
+const mail=(biz&&biz.email)||'';
+el.innerHTML=`<div class="my-wrap">
+<h2 class="my-title">MY</h2>
+<section class="my-card"><div class="my-profile"><span class="my-avatar">${esc(name.slice(0,1))}</span>
+<div style="min-width:0"><div class="my-name">${esc(name)}</div><div class="my-email">${esc(user.email||'')}</div><span class="my-chip">${google?'Google 로그인':'이메일 로그인'}</span></div>
+<button type="button" class="my-edit" onclick="openSheet('profile')">수정</button></div></section>
+<section class="my-card"><div class="my-sec-head"><span class="my-sec-title">구독</span></div>${myPlanHtml(user)}
+<div class="my-sec-head" style="margin:16px 0 4px"><span class="my-sec-title">결제 내역</span></div>
+<div id="myPayments"><button type="button" class="my-btn my-btn--ghost" style="margin-top:4px" onclick="loadMyPayments()">결제 내역 보기</button></div></section>
+<section class="my-card"><div class="my-sec-head"><span class="my-sec-title">데이터</span></div>
+<button type="button" class="my-link" onclick="exportPlayersCsv()">회원 목록 엑셀로 받기<small>${state.players.length}명</small></button>
+<button type="button" class="my-link" onclick="exportPaymentsCsv()">입금 내역 엑셀로 받기</button></section>
+${admin?`<section class="my-card"><div class="my-sec-head"><span class="my-sec-title">관리자</span></div><button type="button" class="my-link" onclick="setView('admin')">관리자 메뉴<small>입금 승인 · 회원 관리</small></button></section>`:''}
+<section class="my-card"><div class="my-sec-head"><span class="my-sec-title">고객지원</span></div>
+${mail?`<a class="my-link" href="mailto:${esc(mail)}?subject=${encodeURIComponent('[레슨 매니저 문의]')}">문의하기<small>${esc(mail)}</small></a>`:''}
+<button type="button" class="my-link" onclick="showInstallGuide()">홈 화면에 앱 추가하기</button>
+<a class="my-link" href="/policy.html#terms" target="_blank" rel="noopener">이용약관</a>
+<a class="my-link" href="/policy.html#privacy" target="_blank" rel="noopener">개인정보처리방침</a>
+<a class="my-link" href="/policy.html#refund" target="_blank" rel="noopener">환불정책</a></section>
+<section class="my-card"><div class="my-sec-head"><span class="my-sec-title">계정</span></div>
+<button type="button" class="my-link" onclick="firebaseLogout()">로그아웃</button>
+${isOwnerUser(user)?'':`<button type="button" class="my-link my-link--danger" onclick="withdrawAccount()">회원 탈퇴</button>`}</section>
+<p class="my-version">레슨 매니저 · ${esc(APP_BUILD)}</p></div>`;
+}
+async function loadMyPayments(){
+const box=document.getElementById('myPayments');if(!box)return;
+box.innerHTML='<p class="my-empty">불러오는 중…</p>';
+try{
+const {items}=await postWithIdToken('/api/account/payments');
+box.innerHTML=items&&items.length?items.map(x=>`<div class="my-pay"><div>${myDate(x.at)}<small>${esc(x.label)}${x.kind==='first'?' · 첫 결제':x.kind==='renewal'?' · 자동결제':''}</small></div><b>${formatWon(x.amount)}</b></div>`).join(''):'<p class="my-empty">결제 내역이 없어요</p>';
+}catch(e){box.innerHTML=`<p class="my-empty">${esc(e.message||'불러오지 못했어요')}</p>`;}
+}
+function csvCell(v){const t=String(v==null?'':v);return/[",\n]/.test(t)?'"'+t.replace(/"/g,'""')+'"':t;}
+function downloadCsv(name,rows){
+const csv='﻿'+rows.map(r=>r.map(csvCell).join(',')).join('\r\n');
+const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
+setTimeout(()=>URL.revokeObjectURL(url),2000);
+}
+function exportPlayersCsv(){
+if(!state.players.length){showAlert('내보낼 회원이 없어요.');return;}
+syncAll();
+const rows=[['이름','출생연도','성별','연락처','보호자 연락처','소속·과목','등록일','누적 결제(원)','충전(회)','사용(회)','잔여(회)','메모']];
+state.players.forEach(p=>rows.push([p.name,getBirthYear(p)||'',p.gender||'',p.phone||'',p.parent_phone||'',p.affiliation||'',p.registered_at||'',p.total_paid||0,p.total_sessions||0,p.used_sessions||0,p.remaining_sessions||0,p.memo||'']));
+downloadCsv('레슨매니저_회원목록_'+todayISO()+'.csv',rows);
+}
+function exportPaymentsCsv(){
+const rows=[['입금일','이름','금액(원)','충전(회)']];
+const list=[];state.players.forEach(p=>(p.payment_history||[]).forEach(h=>list.push([h.date||'',p.name,h.amount||0,h.sessions||0])));
+if(!list.length){showAlert('내보낼 입금 내역이 없어요.');return;}
+list.sort((a,b)=>String(b[0]).localeCompare(String(a[0])));
+downloadCsv('레슨매니저_입금내역_'+todayISO()+'.csv',rows.concat(list));
+}
+function showInstallGuide(){
+const ios=/iphone|ipad|ipod/i.test(navigator.userAgent);
+showAlert(ios?'사파리 아래쪽 공유 버튼(□↑)을 누르고\n"홈 화면에 추가"를 선택하세요.':'브라우저 오른쪽 위 메뉴(⋮)를 누르고\n"홈 화면에 추가" 또는 "앱 설치"를 선택하세요.');
+}
+async function openEarlySubscribe(){
+await showSubscribeGate(currentSubscription);
+const t=document.getElementById('subscribeTitle');if(t)t.textContent='구독하기';
+const m=document.getElementById('subscribeMsg');if(m)m.textContent='남은 체험 기간이 끝난 뒤부터 구독 기간이 시작돼요.';
+document.getElementById('subscribeClose')?.classList.remove('hidden');
+}
+function closeEarlySubscribe(){hideSubscribeGate();}
+async function resetPassword(){
+const email=(document.getElementById('authEmail')?.value||'').trim();
+if(!email){showAuthError('이메일을 먼저 입력한 뒤 눌러 주세요.');document.getElementById('authEmail')?.focus();return;}
+try{await firebase.auth().sendPasswordResetEmail(email);}
+catch(e){if(e&&e.code==='auth/invalid-email'){showAuthError('이메일 형식을 확인해 주세요.');return;}if(e&&e.code!=='auth/user-not-found'){console.error(e);showAuthError('메일을 보내지 못했어요. 잠시 후 다시 시도해 주세요.');return;}}
+clearAuthError();
+await showAlert(email+'\n비밀번호 재설정 메일을 보냈어요.\n메일함(스팸함 포함)을 확인해 주세요.');
+}
+function renderProfileForm(){
+const user=firebase.auth().currentUser;
+document.getElementById('sheet').innerHTML=`<h3 class="text-xl font-bold mb-5">내 정보 수정</h3>
+<label class="block text-sm text-toss-sub mb-1">강사명</label><input id="profEditName" class="toss-input mb-4" maxlength="20" value="${esc(currentCoachName||'')}"/>
+<label class="block text-sm text-toss-sub mb-1">이메일</label><input class="toss-input mb-1" value="${esc(user?.email||'')}" disabled/>
+<p class="text-xs text-toss-muted mb-5">연락처 변경은 고객지원 문의로 도와드려요.</p>
+<button type="button" class="btn-toss" onclick="saveProfileEdit()">저장</button>
+<button type="button" class="w-full mt-2 py-3 rounded-2xl bg-toss-bg text-toss-sub font-semibold" onclick="closeSheet()">닫기</button>`;
+}
+async function saveProfileEdit(){
+const name=(document.getElementById('profEditName')?.value||'').trim();
+if(!name){showAlert('강사명을 입력해 주세요.');return;}
+const user=firebase.auth().currentUser;if(!user)return;
+try{await cloudProfileRef(user.uid).set({coachName:name,updatedAt:Date.now()},{merge:true});currentCoachName=name;closeSheet();renderMy();}
+catch(e){console.error(e);showAlert('저장하지 못했어요. 잠시 후 다시 시도해 주세요.');}
+}
+
 async function loadShowcaseData(){
 if(!isOwnerUser(firebase.auth().currentUser)||!window.buildShowcaseData)return;
 if(!await showConfirm('이 계정의 회원·일정이 모두 가상 데이터로 바뀝니다.\n계속할까요?'))return;
@@ -2369,7 +2523,9 @@ rejectedBy:firebase.auth().currentUser?.email||''
 async function getActiveExtendBase(uid,now){
 const snap=await firebase.firestore().doc('users/'+uid).get();
 const sub=snap.exists?snap.data()?.subscription:null;
-return sub?.status==='active'&&(sub.expiresAt||0)>now?sub.expiresAt:now;
+if(sub?.status==='active'&&(sub.expiresAt||0)>now)return sub.expiresAt;
+const trialEnd=sub?.status==='trial'?(sub.trialEndsAt||sub.expiresAt||0):0;
+return trialEnd>now?trialEnd:now;
 }
 async function activateAdminUser(uid){
 if(!uid)return;
@@ -2492,11 +2648,13 @@ if(location.hash==='#admin'&&isAdminUser(firebase.auth().currentUser)&&bootFinis
 }
 
 function setView(v){
+if(v==='my'&&firebaseReady&&!firebase.auth().currentUser){showAuthGate();return;}
 if(v==='admin'&&!isAdminUser(firebase.auth().currentUser))v='home';
 if(v!=='admin'&&location.hash==='#admin')history.replaceState({},'',location.pathname+location.search);
 if(currentView==='admin'&&v!=='admin')stopAdminListeners();
 currentView=v;
-document.querySelectorAll('.nav-btn').forEach(b=>{const on=b.dataset.view===v;b.classList.toggle('nav-active',on);b.setAttribute('aria-current',on?'page':'false');});
+document.body.dataset.view=v;
+document.querySelectorAll('.nav-btn').forEach(b=>{const on=b.dataset.view===v||(v==='admin'&&b.dataset.view==='my');b.classList.toggle('nav-active',on);b.setAttribute('aria-current',on?'page':'false');});
 document.querySelectorAll('.view-panel').forEach(el=>el.classList.add('hidden'));
 document.getElementById('view-'+v).classList.remove('hidden');
 document.getElementById('statsSection').classList.toggle('hidden',v!=='home');
@@ -2504,7 +2662,7 @@ document.getElementById('dashBrandRow')?.classList.toggle('hidden',v!=='home');
 document.getElementById('appHeader').classList.toggle('hidden',v==='home');
 if(v==='home')startDashClock();
 const fab=document.getElementById('fab');
-fab.style.display=(v==='home'||v==='admin')?'none':'flex';
+fab.style.display=(v==='home'||v==='admin'||v==='my')?'none':'flex';
 fab.onclick=()=>{if(v==='players')openSheet('player');else openSheet('schedule',{date:selectedDate||todayISO()});};
 if(v==='admin'){
 document.getElementById('adminShowcase')?.classList.toggle('hidden',!isOwnerUser(firebase.auth().currentUser));
@@ -2513,6 +2671,7 @@ startAdminListeners();
 history.replaceState({},'',location.pathname+location.search+'#admin');
 return;
 }
+if(v==='my'){renderMy();return;}
 render();
 }
 
@@ -2926,6 +3085,7 @@ if(type==='player')renderPlayerForm(arg);
 else if(type==='payment')renderPaymentForm(arg);
 else if(type==='schedule')renderScheduleForm(arg);
 else if(type==='detail'){detailTab='payment';renderDetail(arg);}
+else if(type==='profile')renderProfileForm();
 const sheet=document.getElementById('sheet'),bd=document.getElementById('sheetBackdrop');
 bd.classList.remove('hidden');sheet.classList.remove('hidden');
 document.body.classList.add('sheet-open');
