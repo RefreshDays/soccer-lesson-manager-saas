@@ -287,6 +287,17 @@ body.auth-lock #app,body.auth-lock .bottom-nav,body.auth-lock #fab{visibility:hi
 .sync-login{font-size:13px;font-weight:700;color:#fff;background:#3182F6;border:0;border-radius:10px;padding:8px 14px;cursor:pointer;font-family:inherit;white-space:nowrap}
 .sync-login.hidden{display:none}
 .sync-dot.is-guest{display:none}
+.guest-cta{position:relative;margin-bottom:12px;padding:20px 20px 14px;border-radius:20px;background:#fff;box-shadow:0 2px 16px rgba(0,0,0,.06);border:1.5px solid #CFE2FF;overflow:hidden}
+.guest-cta.hidden{display:none}
+.guest-cta::after{content:"";position:absolute;right:-30px;top:-30px;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,#EAF2FF 0%,rgba(234,242,255,0) 70%);pointer-events:none}
+.guest-cta-badge{position:relative;display:inline-block;font-size:12px;font-weight:700;color:#0046C0;background:#EAF2FF;padding:5px 10px;border-radius:999px}
+.guest-cta-title{position:relative;margin:10px 0 0;font-size:21px;font-weight:800;line-height:1.35;color:#191F28;letter-spacing:-.03em}
+.guest-cta-title span{color:#0076E5}
+.guest-cta-sub{position:relative;margin:6px 0 0;font-size:13px;color:#6B7684;line-height:1.45}
+.guest-cta-btn{position:relative;display:block;width:100%;height:50px;margin-top:16px;border:0;border-radius:14px;background:linear-gradient(120deg,#0046C0,#0076E5);color:#fff;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 6px 16px rgba(0,70,192,.22)}
+.guest-cta-btn:active{transform:scale(.98)}
+.guest-cta-login{position:relative;display:block;width:100%;margin-top:8px;padding:8px 0 4px;border:0;background:none;font-size:13px;color:#6B7684;cursor:pointer;font-family:inherit}
+.guest-cta-login strong{color:#3182F6;font-weight:700}
 .auth-card h2{font-size:1.125rem;font-weight:700;margin:0 0 6px}
 .auth-card p{font-size:13px;color:#4E5968;line-height:1.45;margin:0 0 16px}
 .auth-card-desc{margin:0 0 16px;font-size:13px;color:#4E5968;line-height:1.45}
@@ -393,6 +404,13 @@ body.auth-lock #app,body.auth-lock .bottom-nav,body.auth-lock #fab{visibility:hi
 <h2 class="dash-brand"><img class="dash-brand-logo" src="/brand/logo-horizontal.svg" alt="LESSON MANAGER"/></h2>
 <span class="dash-greeting-pill">오늘도 힘내세요!</span>
 </div>
+<section id="guestCta" class="guest-cta hidden" aria-label="무료 체험 안내">
+<span class="guest-cta-badge">무료 체험</span>
+<p class="guest-cta-title"><span id="guestTrialDays">7일</span> 무료 체험으로<br>먼저 써 보세요</p>
+<p class="guest-cta-sub">카드 등록 없이 바로 시작 · 회원·일정·입금을 한 곳에서</p>
+<button type="button" class="guest-cta-btn" onclick="showAuthGate('', 'register')">무료로 시작하기</button>
+<button type="button" class="guest-cta-login" onclick="showAuthGate()">이미 계정이 있어요 · <strong>로그인</strong></button>
+</section>
 <section id="syncStatusBar" class="sync-bar hidden mb-3" aria-live="polite">
 <div class="sync-bar-top">
 <div class="sync-bar-row"><span class="sync-dot" id="syncDot"></span><span class="sync-bar-text" id="syncText">동기화 준비 중</span></div>
@@ -578,7 +596,7 @@ let state={players:[],schedules:[]};
 let currentView='home',calendarMode='month',calendarDate=new Date(),selectedDate=null,detailTab='payment',historyViewMonth=null;
 let currentCoachName='',overdueExpanded=false;
 let cloudSaveTimer=null,cloudUnsub=null,profileUnsub=null,lastCloudPush=0,applyingRemote=false,firebaseReady=false,bootFinished=false,currentAuthUid=null,currentSyncSession=0,currentSubscription=null;
-const APP_BUILD='v2-guest-first';
+const APP_BUILD='v2-trial-cta';
 function getSaasConfig(){return window.SAAS_CONFIG||{};}
 function getBankInfo(){return getSaasConfig().BANK||{};}
 function getSubscribeDays(){return Number(getSaasConfig().SUBSCRIBE_DAYS||30);}
@@ -893,6 +911,9 @@ else if(mode==='guest'){dot.classList.add('is-guest');text.textContent='로그�
 else{text.textContent=detail||'동기화 준비 중';if(subLine){subLine.innerHTML='';subLine.classList.add('hidden');}}
 if(logout)logout.classList.toggle('hidden',mode!=='synced'&&mode!=='pending'&&mode!=='error');
 document.getElementById('syncLogin')?.classList.toggle('hidden',mode!=='guest');
+const guestCta=document.getElementById('guestCta');
+if(guestCta){guestCta.classList.toggle('hidden',mode!=='guest');const td=document.getElementById('guestTrialDays');if(td)td.textContent=getTrialDays()+'일';}
+if(mode==='guest')bar.classList.add('hidden');
 const syncAdmin=document.getElementById('syncAdmin');
 const user=firebase.auth().currentUser;
 const showAdminBar=!!user&&isAdminUser(user)&&(mode==='synced'||mode==='pending'||mode==='error');
@@ -917,10 +938,10 @@ const clearPw=()=>{pw.value='';};
 requestAnimationFrame(clearPw);
 setTimeout(clearPw,50);
 }
-function showAuthGate(msg){
+function showAuthGate(msg,mode){
 const gate=document.getElementById('authGate');
 document.body.classList.add('auth-lock');
-setAuthMode('login');
+setAuthMode(mode==='register'?'register':'login');
 resetAuthForm();
 clearAuthError();
 if(gate){gate.classList.remove('hidden');gate.setAttribute('aria-hidden','false');}
