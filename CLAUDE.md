@@ -8,9 +8,8 @@
 ## 버전 운영
 - 운영 주소(master): https://lesson-manager-saas.vercel.app
 - 이전 안정 버전 보관: `stable/v1`, `stable/v2` 브랜치
+- `v3` 브랜치: Three.js 3D 실험(채택 안 함, 참고용 보관)
 - 새 기능은 먼저 실험 브랜치(`v2`, `v3` …, 고정 미리보기 주소)에서 확인한 뒤 운영에 반영합니다.
 - 미리보기 주소에서 구글 로그인을 쓰려면 Firebase 승인된 도메인에 그 주소를 추가해야 합니다.
 - 실험 브랜치에는 새 커밋을 먼저 푸시합니다. 같은 커밋이 다른 브랜치에서 먼저 배포되면 Vercel이 그 브랜치의 고정 주소(`lesson-manager-git-<브랜치>-123s-projects-e1179323.vercel.app`)를 만들지 않습니다.
 
-## 라이브러리
-- Three.js는 `vendor/three.module.min.js`(0.160.0)로 포함합니다. 외부 CDN에 의존하지 않습니다.
