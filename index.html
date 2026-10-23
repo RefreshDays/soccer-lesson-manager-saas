@@ -23,6 +23,12 @@ html{word-break:keep-all;overflow-wrap:break-word}
 html,body,button,input,select,textarea{font-family:'Paperlogy',system-ui,sans-serif}
 body{background:#F2F4F6;color:#191F28;-webkit-tap-highlight-color:transparent}
 .toss-card{background:#fff;border-radius:20px;box-shadow:0 2px 16px rgba(0,0,0,.06)}
+.avatar{flex-shrink:0;width:38px;height:38px;border-radius:13px;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;letter-spacing:-.04em;background:linear-gradient(140deg,color-mix(in srgb,var(--av) 78%,#fff) 0%,var(--av) 70%);box-shadow:0 4px 10px color-mix(in srgb,var(--av) 30%,transparent)}
+.avatar--sm{width:32px;height:32px;border-radius:11px;font-size:12px}
+.today-row.is-done .avatar{filter:grayscale(.85);opacity:.55;box-shadow:none}
+.overdue-row .overdue-info,.renew-row .renew-info{flex:1}
+body{background:#F2F4F6}
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(60% 38% at 0% 0%,rgba(255,180,140,.22) 0%,rgba(255,180,140,0) 100%),radial-gradient(55% 35% at 100% 4%,rgba(80,220,180,.18) 0%,rgba(80,220,180,0) 100%),radial-gradient(70% 40% at 50% 100%,rgba(124,108,242,.10) 0%,rgba(124,108,242,0) 100%)}
 .home-block{margin-bottom:20px}
 .home-block-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 2px 10px}
 .home-block-title{display:flex;align-items:center;gap:8px;margin:0;font-size:1.125rem;font-weight:700;color:#191F28;letter-spacing:-.02em}
@@ -181,14 +187,21 @@ body.sheet-open,body.confirm-open{overflow:hidden}
 .dash-head.hidden{display:none}
 .dash-brand{margin:0;font-size:1.05rem;font-weight:800;color:#3182F6;letter-spacing:-.03em;line-height:1.12}
 .dash-hero{border-radius:22px;overflow:hidden;background:#fff;box-shadow:0 2px 20px rgba(0,0,0,.07)}
-.dash-hero-clock{position:relative;padding:18px 20px 20px;background:linear-gradient(125deg,#0B1E3F 0%,#0046C0 62%,#0076E5 100%);color:#fff;overflow:hidden}
-.dash-hero-clock::after{content:"";position:absolute;right:-46px;top:-58px;width:170px;height:170px;border-radius:50%;border:26px solid rgba(255,255,255,.06);pointer-events:none}
+.dash-hero-clock{position:relative;display:flex;align-items:center;gap:8px;min-height:148px;padding:18px 8px 18px 20px;background:radial-gradient(120% 140% at 100% 0%,#1B7CF0 0%,rgba(27,124,240,0) 55%),linear-gradient(125deg,#0B1E3F 0%,#0A2C78 55%,#0046C0 100%);color:#fff;overflow:hidden}
+.dash-clock-text{position:relative;flex:1;min-width:0;z-index:1}
+.dash-hero-3d{position:relative;flex-shrink:0;width:136px;height:136px;margin:-10px -2px -10px 0}
+.dash-hero-3d .hero3d-canvas{position:absolute;inset:0;width:100%!important;height:100%!important}
+.hero3d-fallback{position:absolute;inset:22px;width:auto;height:auto;opacity:.92}
+.dash-hero-3d.is-3d .hero3d-fallback{display:none}
+.dash-clock-meta{display:flex;align-items:center;flex-wrap:wrap;gap:6px 8px;margin-top:12px}
+.dash-clock-count{font-size:12px;font-weight:600;color:rgba(255,255,255,.75)}
+.dash-clock-count b{color:#5BF0B6;font-weight:700}
 .dash-clock-top{position:relative;display:flex;align-items:center;justify-content:space-between;gap:10px}
 .dash-clock-label{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:rgba(255,255,255,.72);letter-spacing:-.01em}
 .dash-clock-label svg,.dash-clock-chip svg{width:15px;height:15px;flex-shrink:0}
 .dash-clock-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px 6px 10px;border-radius:999px;background:rgba(255,255,255,.14);font-size:14px;font-weight:600;color:#fff;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
-.dash-clock-date{position:relative;margin-top:10px;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
-.dash-clock-ymd{font-size:clamp(1.625rem,7vw,1.95rem);font-weight:800;letter-spacing:-.03em;line-height:1.15;font-variant-numeric:tabular-nums}
+.dash-clock-date{position:relative;margin-top:8px;display:flex;align-items:baseline;gap:6px 8px;flex-wrap:wrap}
+.dash-clock-ymd{font-size:clamp(1.45rem,6.4vw,1.85rem);font-weight:800;letter-spacing:-.03em;line-height:1.15;font-variant-numeric:tabular-nums}
 .dash-clock-dow{font-size:15px;font-weight:600;color:rgba(255,255,255,.72)}
 .dash-hero-body{padding:2px 16px 14px;display:grid;grid-template-columns:1fr 1fr;gap:0}
 .dash-stat{display:flex;align-items:center;gap:11px;padding:14px 6px;border-bottom:1px solid #F2F4F6}
@@ -583,6 +596,7 @@ body.auth-lock #app,body.auth-lock .bottom-nav,body.auth-lock #fab{visibility:hi
 <script src="/saas-config.js"></script>
 <script src="/toss-config.js"></script>
 <script src="/showcase-data.js"></script>
+<script type="module" src="/hero3d.js"></script>
 <script src="https://js.tosspayments.com/v2/standard"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-auth-compat.js"></script>
@@ -596,7 +610,7 @@ let state={players:[],schedules:[]};
 let currentView='home',calendarMode='month',calendarDate=new Date(),selectedDate=null,detailTab='payment',historyViewMonth=null;
 let currentCoachName='',overdueExpanded=false;
 let cloudSaveTimer=null,cloudUnsub=null,profileUnsub=null,lastCloudPush=0,applyingRemote=false,firebaseReady=false,bootFinished=false,currentAuthUid=null,currentSyncSession=0,currentSubscription=null;
-const APP_BUILD='v2-trial-cta';
+const APP_BUILD='v3-three';
 function getSaasConfig(){return window.SAAS_CONFIG||{};}
 function getBankInfo(){return getSaasConfig().BANK||{};}
 function getSubscribeDays(){return Number(getSaasConfig().SUBSCRIBE_DAYS||30);}
@@ -2664,11 +2678,12 @@ const{registered,lessonMembers,totalLessons,totalDeposits}=getDashboardStats();
 document.getElementById('statsSection').innerHTML=`
 <article class="dash-hero">
 <div id="dashClock" class="dash-hero-clock">
-<div class="dash-clock-top">
+<div class="dash-clock-text">
 <span class="dash-clock-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>오늘</span>
-<span class="dash-clock-chip" aria-label="현재 시간"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span class="dash-clock-time">${formatClockTime(now)}</span></span>
-</div>
 <div class="dash-clock-date"><span class="dash-clock-ymd">${formatDisplayDate(now)}</span><span class="dash-clock-dow">${formatWeekday(now)}</span></div>
+<div class="dash-clock-meta"><span class="dash-clock-chip" aria-label="현재 시간"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span class="dash-clock-time">${formatClockTime(now)}</span></span><span class="dash-clock-count">${heroLessonSummary()}</span></div>
+</div>
+<div class="dash-hero-3d" id="hero3d" aria-hidden="true"><img class="hero3d-fallback" src="/brand/symbol-white.svg" alt=""/></div>
 </div>
 <div class="dash-hero-month"><span>${formatMonthTitle(curYm)} 누계</span></div>
 <div class="dash-hero-body">
@@ -2679,10 +2694,19 @@ ${dashStat('deposit','입금액',totalDeposits,'원')}
 </div>
 </article>`;
 if(currentView==='home')startDashClock();
+mountHero3D();
 }
 
 
 
+
+const AVATAR_COLORS=['#FF8A3D','#22B8CF','#F06292','#7C6CF2','#2FB673','#F5A524','#FF6B6B','#3D8BFD','#A061D1','#14B8A6'];
+function avatarColor(id){const k=String(id||'');let h=0;for(let i=0;i<k.length;i++)h=(h*31+k.charCodeAt(i))>>>0;return AVATAR_COLORS[h%AVATAR_COLORS.length];}
+function avatarHtml(p,size){if(!p)return'';const n=String(p.name||'?').trim();const label=n.length>=3?n.slice(1,3):n.slice(0,2);return`<span class="avatar${size==='sm'?' avatar--sm':''}" style="--av:${avatarColor(p.id)}">${esc(label)}</span>`;}
+function todayLessonsForHero(){const t=todayISO();return state.schedules.filter(s=>s.date===t&&s.status!=='canceled').map(s=>({done:s.status==='completed',color:avatarColor(s.player_id)}));}
+function heroLessonSummary(){const l=todayLessonsForHero();if(!l.length)return'오늘 레슨 없음';const d=l.filter(x=>x.done).length;return`레슨 ${l.length}건 · <b>완료 ${d}</b>`;}
+function mountHero3D(){const el=document.getElementById('hero3d');if(!el||!window.Hero3D)return;try{if(window.Hero3D.attach(el,todayLessonsForHero()))el.classList.add('is-3d');}catch(e){console.error(e);}}
+window.addEventListener('hero3d-ready',mountHero3D);
 function homeTimeLabel(t){const[h,m]=String(t||'').split(':').map(Number);if(isNaN(h))return t||'';return String(h).padStart(2,'0')+':'+String(m||0).padStart(2,'0');}
 function renderTodayLessons(){
 const today=todayISO();
@@ -2695,7 +2719,7 @@ let action;
 if(isDone)action='<span class="today-done"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>완료</span>';
 else if(p&&left<=0)action=`<button type="button" class="today-btn today-btn--charge" onclick="openSheet('payment','${p.id}')">충전 필요</button>`;
 else action=`<button type="button" class="today-btn" onclick="completeLesson('${s.id}')">완료</button>`;
-return`<div class="today-row${isDone?' is-done':''}"><span class="today-time">${esc(homeTimeLabel(s.time))}</span>
+return`<div class="today-row${isDone?' is-done':''}"><span class="today-time">${esc(homeTimeLabel(s.time))}</span>${avatarHtml(p)}
 <button type="button" class="today-main" ${p?`onclick="openSheet('detail','${p.id}')"`:''}><span class="today-name">${esc(name)}</span>${meta}</button>${action}</div>`;
 }).join('');
 return`<section class="home-block">
@@ -2711,7 +2735,7 @@ if(!list.length)return'';
 const shown=overdueExpanded?list:list.slice(0,3);
 const rows=shown.map(s=>{const p=getPlayer(s.player_id),name=p?p.name:'알 수 없음',[,m,d]=s.date.split('-').map(Number),dow='일월화수목금토'[new Date(s.date+'T00:00:00').getDay()];
 const canDone=p&&p.remaining_sessions>0;
-return`<div class="overdue-row"><div class="overdue-info"><span class="overdue-name">${esc(name)}</span><span class="overdue-when">${m}/${d}(${dow}) ${esc(homeTimeLabel(s.time))}</span></div>
+return`<div class="overdue-row">${avatarHtml(p,'sm')}<div class="overdue-info"><span class="overdue-name">${esc(name)}</span><span class="overdue-when">${m}/${d}(${dow}) ${esc(homeTimeLabel(s.time))}</span></div>
 <div class="overdue-actions">${canDone?`<button type="button" class="mini-btn mini-btn--primary" onclick="completeLesson('${s.id}')">완료</button>`:(p?`<button type="button" class="mini-btn mini-btn--warn" onclick="openSheet('payment','${p.id}')">충전</button>`:'')}<button type="button" class="mini-btn" onclick="cancelSchedule('${s.id}')">취소</button></div></div>`;}).join('');
 const more=list.length>3?`<button type="button" class="overdue-more" onclick="overdueExpanded=!overdueExpanded;renderHome()">${overdueExpanded?'접기':`${list.length-3}건 더 보기`}</button>`:'';
 return`<section class="home-block"><div class="toss-card notice-card notice-card--warn">
@@ -2722,7 +2746,7 @@ return`<section class="home-block"><div class="toss-card notice-card notice-card
 function renderRenewalBlock(){
 const low=state.players.filter(isLow).sort((a,b)=>a.remaining_sessions-b.remaining_sessions);
 if(!low.length)return'';
-const rows=low.map(p=>`<div class="renew-row"><button type="button" class="renew-info" onclick="openSheet('detail','${p.id}')"><span class="renew-name">${esc(p.name)}</span><span class="renew-left${p.remaining_sessions<=0?' is-zero':''}">${p.remaining_sessions<=0?'잔여 없음':`잔여 ${p.remaining_sessions}회`}</span></button>
+const rows=low.map(p=>`<div class="renew-row">${avatarHtml(p,'sm')}<button type="button" class="renew-info" onclick="openSheet('detail','${p.id}')"><span class="renew-name">${esc(p.name)}</span><span class="renew-left${p.remaining_sessions<=0?' is-zero':''}">${p.remaining_sessions<=0?'잔여 없음':`잔여 ${p.remaining_sessions}회`}</span></button>
 <button type="button" class="kakao-btn" onclick="shareRenewal('${p.id}')"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 4C7.03 4 3 7.13 3 11c0 2.5 1.68 4.69 4.2 5.93l-.86 3.16c-.08.28.24.5.48.34l3.77-2.5c.46.05.93.07 1.41.07 4.97 0 9-3.13 9-7s-4.03-7-9-7z"/></svg>카톡 안내</button></div>`).join('');
 return`<section class="home-block"><div class="toss-card notice-card">
 <div class="notice-head"><span class="notice-icon notice-icon--orange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10h18M7 15h2"/><rect x="3" y="5" width="18" height="14" rx="3"/></svg></span>
