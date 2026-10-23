@@ -280,7 +280,13 @@ body.auth-lock #app,body.auth-lock .bottom-nav,body.auth-lock #fab{visibility:hi
 .app-header-home{display:block;width:100%;text-align:left;font-size:17px;font-weight:700;line-height:1.375;letter-spacing:-.025em;color:#191F28;background:transparent;border:0;padding:0;cursor:pointer;font-family:inherit;-webkit-tap-highlight-color:transparent}
 .app-header-home:active{opacity:.72}
 .subscribe-badge{display:inline-flex;align-items:center;font-size:11px;font-weight:600;color:#E65100;background:#FFF4E6;padding:4px 8px;border-radius:9999px;margin-left:6px;vertical-align:middle}
-.auth-card{width:100%;max-width:22rem}
+.auth-card{width:100%;max-width:22rem;position:relative}
+.auth-close{position:absolute;top:14px;right:14px;width:36px;height:36px;border-radius:12px;border:0;background:#F2F4F6;color:#6B7684;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.auth-close.hidden{display:none}
+.auth-close svg{width:18px;height:18px}
+.sync-login{font-size:13px;font-weight:700;color:#fff;background:#3182F6;border:0;border-radius:10px;padding:8px 14px;cursor:pointer;font-family:inherit;white-space:nowrap}
+.sync-login.hidden{display:none}
+.sync-dot.is-guest{display:none}
 .auth-card h2{font-size:1.125rem;font-weight:700;margin:0 0 6px}
 .auth-card p{font-size:13px;color:#4E5968;line-height:1.45;margin:0 0 16px}
 .auth-card-desc{margin:0 0 16px;font-size:13px;color:#4E5968;line-height:1.45}
@@ -392,6 +398,7 @@ body.auth-lock #app,body.auth-lock .bottom-nav,body.auth-lock #fab{visibility:hi
 <div class="sync-bar-row"><span class="sync-dot" id="syncDot"></span><span class="sync-bar-text" id="syncText">동기화 준비 중</span></div>
 <div class="sync-bar-actions">
 <button type="button" id="syncAdmin" class="sync-admin hidden">관리</button>
+<button type="button" id="syncLogin" class="sync-login hidden" onclick="showAuthGate()">로그인</button>
 <button type="button" id="syncLogout" class="sync-logout hidden">로그아웃</button>
 </div>
 </div>
@@ -458,6 +465,7 @@ body.auth-lock #app,body.auth-lock .bottom-nav,body.auth-lock #fab{visibility:hi
 </div>
 <div id="authGate" class="auth-gate hidden" aria-hidden="true">
 <div class="auth-card toss-card p-6 pb-7">
+<button type="button" id="authClose" class="auth-close hidden" onclick="closeAuthGate()" aria-label="닫고 둘러보기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
 <div class="auth-brand">
 <img class="brand-symbol" src="/brand/symbol.svg" alt=""/>
 <div class="auth-brand-text"><span class="auth-brand-name">레슨 매니저</span><span class="auth-brand-tag">축구·피아노·영어… 종목에 상관없이<br>회차·일정·입금을 한 곳에서</span></div>
@@ -570,7 +578,7 @@ let state={players:[],schedules:[]};
 let currentView='home',calendarMode='month',calendarDate=new Date(),selectedDate=null,detailTab='payment',historyViewMonth=null;
 let currentCoachName='',overdueExpanded=false;
 let cloudSaveTimer=null,cloudUnsub=null,profileUnsub=null,lastCloudPush=0,applyingRemote=false,firebaseReady=false,bootFinished=false,currentAuthUid=null,currentSyncSession=0,currentSubscription=null;
-const APP_BUILD='v2-keep-all';
+const APP_BUILD='v2-guest-first';
 function getSaasConfig(){return window.SAAS_CONFIG||{};}
 function getBankInfo(){return getSaasConfig().BANK||{};}
 function getSubscribeDays(){return Number(getSaasConfig().SUBSCRIBE_DAYS||30);}
@@ -881,8 +889,10 @@ if(mode==='synced'){dot.classList.add('is-synced');dot.title='저장됨';text.te
 else if(mode==='pending'){dot.classList.add('is-pending');dot.title='저장 중';text.textContent=account||'저장 중…';setDetail('');}
 else if(mode==='error'){dot.classList.add('is-error');dot.title='저장 실패';text.textContent=account;setDetail('저장하지 못했어요'+(detail?' · '+detail:''));}
 else if(mode==='local'){bar.classList.add('hidden');return;}
+else if(mode==='guest'){dot.classList.add('is-guest');text.textContent='로그인하고 내 레슨 관리를 시작해 보세요';setDetail('');if(subLine){subLine.innerHTML='';subLine.classList.add('hidden');}}
 else{text.textContent=detail||'동기화 준비 중';if(subLine){subLine.innerHTML='';subLine.classList.add('hidden');}}
 if(logout)logout.classList.toggle('hidden',mode!=='synced'&&mode!=='pending'&&mode!=='error');
+document.getElementById('syncLogin')?.classList.toggle('hidden',mode!=='guest');
 const syncAdmin=document.getElementById('syncAdmin');
 const user=firebase.auth().currentUser;
 const showAdminBar=!!user&&isAdminUser(user)&&(mode==='synced'||mode==='pending'||mode==='error');
@@ -914,7 +924,17 @@ setAuthMode('login');
 resetAuthForm();
 clearAuthError();
 if(gate){gate.classList.remove('hidden');gate.setAttribute('aria-hidden','false');}
+document.getElementById('authClose')?.classList.toggle('hidden',!!(firebaseReady&&firebase.auth().currentUser));
 if(msg)showAuthError(msg);
+}
+function closeAuthGate(){
+if(firebaseReady&&firebase.auth().currentUser)return;
+hideAuthGate();
+}
+function requireLogin(){
+if(!firebaseReady||firebase.auth().currentUser)return true;
+showAuthGate();
+return false;
 }
 function hideAuthGate(){
 const gate=document.getElementById('authGate');
@@ -1463,8 +1483,7 @@ stopAdminListeners();
 stopAdminConfigListener();
 hideProfileGate();
 updateAdminNavVisibility(null);
-showAuthGate();
-updateSyncStatus('offline','로그인이 필요합니다');
+updateSyncStatus('guest');
 if(bootFinished)render();
 return;
 }
@@ -2697,6 +2716,7 @@ const status=left<=0?'등록하신 레슨 회차를 모두 사용하셨어요.':
 return`안녕하세요, ${p.name}님 😊\n${who}입니다.\n\n${status}\n레슨을 계속 이어가시려면 재등록 부탁드려요.\n\n편하실 때 답장 주시면 일정 맞춰 드릴게요. 감사합니다!`;
 }
 async function shareRenewal(pid){
+if(!requireLogin())return;
 const p=getPlayer(pid);if(!p)return;
 const text=buildRenewalMessage(p);
 if(navigator.share){
@@ -2836,6 +2856,7 @@ ${!done?`<div class="flex gap-2 mt-3">
 }
 
 function openSheet(type,arg){
+if(!requireLogin())return;
 if(type==='player')renderPlayerForm(arg);
 else if(type==='payment')renderPaymentForm(arg);
 else if(type==='schedule')renderScheduleForm(arg);
@@ -2980,6 +3001,7 @@ document.getElementById('confirmCancel').classList.remove('hidden');
 if(confirmResolve){const r=confirmResolve;confirmResolve=null;r(!!ok);}
 }
 async function completeLesson(id){
+if(!requireLogin())return;
 const s=state.schedules.find(x=>x.id===id);if(!s||s.status!=='scheduled')return;
 const p=getPlayer(s.player_id);if(!p)return;
 if(p.remaining_sessions<=0){alert('잔여 회차가 없습니다.');openSheet('payment',p.id);return;}
@@ -2987,6 +3009,7 @@ if(!await showConfirm(p.name+'님 레슨을 완료하고 1회 차감할까요?')
 p.used_sessions+=1;s.status='completed';saveState();render();
 }
 async function cancelSchedule(id){
+if(!requireLogin())return;
 const s=state.schedules.find(x=>x.id===id);
 if(!s||s.status!=='scheduled')return;
 if(!await showConfirm('이 일정을 취소할까요?'))return;
@@ -3089,7 +3112,6 @@ initAuthGate();
 handleSubscribeCallback();
 if(initFirebase()){
 resetAppState();
-showAuthGate();
 firebase.auth().onAuthStateChanged(handleAuthUser);
 firebase.auth().getRedirectResult().catch(e=>{console.error(e);showAuthError(googleAuthErrorMessage(e));});
 }else{
